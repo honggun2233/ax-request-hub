@@ -93,7 +93,13 @@ export class ConsultationAgent {
     const match = text.match(/<EXTRACTED>([\s\S]*?)<\/EXTRACTED>/)
     if (!match) return null
     try {
-      return JSON.parse(match[1].trim()) as ExtractedProject
+      const VALID_LEVELS = ['G1', 'G2', 'G3'] as const
+      const parsed = JSON.parse(match[1].trim()) as ExtractedProject
+      if (!VALID_LEVELS.includes(parsed.confidentialityLevel as any)) {
+        console.warn('Invalid confidentialityLevel:', parsed.confidentialityLevel)
+        return null
+      }
+      return parsed
     } catch (err) {
       console.warn('Failed to parse EXTRACTED block:', err)
       return null

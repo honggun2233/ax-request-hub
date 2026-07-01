@@ -80,16 +80,18 @@ As-Is: ${project.asIs}
         strategyScore: Number(obj.strategyScore),
         evaluationRationale: String(obj.evaluationRationale ?? ''),
       }
-      // validate ranges
+      // validate ranges (also rejects NaN via Number.isFinite)
+      const isValidScore = (v: number, max: number) => Number.isFinite(v) && v >= 0 && v <= max
+
       if (
-        scores.impactScore < 0 || scores.impactScore > 25 ||
-        scores.roiScore < 0 || scores.roiScore > 25 ||
-        scores.confidentialityScore < 0 || scores.confidentialityScore > 15 ||
-        scores.difficultyScore < 0 || scores.difficultyScore > 15 ||
-        scores.readinessScore < 0 || scores.readinessScore > 10 ||
-        scores.strategyScore < 0 || scores.strategyScore > 10
+        !isValidScore(scores.impactScore, 25) ||
+        !isValidScore(scores.roiScore, 25) ||
+        !isValidScore(scores.confidentialityScore, 15) ||
+        !isValidScore(scores.difficultyScore, 15) ||
+        !isValidScore(scores.readinessScore, 10) ||
+        !isValidScore(scores.strategyScore, 10)
       ) {
-        console.warn('Score out of range in evaluation result:', scores)
+        console.warn('Score out of range or NaN in evaluation result:', scores)
         return null
       }
       const totalScore =
