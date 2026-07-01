@@ -45,31 +45,41 @@ const SYSTEM_PROMPT = `당신은 삼성자산운용 AX/PI팀의 AI 과제 접수
 
 export class ConsultationAgent {
   async start(): Promise<AgentResponse> {
-    const response = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 500,
-      system: SYSTEM_PROMPT,
-      messages: [
-        {
-          role: 'user',
-          content: '안녕하세요, AI 과제 신청을 시작하고 싶습니다.',
-        },
-      ],
-    })
+    let response
+    try {
+      response = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 800,
+        system: SYSTEM_PROMPT,
+        messages: [
+          {
+            role: 'user',
+            content: '안녕하세요, AI 과제 신청을 시작하고 싶습니다.',
+          },
+        ],
+      })
+    } catch (err) {
+      throw new Error(`ConsultationAgent.start() API 호출 실패: ${err}`)
+    }
 
-    const message = response.content[0].type === 'text' ? response.content[0].text : ''
+    const message = response.content[0]?.type === 'text' ? response.content[0].text : ''
     return { message, isComplete: false, extracted: null }
   }
 
   async continueChat(messages: ChatMessage[]): Promise<AgentResponse> {
-    const response = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 800,
-      system: SYSTEM_PROMPT,
-      messages,
-    })
+    let response
+    try {
+      response = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 800,
+        system: SYSTEM_PROMPT,
+        messages,
+      })
+    } catch (err) {
+      throw new Error(`ConsultationAgent.continueChat() API 호출 실패: ${err}`)
+    }
 
-    const message = response.content[0].type === 'text' ? response.content[0].text : ''
+    const message = response.content[0]?.type === 'text' ? response.content[0].text : ''
     const extracted = this.parseExtracted(message)
 
     return {
@@ -84,7 +94,8 @@ export class ConsultationAgent {
     if (!match) return null
     try {
       return JSON.parse(match[1].trim()) as ExtractedProject
-    } catch {
+    } catch (err) {
+      console.warn('Failed to parse EXTRACTED block:', err)
       return null
     }
   }

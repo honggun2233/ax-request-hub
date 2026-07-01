@@ -46,22 +46,18 @@ describe('ConsultationAgent', () => {
     expect(typeof response.isComplete).toBe('boolean')
   }, 30000)
 
-  test('extracted 데이터 타입이 올바르다', () => {
-    const mockExtracted: ExtractedProject = {
-      title: '리서치 보고서 요약 자동화',
-      department: '운용팀',
-      requesterName: '김과장',
-      requesterEmail: 'kim@samsung.com',
-      description: '주간 PDF 10개 자동 요약',
-      asIs: '수동으로 읽고 요약',
-      expectedBenefit: '주 5시간 절감',
-      confidentialityLevel: 'G1',
-      championName: '김과장',
-      estimatedUsers: 5,
-    }
-    expect(mockExtracted.title).toBe('리서치 보고서 요약 자동화')
-    expect(['G1', 'G2', 'G3']).toContain(mockExtracted.confidentialityLevel)
-  })
+  test('EXTRACTED 블록이 없으면 continueChat은 isComplete=false를 반환한다', async () => {
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'text', text: '네, 관련 데이터의 기밀등급이 어떻게 되나요?' }],
+    })
+
+    const messages = [
+      { role: 'user' as const, content: '사용자는 10명입니다.' },
+    ]
+    const response = await agent.continueChat(messages)
+    expect(response.isComplete).toBe(false)
+    expect(response.extracted).toBeNull()
+  }, 30000)
 
   test('continueChat이 EXTRACTED 블록을 파싱하면 isComplete=true를 반환한다', async () => {
     const extractedJson = JSON.stringify({
