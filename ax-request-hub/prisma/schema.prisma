@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id                   String      @id @default(cuid())
+  title                String
+  department           String
+  requesterName        String
+  requesterEmail       String
+  source               String      @default("user_request")
+  status               String      @default("submitted")
+  description          String
+  asIs                 String
+  expectedBenefit      String
+  confidentialityLevel String      @default("G2")
+  championName         String?
+  estimatedUsers       Int         @default(0)
+  totalScore           Float?
+  autoApproved         Boolean     @default(false)
+  approvedBy           String?
+  decisionNote         String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  scoreCard   ScoreCard?
+  chatSession ChatSession?
+}
+
+model ScoreCard {
+  id                   String   @id @default(cuid())
+  projectId            String   @unique
+  project              Project  @relation(fields: [projectId], references: [id])
+  impactScore          Float
+  roiScore             Float
+  confidentialityScore Float
+  difficultyScore      Float
+  readinessScore       Float
+  strategyScore        Float
+  totalScore           Float
+  evaluationRationale  String
+  evaluatedAt          DateTime @default(now())
+}
+
+model ChatSession {
+  id          String   @id @default(cuid())
+  projectId   String?  @unique
+  project     Project? @relation(fields: [projectId], references: [id])
+  messages    String
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+}
