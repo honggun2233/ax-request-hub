@@ -1,0 +1,98 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+<style>
+  body{margin:0;background:#fff;font-family:"맑은 고딕","Malgun Gothic",sans-serif}
+  .wrap{width:1280px;padding:26px 30px 22px}
+  h1{font-size:25px;color:#1428A0;margin:0 0 2px;font-weight:800}
+  .sub{font-size:14px;color:#5A5A5A;margin:0 0 14px}
+  text{font-family:"맑은 고딕","Malgun Gothic",sans-serif}
+</style></head><body>
+<div class="wrap">
+  <h1>IT솔루션담당 — 4팀 관계도</h1>
+  <p class="sub">AX/PI = 전환 엔진(오케스트레이터) · 데이터플랫폼 = 연료 · 정보전략 = 기반·안전 · IT업무개발 = 정착 · 현업 = 수요·수용</p>
+  <svg width="1280" height="720" viewBox="0 0 1280 720">
+    <defs>
+      <marker id="arr" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="#3a4a72"/></marker>
+      <marker id="arrB" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="#1428A0"/></marker>
+      <marker id="arrG" markerWidth="11" markerHeight="11" refX="8" refY="3.5" orient="auto"><path d="M0,0 L8,3.5 L0,7 Z" fill="#37926a"/></marker>
+    </defs>
+
+    <!-- 담당 -->
+    <rect x="540" y="20" width="200" height="48" rx="9" fill="#0B1F66"/>
+    <text x="640" y="50" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">IT솔루션담당</text>
+    <line x1="640" y1="68" x2="640" y2="100" stroke="#9fb0d6" stroke-width="2"/>
+    <line x1="190" y1="100" x2="1090" y2="100" stroke="#9fb0d6" stroke-width="2"/>
+    <line x1="190" y1="100" x2="190" y2="150" stroke="#9fb0d6" stroke-width="2"/>
+    <line x1="640" y1="100" x2="640" y2="150" stroke="#9fb0d6" stroke-width="2"/>
+    <line x1="1090" y1="100" x2="1090" y2="150" stroke="#9fb0d6" stroke-width="2"/>
+
+    <!-- AX hub (center) -->
+    <rect x="500" y="300" width="280" height="120" rx="14" fill="#1428A0"/>
+    <text x="640" y="338" fill="#fff" font-size="20" font-weight="800" text-anchor="middle">AX / PI 팀</text>
+    <text x="640" y="364" fill="#dbe3ff" font-size="13" text-anchor="middle">AI 전환 엔진 · 오케스트레이터</text>
+    <text x="640" y="386" fill="#dbe3ff" font-size="12.5" text-anchor="middle">PI · 등대 빌드/agent</text>
+    <text x="640" y="405" fill="#dbe3ff" font-size="12.5" text-anchor="middle">agent paved road · AI 가드레일</text>
+
+    <!-- 데이터플랫폼 (left) -->
+    <rect x="120" y="150" width="210" height="104" rx="11" fill="#E8EEF7" stroke="#1428A0" stroke-width="1.5"/>
+    <text x="225" y="182" fill="#0B1F66" font-size="16" font-weight="700" text-anchor="middle">데이터플랫폼팀</text>
+    <text x="225" y="206" fill="#33415e" font-size="12.5" text-anchor="middle">AI-Ready Data · Snowflake</text>
+    <text x="225" y="225" fill="#33415e" font-size="12.5" text-anchor="middle">파이프라인 · 피처/벡터</text>
+    <text x="225" y="244" fill="#37926a" font-size="12" font-weight="700" text-anchor="middle">= 연료</text>
+
+    <!-- 정보전략 (foundation, bottom-left under) -->
+    <rect x="120" y="470" width="210" height="104" rx="11" fill="#E8EEF7" stroke="#1428A0" stroke-width="1.5"/>
+    <text x="225" y="502" fill="#0B1F66" font-size="16" font-weight="700" text-anchor="middle">정보전략팀</text>
+    <text x="225" y="526" fill="#33415e" font-size="12.5" text-anchor="middle">전략·예산·보안·아키텍처</text>
+    <text x="225" y="545" fill="#33415e" font-size="12.5" text-anchor="middle">클라우드 랜딩존(AWS)</text>
+    <text x="225" y="564" fill="#37926a" font-size="12" font-weight="700" text-anchor="middle">= 기반·안전</text>
+
+    <!-- IT업무개발 (right) -->
+    <rect x="950" y="150" width="210" height="104" rx="11" fill="#E8EEF7" stroke="#1428A0" stroke-width="1.5"/>
+    <text x="1055" y="182" fill="#0B1F66" font-size="16" font-weight="700" text-anchor="middle">IT업무개발팀</text>
+    <text x="1055" y="206" fill="#33415e" font-size="12.5" text-anchor="middle">기간계·업무시스템</text>
+    <text x="1055" y="225" fill="#33415e" font-size="12.5" text-anchor="middle">개발·운영 · SI</text>
+    <text x="1055" y="244" fill="#37926a" font-size="12" font-weight="700" text-anchor="middle">= 정착</text>
+
+    <!-- 현업 (right bottom) -->
+    <rect x="950" y="470" width="210" height="104" rx="11" fill="#F4F7E8" stroke="#7a8a3a" stroke-width="1.5"/>
+    <text x="1055" y="502" fill="#3d4716" font-size="16" font-weight="700" text-anchor="middle">현업 부서</text>
+    <text x="1055" y="526" fill="#444" font-size="12.5" text-anchor="middle">운용·리서치·상품</text>
+    <text x="1055" y="545" fill="#444" font-size="12.5" text-anchor="middle">컴플·오퍼레이션</text>
+    <text x="1055" y="564" fill="#7a8a3a" font-size="12" font-weight="700" text-anchor="middle">= 수요·수용</text>
+
+    <!-- arrows -->
+    <!-- 데이터플랫폼 -> AX (공급) -->
+    <path d="M330 215 C430 240 440 320 498 340" fill="none" stroke="#1428A0" stroke-width="2.2" marker-end="url(#arrB)"/>
+    <text x="392" y="262" fill="#1428A0" font-size="12.5" font-weight="700">데이터·임베딩 공급</text>
+    <!-- 데이터 거버넌스 2-track (점선 양방향) -->
+    <path d="M335 245 C420 300 430 330 500 360" fill="none" stroke="#37926a" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#arrG)" marker-start="url(#arrG)"/>
+    <text x="372" y="330" fill="#37926a" font-size="11.5" font-weight="700">데이터 거버넌스 2-track</text>
+
+    <!-- 정보전략 -> AX (기반·승인) -->
+    <path d="M330 510 C440 470 450 440 510 410" fill="none" stroke="#1428A0" stroke-width="2.2" marker-end="url(#arrB)"/>
+    <text x="350" y="452" fill="#1428A0" font-size="12.5" font-weight="700">랜딩존·보안·예산 승인</text>
+
+    <!-- AX -> IT업무개발 (운영 이관) -->
+    <path d="M780 340 C850 320 870 250 948 222" fill="none" stroke="#3a4a72" stroke-width="2.2" marker-end="url(#arr)"/>
+    <text x="800" y="270" fill="#3a4a72" font-size="12.5" font-weight="700">등대 운영 이관·연계</text>
+
+    <!-- AX -> 현업 (AI 솔루션) -->
+    <path d="M782 378 C860 400 880 470 948 500" fill="none" stroke="#3a4a72" stroke-width="2.2" marker-end="url(#arr)"/>
+    <text x="800" y="430" fill="#3a4a72" font-size="12.5" font-weight="700">AI 솔루션·agent 전달</text>
+    <!-- 현업 -> AX (과제·수용) -->
+    <path d="M950 540 C840 560 760 470 720 422" fill="none" stroke="#7a8a3a" stroke-width="1.8" stroke-dasharray="5 5" marker-end="url(#arrG)"/>
+    <text x="772" y="540" fill="#7a8a3a" font-size="11.5" font-weight="700">과제·수용(공동설계)</text>
+
+    <!-- 거버넌스 3계층 legend -->
+    <rect x="430" y="470" width="420" height="120" rx="11" fill="#fbfbfd" stroke="#cdd6e6" stroke-width="1.3"/>
+    <text x="640" y="496" fill="#1428A0" font-size="13.5" font-weight="800" text-anchor="middle">거버넌스 = 3계층 내장 통제 (플랫폼이 강제)</text>
+    <text x="450" y="522" fill="#333" font-size="12.5">🟦 인프라 — 랜딩존 SCP·Bedrock Guardrails</text>
+    <text x="690" y="522" fill="#7a8a3a" font-size="12" font-weight="700">→ 정보전략</text>
+    <text x="450" y="546" fill="#333" font-size="12.5">🟩 데이터 — Snowflake Horizon(마스킹·계보)</text>
+    <text x="690" y="546" fill="#7a8a3a" font-size="12" font-weight="700">→ 데이터플랫폼</text>
+    <text x="450" y="570" fill="#333" font-size="12.5">🟪 agent — paved road(PII·평가·승격게이트)</text>
+    <text x="690" y="570" fill="#7a8a3a" font-size="12" font-weight="700">→ AX/PI</text>
+  </svg>
+  <p style="font-size:11.5px;color:#888;margin-top:6px">※ 실선=공급/전달, 점선=상호·협의(2-track). 팀 경계는 협의로 확정. v0.4 청사진 기준.</p>
+</div>
+</body></html>
