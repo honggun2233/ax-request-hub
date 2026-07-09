@@ -1,65 +1,66 @@
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
-import { redirect } from "next/navigation"
-import { db } from "@/src/lib/db"
+'use client'
+import { useState, useEffect } from 'react'
 
-export default async function MePage() {
-  const session = await getServerSession(authOptions)
-  if (!session) redirect("/login")
+const LEVEL_BADGE: Record<string, string> = {
+  L0: 'bg-gray-100 text-gray-600', L1: 'bg-blue-100 text-blue-700',
+  L2: 'bg-green-100 text-green-700', L3: 'bg-orange-100 text-orange-700', L4: 'bg-purple-100 text-purple-700',
+}
 
-  const userId = (session.user as any).id
-  const yearMonth = new Date().toISOString().slice(0, 7)
+export default function MePage() {
+  const [data, setData] = useState<any>(null)
+  useEffect(() => { fetch('/api/me/summary').then(r => r.json()).then(setData).catch(() => {}) }, [])
+  if (!data || data.error) return <div className="text-gray-400">로딩 중...</div>
 
-  const [employee, pendingApp, activeAllocations, monthUsage] = await Promise.all([
-    db.employee.findUnique({ where: { id: userId } }),
-    db.levelApplication.findFirst({ where: { employeeId: userId, status: { in: ["PENDING", "REVIEWING"] } }, orderBy: { createdAt: "desc" } }),
-    db.serviceAllocation.count({ where: { employeeId: userId, status: "ACTIVE" } }),
-    db.usageRecord.findMany({ where: { employeeId: userId, yearMonth } }),
-  ])
-
-  const totalUsed = monthUsage.reduce((s, r) => s + r.tokenUsed, 0)
-  const currentLevel = employee?.currentLevel || "L0"
+  const { employee, services, tokenUsed, tokenLimit, recentApplications } = data
+  const pct = tokenLimit > 0 ? Math.min((tokenUsed / tokenLimit) * 100, 100) : 0
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h1 className="text-2xl font-bold">안녕하세요, {session.user.name}님</h1>
-            <p className="text-gray-500 mt-1">{(session.user as any).department}</p>
-          </div>
-          <div className="text-right">
-            <span className="text-3xl font-bold text-blue-600">{currentLevel}</span>
-            <p className="text-xs text-gray-400">AI 레벨</p>
-          </div>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <h1 className="text-xl font-bold">나의 현황</h1>
+        <span className={`px-3 py-1 rounded-full font-bold ${LEVEL_BADGE[employee?.currentLevel ?? 'L0']}`}>{employee?.currentLevel ?? 'L0'}</span>
+      </div>
 
-        {pendingApp && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6 text-sm text-yellow-800">
-            📋 {pendingApp.requestedLevel} 레벨 신청이 심사 중입니다.
+      <div className="bg-white rounded-lg border p-4">
+        <p className="text-sm font-medium text-gray-700 mb-2">이번달 토큰 사용량</p>
+        <div className="flex items-center gap-3">
+          <div className="flex-1 bg-gray-100 rounded-full h-3">
+            <div className={`h-3 rounded-full ${pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-orange-400' : 'bg-blue-500'}`} style={{ width: `${pct}%` }} />
           </div>
-        )}
-
-        <div className="grid grid-cols-3 gap-4">
-          <a href="/me/level" className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition">
-            <div className="text-2xl mb-3">🎯</div>
-            <h2 className="font-semibold">AI 레벨</h2>
-            <p className="text-2xl font-bold text-blue-600 mt-1">{currentLevel}</p>
-            <p className="text-xs text-gray-400 mt-1">{pendingApp ? "심사 중" : "레벨 신청"} →</p>
-          </a>
-          <a href="/me/services" className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition">
-            <div className="text-2xl mb-3">🔧</div>
-            <h2 className="font-semibold">배분 서비스</h2>
-            <p className="text-2xl font-bold text-green-600 mt-1">{activeAllocations}개</p>
-            <p className="text-xs text-gray-400 mt-1">활성 서비스 →</p>
-          </a>
-          <a href="/me/usage" className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition">
-            <div className="text-2xl mb-3">📊</div>
-            <h2 className="font-semibold">이번 달 사용량</h2>
-            <p className="text-2xl font-bold text-purple-600 mt-1">{totalUsed > 0 ? `${(totalUsed / 1000).toFixed(0)}K` : "0"}</p>
-            <p className="text-xs text-gray-400 mt-1">토큰 →</p>
-          </a>
+          <span className="text-sm text-gray-600">{tokenUsed.toLocaleString()} / {tokenLimit.toLocaleString()}</span>
         </div>
+        {pct >= 80 && <p className="text-xs text-orange-600 mt-1">⚠️ 한도의 {pct.toFixed(0)}% 사용 중</p>}
+      </div>
+
+      <div>
+        <h2 className="text-sm font-semibold text-gray-700 mb-3">배분된 서비스 ({services?.length ?? 0}개)</h2>
+        <div className="grid grid-cols-3 gap-3">
+          {(services || []).map((s: any) => (
+            <div key={s.id} className="bg-white border rounded-lg p-3">
+              <p className="font-medium text-sm">{s.serviceName}</p>
+              <p className="text-xs text-gray-400 mt-1">배분일: {new Date(s.createdAt).toLocaleDateString('ko-KR')}</p>
+              <span className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 mt-2 inline-block">활성</span>
+            </div>
+          ))}
+          {(!services || services.length === 0) && <p className="text-gray-400 text-sm col-span-3">배분된 서비스 없음 — 레벨 신청 후 AX팀 문의</p>}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border">
+        <div className="px-4 py-3 border-b"><h3 className="text-sm font-medium">레벨 신청 이력</h3></div>
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50"><tr>{['신청레벨', '상태', '신청일', '처리일'].map(h => <th key={h} className="px-4 py-2 text-left text-xs text-gray-500">{h}</th>)}</tr></thead>
+          <tbody>
+            {(recentApplications || []).map((a: any) => (
+              <tr key={a.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-2">{a.requestedLevel}</td>
+                <td className="px-4 py-2"><span className={`text-xs px-1.5 py-0.5 rounded ${a.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : a.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{a.status}</span></td>
+                <td className="px-4 py-2 text-gray-400">{new Date(a.createdAt).toLocaleDateString('ko-KR')}</td>
+                <td className="px-4 py-2 text-gray-400">{a.updatedAt ? new Date(a.updatedAt).toLocaleDateString('ko-KR') : '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )
