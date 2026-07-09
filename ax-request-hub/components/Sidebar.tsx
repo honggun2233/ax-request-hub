@@ -12,31 +12,31 @@ const LEVEL_BADGE: Record<string, string> = {
 }
 
 const NAV = [
-  { href: '/', icon: '📊', label: '홈' },
+  { href: '/', label: '홈' },
   { section: '나의 AI' },
-  { href: '/me', icon: '👤', label: '나의 현황' },
-  { href: '/me/level', icon: '📝', label: '레벨 신청' },
-  { href: '/me/services', icon: '⚡', label: '내 서비스' },
-  { href: '/me/usage', icon: '📊', label: '사용량' },
-  { href: '/me/literacy', icon: '🎓', label: '리터러시' },
+  { href: '/me', label: '나의 현황' },
+  { href: '/me/level', label: '레벨 신청' },
+  { href: '/me/services', label: '내 서비스' },
+  { href: '/me/usage', label: '사용량' },
+  { href: '/me/literacy', label: '리터러시' },
   { section: 'AI 과제' },
-  { href: '/submit', icon: '➕', label: '과제 신청' },
-  { href: '/dashboard', icon: '📋', label: '과제 현황' },
+  { href: '/submit', label: '과제 신청' },
+  { href: '/dashboard', label: '과제 현황' },
 ]
 
 const ADMIN_NAV = [
   { section: '관리' },
-  { href: '/admin/employees', icon: '👥', label: '직원 관리' },
-  { href: '/admin/distribution', icon: '📦', label: '서비스 배분' },
-  { href: '/admin/tokens', icon: '💰', label: '토큰 관리' },
-  { href: '/admin/agents', icon: '🤖', label: '에이전트 관리' },
-  { href: '/admin/retired', icon: '🗄️', label: '폐기 아카이브' },
-  { href: '/admin/literacy', icon: '🎓', label: '리터러시 관리' },
+  { href: '/admin/employees', label: '직원 관리' },
+  { href: '/admin/distribution', label: '서비스 배분' },
+  { href: '/admin/tokens', label: '토큰 관리' },
+  { href: '/admin/agents', label: '에이전트 관리' },
+  { href: '/admin/retired', label: '폐기 아카이브' },
+  { href: '/admin/literacy', label: '리터러시 관리' },
   { section: '거버넌스' },
-  { href: '/governance', icon: '🔒', label: '감사 로그' },
+  { href: '/governance', label: '감사 로그' },
 ]
 
-type NavItem = { href: string; icon: string; label: string } | { section: string }
+type NavItem = { href: string; label: string } | { section: string }
 
 export default function Sidebar() {
   const { data: session } = useSession()
@@ -60,10 +60,9 @@ export default function Sidebar() {
           const active = pathname === item.href
           return (
             <Link key={item.href} href={item.href}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+              className={`flex items-center px-3 py-2 rounded-lg text-sm transition-colors ${
                 active ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}>
-              <span className="text-base">{item.icon}</span>
               <span>{item.label}</span>
             </Link>
           )

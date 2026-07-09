@@ -117,14 +117,14 @@ export default function RetiredAgentsPage() {
     })
     setLoading(false)
     if (res.ok) {
-      setMsg('✅ DEPRECATED 상태로 변경됐습니다 (30일 유예 후 RETIRE 가능)')
+      setMsg('DEPRECATED 상태로 변경됐습니다 (30일 유예 후 RETIRE 가능)')
       const updated = await fetch('/api/agents/retired').then(r => r.json())
       setAgents(updated)
       const all = await fetch('/api/admin/agents').then(r => r.json())
       setAllAgents(all)
     } else {
       const err = await res.json()
-      setMsg(`❌ 오류: ${err.error}`)
+      setMsg(`오류: ${err.error}`)
     }
   }
 
@@ -141,13 +141,13 @@ export default function RetiredAgentsPage() {
     })
     setLoading(false)
     if (res.ok) {
-      setMsg('✅ 지식 추출 저장 완료')
+      setMsg('지식 추출 저장 완료')
       const updated = await fetch(`/api/agents/${selectedAgent}/knowledge`).then(r => r.json())
       setKnowledge(updated)
       setKnowledgeForm({ promptPatterns: '', failureCases: '', useCaseSummary: '', lessonsLearned: '' })
     } else {
       const err = await res.json()
-      setMsg(`❌ 오류: ${err.error}`)
+      setMsg(`오류: ${err.error}`)
     }
   }
 
@@ -165,7 +165,7 @@ export default function RetiredAgentsPage() {
       {msg && (
         <div className="p-3 rounded bg-blue-50 text-sm text-blue-700 flex justify-between items-center">
           <span>{msg}</span>
-          <button onClick={() => setMsg('')} className="text-blue-400 hover:text-blue-600 ml-4">✕</button>
+          <button onClick={() => setMsg('')} className="text-blue-400 hover:text-blue-600 ml-4">x</button>
         </div>
       )}
 
@@ -236,7 +236,7 @@ export default function RetiredAgentsPage() {
         <div className="bg-white border rounded-lg p-6 space-y-4 max-w-lg">
           <h2 className="font-semibold">폐기 절차 시작</h2>
           <div className="p-3 bg-yellow-50 rounded text-sm text-yellow-700">
-            ⚠️ DEPRECATED 후 최소 30일 경과 후 RETIRE 가능합니다.
+            DEPRECATED 후 최소 30일 경과 후 RETIRE 가능합니다.
           </div>
           <label className="block text-sm">
             <span className="text-gray-600">대상 에이전트</span>
