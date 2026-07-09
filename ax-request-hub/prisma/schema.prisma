@@ -184,3 +184,51 @@ model UsageAlert {
   sentAt       DateTime @default(now())
   createdAt    DateTime @default(now())
 }
+
+// ─── Module 8: 폐기 에이전트 거버넌스 ─────────────────────────────
+
+// Agent.status: ACTIVE | DEPRECATED | RETIRED
+// Agent.deprecationReason: DUPLICATE | PERFORMANCE | POLICY_CHANGE | SCOPE_CHANGE | OTHER
+model Agent {
+  id                  String    @id @default(cuid())
+  name                String
+  department          String
+  description         String    @default("")
+  status              String    @default("ACTIVE")
+  deprecatedAt        DateTime?
+  retiredAt           DateTime?
+  deprecationReason   String?
+  retirementNote      String?
+  successorAgentId    String?
+  dataRetentionYears  Int       @default(3)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  artifacts         AgentArtifact[]
+  knowledgeExtracts AgentKnowledgeExtract[]
+}
+
+model AgentArtifact {
+  id            String   @id @default(cuid())
+  agentId       String
+  agent         Agent    @relation(fields: [agentId], references: [id])
+  artifactType  String
+  title         String
+  contentPath   String
+  createdAt     DateTime @default(now())
+  retainUntil   DateTime
+  transferredTo String?
+  archived      Boolean  @default(false)
+}
+
+model AgentKnowledgeExtract {
+  id             String   @id @default(cuid())
+  agentId        String
+  agent          Agent    @relation(fields: [agentId], references: [id])
+  promptPatterns String?
+  failureCases   String?
+  useCaseSummary String?
+  lessonsLearned String?
+  extractedBy    String
+  extractedAt    DateTime @default(now())
+}
