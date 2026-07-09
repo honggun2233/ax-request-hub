@@ -232,3 +232,39 @@ model AgentKnowledgeExtract {
   extractedBy    String
   extractedAt    DateTime @default(now())
 }
+
+// ─── AI Hub 리터러시 + 거버넌스 ─────────────────────────────
+
+model LiteracyCourse {
+  id          String   @id @default(cuid())
+  title       String
+  level       String
+  description String
+  durationMin Int
+  isRequired  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  enrollments LiteracyEnrollment[]
+}
+
+model LiteracyEnrollment {
+  id          String    @id @default(cuid())
+  employeeId  String
+  courseId    String
+  course      LiteracyCourse @relation(fields: [courseId], references: [id])
+  status      String    @default("IN_PROGRESS")
+  completedAt DateTime?
+  score       Int?
+  createdAt   DateTime  @default(now())
+  @@unique([employeeId, courseId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  actorEmail String
+  detail     String   @default("")
+  createdAt  DateTime @default(now())
+}
