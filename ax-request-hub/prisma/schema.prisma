@@ -55,3 +55,132 @@ model ChatSession {
   startedAt   DateTime @default(now())
   completedAt DateTime?
 }
+
+// ─── AI Hub 신규 모델 ─────────────────────────────
+
+model Employee {
+  id             String   @id @default(cuid())
+  employeeId     String   @unique
+  name           String
+  email          String   @unique
+  department     String
+  jobTitle       String   @default("")
+  role           String   @default("EMPLOYEE")
+  currentLevel   String   @default("L0")
+  levelGrantedAt DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  levelApplications    LevelApplication[]  @relation("ApplicantApplications")
+  reviewedApplications LevelApplication[]  @relation("ReviewerApplications")
+  levelHistories       LevelHistory[]      @relation("EmployeeHistory")
+  grantedHistories     LevelHistory[]      @relation("GranterHistory")
+  allocations          ServiceAllocation[] @relation("EmployeeAllocations")
+  grantedAllocations   ServiceAllocation[] @relation("GranterAllocations")
+  usageRecords         UsageRecord[]       @relation("EmployeeUsage")
+  inputUsageRecords    UsageRecord[]       @relation("InputterUsage")
+  usageAlerts          UsageAlert[]
+}
+
+model LevelApplication {
+  id                 String    @id @default(cuid())
+  employeeId         String
+  employee           Employee  @relation("ApplicantApplications", fields: [employeeId], references: [id])
+  requestedLevel     String
+  currentLevel       String    @default("L0")
+  selfIntro          String    @default("")
+  trainingCompleted  String    @default("")
+  utilizationPlan    String    @default("")
+  recommendationNote String    @default("")
+  status             String    @default("PENDING")
+  reviewNote         String    @default("")
+  reviewedById       String?
+  reviewedBy         Employee? @relation("ReviewerApplications", fields: [reviewedById], references: [id])
+  reviewedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model LevelHistory {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation("EmployeeHistory", fields: [employeeId], references: [id])
+  fromLevel   String
+  toLevel     String
+  reason      String   @default("")
+  changedById String
+  changedBy   Employee @relation("GranterHistory", fields: [changedById], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model DistributionPolicy {
+  id                 String              @id @default(cuid())
+  level              String
+  serviceName        String
+  serviceDescription String              @default("")
+  isActive           Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  allocations        ServiceAllocation[]
+
+  @@unique([level, serviceName])
+}
+
+model ServiceAllocation {
+  id          String             @id @default(cuid())
+  employeeId  String
+  employee    Employee           @relation("EmployeeAllocations", fields: [employeeId], references: [id])
+  policyId    String
+  policy      DistributionPolicy @relation(fields: [policyId], references: [id])
+  status      String             @default("ACTIVE")
+  accountInfo String             @default("")
+  grantedAt   DateTime           @default(now())
+  revokedAt   DateTime?
+  expiresAt   DateTime?
+  grantedById String
+  grantedBy   Employee           @relation("GranterAllocations", fields: [grantedById], references: [id])
+  createdAt   DateTime           @default(now())
+}
+
+model TokenPolicy {
+  id               String   @id @default(cuid())
+  scope            String
+  level            String?
+  employeeId       String?
+  service          String
+  monthlyLimit     Int
+  singleCallLimit  Int      @default(0)
+  warningThreshold Int      @default(80)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model UsageRecord {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation("EmployeeUsage", fields: [employeeId], references: [id])
+  service    String
+  yearMonth  String
+  tokenUsed  Int      @default(0)
+  costKrw    Float    @default(0)
+  inputById  String
+  inputBy    Employee @relation("InputterUsage", fields: [inputById], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([employeeId, service, yearMonth])
+}
+
+model UsageAlert {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id])
+  service      String
+  yearMonth    String
+  alertType    String
+  acknowledged Boolean  @default(false)
+  sentAt       DateTime @default(now())
+  createdAt    DateTime @default(now())
+}

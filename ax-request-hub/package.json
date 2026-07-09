@@ -13,9 +13,15 @@
     "@prisma/client": "^5.19.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
+    "@types/xlsx": "^0.0.35",
     "next": "16.2.9",
+    "next-auth": "^4.24.14",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "xlsx": "^0.18.5"
+  },
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -30,6 +36,7 @@
     "prisma": "^5.19.1",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.11",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
