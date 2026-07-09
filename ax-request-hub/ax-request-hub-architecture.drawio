@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-07-01T05:00:00.000Z" agent="draw.io" version="21.6.8" type="device">
+  <diagram name="ax-request-hub 아키텍처" id="ax-arch-1">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="820" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== ZONE BACKGROUNDS ===== -->
+
+        <mxCell id="z_user" value="① 사용자" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=10;fontColor=#333333;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="10" y="10" width="1100" height="85" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_fe" value="② 프론트엔드 (Next.js Pages — Static)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;fontColor=#003087;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="10" y="115" width="1100" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_api" value="③ API Routes (Next.js — Dynamic)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;fontColor=#006600;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="10" y="225" width="1100" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_svc" value="④ 서비스 레이어 (Business Logic)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=10;fontColor=#663d00;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="10" y="335" width="1100" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="z_data" value="⑤ 데이터 / 외부 서비스" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fde3d6;strokeColor=#b85450;fontStyle=1;fontSize=10;fontColor=#6f0000;verticalAlign=top;align=left;spacingLeft=8;spacingTop=4;" vertex="1" parent="1">
+          <mxGeometry x="10" y="445" width="1100" height="165" as="geometry" />
+        </mxCell>
+
+        <!-- ===== NODES ===== -->
+
+        <!-- 사용자 -->
+        <mxCell id="n_browser" value="🌐 브라우저 (사용자)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="455" y="28" width="180" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- 프론트엔드 페이지 -->
+        <mxCell id="n_fe_landing" value="/ 랜딩" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="30" y="138" width="110" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_fe_chat" value="/chat&#xa;AI 상담 챗" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="165" y="138" width="125" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_fe_dashboard" value="/dashboard&#xa;관리자 대시보드" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="315" y="138" width="140" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_fe_submit" value="/submit&#xa;신청서 확인·제출" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="480" y="138" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_fe_status" value="/status/[id]&#xa;과제 상태 조회" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="635" y="138" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- API Routes -->
+        <mxCell id="n_api_chat" value="POST /api/chat&#xa;상담 에이전트" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="75" y="248" width="145" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_api_projects" value="POST /api/projects&#xa;과제 CRUD" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="255" y="248" width="145" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_api_evaluate" value="POST /api/evaluate/[id]&#xa;AI 평가 트리거" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="440" y="248" width="155" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_api_approve" value="POST /api/approve/[id]&#xa;결재" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="635" y="248" width="145" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- 서비스 레이어 -->
+        <mxCell id="n_svc_consult" value="AI 상담 에이전트&#xa;(과제 구조화)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="60" y="358" width="160" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_svc_eval" value="평가 에이전트&#xa;(6차원 스코어카드)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="390" y="358" width="170" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_svc_approve" value="자율 승인 로직&#xa;(임계값 판단)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="615" y="358" width="155" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- 데이터 / 외부 -->
+        <mxCell id="n_prisma" value="Prisma ORM" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="90" y="472" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_sqlite" value="SQLite&#xa;(prisma/dev.db)" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=10;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="90" y="558" width="120" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_anthropic" value="☁️ Anthropic API&#xa;(claude-sonnet)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="395" y="482" width="155" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="n_telegram" value="📨 Telegram Bot&#xa;(결재 알림)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="640" y="482" width="135" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- ===== EDGES ===== -->
+
+        <!-- 브라우저 → 프론트엔드 페이지 -->
+        <mxCell id="e1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="n_browser" target="n_fe_landing" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="n_browser" target="n_fe_chat" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="n_browser" target="n_fe_dashboard" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="n_browser" target="n_fe_submit" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" source="n_browser" target="n_fe_status" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- 프론트엔드 → API -->
+        <mxCell id="e6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_fe_chat" target="n_api_chat" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_fe_dashboard" target="n_api_projects" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_fe_submit" target="n_api_evaluate" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_fe_status" target="n_api_projects" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- API → 서비스 -->
+        <mxCell id="e10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_api_chat" target="n_svc_consult" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_api_evaluate" target="n_svc_eval" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_api_approve" target="n_svc_approve" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_api_projects" target="n_prisma" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- 서비스 → 외부/데이터 -->
+        <mxCell id="e14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_svc_consult" target="n_anthropic" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_svc_eval" target="n_anthropic" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_svc_eval" target="n_prisma" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_svc_approve" target="n_telegram" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_svc_approve" target="n_prisma" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- Prisma → SQLite -->
+        <mxCell id="e19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;" edge="1" source="n_prisma" target="n_sqlite" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

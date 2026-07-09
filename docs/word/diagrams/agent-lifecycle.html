@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #fff; font-family: 'Malgun Gothic','Apple SD Gothic Neo',sans-serif; padding: 28px 32px; width: 960px; }
+  h2 { font-size: 16px; color: #1A3C6E; margin-bottom: 20px; border-left: 5px solid #2E6DB4; padding-left: 12px; }
+
+  .layout { display: flex; gap: 24px; align-items: flex-start; }
+  .diagram { flex: 1; }
+  .table-section { width: 340px; }
+
+  /* 상태 박스들 */
+  .states { display: flex; flex-direction: column; gap: 10px; }
+  .state-row { display: flex; align-items: center; gap: 0; }
+  .state { border-radius: 10px; padding: 10px 14px; min-width: 150px; }
+  .state .icon { font-size: 16px; margin-bottom: 3px; }
+  .state .name { font-size: 12px; font-weight: bold; }
+  .state .id { font-size: 9px; margin-top: 2px; opacity: 0.85; }
+  .state .note { font-size: 9px; margin-top: 4px; opacity: 0.8; }
+
+  /* 화살표 */
+  .v-arrow { display: flex; flex-direction: column; align-items: center; margin-left: 75px; }
+  .v-line { width: 2px; background: #9AB0CF; }
+  .v-head::after { content:''; width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent; border-top:9px solid #9AB0CF; display:block; }
+  .arrow-label { font-size: 9px; color: #5A5A5A; background: #fff; border: 1px solid #D0D9E8; padding: 2px 7px; border-radius: 8px; white-space: nowrap; margin: 2px 0; }
+
+  /* 색상 */
+  .s-none { background:#F5F5F5; border:2px solid #BDBDBD; color:#444; }
+  .s-reg  { background:#FFF8E1; border:2px solid #F0A500; color:#7A4E00; }
+  .s-active { background:#E8F5E9; border:2px solid #43A047; color:#1B5E20; }
+  .s-susp { background:#FFF3E0; border:2px solid #FF9800; color:#7A4B00; }
+  .s-retire { background:#FFEBEE; border:2px solid #E53935; color:#B71C1C; }
+  .s-init { background:#E3F2FD; border:2px solid #1976D2; color:#0D47A1; }
+
+  /* 사이드 화살표 (Suspended↔Active) */
+  .bi-arrow { font-size: 18px; color: #FF9800; margin: 0 8px; }
+
+  /* 표 */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .data-table th { background: #1A3C6E; color: #fff; padding: 7px 8px; text-align: left; }
+  .data-table td { padding: 6px 8px; border-bottom: 1px solid #E0E0E0; vertical-align: top; }
+  .data-table tr:nth-child(even) td { background: #F0F5FC; }
+  .tbl-title { font-size: 11px; font-weight: bold; color: #1A3C6E; margin-bottom: 6px; }
+
+  .retire-note { font-size: 9px; color: #B71C1C; background: #FFEBEE; border: 1px solid #EF9A9A; border-radius: 6px; padding: 6px 10px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h2>에이전트 라이프사이클 — 상태 머신</h2>
+
+<div class="layout">
+  <div class="diagram">
+    <div class="states">
+
+      <!-- 시작 -->
+      <div class="state-row">
+        <div class="state s-init">
+          <div class="icon">⭕</div>
+          <div class="name">등록 전</div>
+          <div class="id">ID 없음 (Phase 0~4)</div>
+          <div class="note">CREW 자율 실험 단계</div>
+        </div>
+      </div>
+
+      <div class="v-arrow">
+        <div class="v-line" style="height:16px;"></div>
+        <div class="arrow-label">Phase 5 파일럿 진입 승인</div>
+        <div class="v-line" style="height:10px;"></div>
+        <div class="v-head"></div>
+      </div>
+
+      <!-- 등록신청 -->
+      <div class="state-row">
+        <div class="state s-reg">
+          <div class="icon">🟡</div>
+          <div class="name">등록신청 (Pending)</div>
+          <div class="id">AX-DEV-YYYY-XXX (임시)</div>
+          <div class="note">AX팀이 임시 ID 발급 · 파일럿 운영</div>
+        </div>
+      </div>
+
+      <div class="v-arrow">
+        <div class="v-line" style="height:16px;"></div>
+        <div class="arrow-label">파일럿 완료 · KPI 80%↑ · 사고 0건 → Phase 6 운영 승격</div>
+        <div class="v-line" style="height:10px;"></div>
+        <div class="v-head"></div>
+      </div>
+
+      <!-- Active -->
+      <div class="state-row" style="gap: 12px;">
+        <div class="state s-active">
+          <div class="icon">🟢</div>
+          <div class="name">운영 (Active)</div>
+          <div class="id">AX-YYYY-AGT-XXX (정식)</div>
+          <div class="note">KPI 모니터링 · 정식 데이터 접근</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <span class="arrow-label" style="color:#FF9800;border-color:#FF9800;">사고·점검</span>
+            <span style="font-size:18px;color:#FF9800;">⇄</span>
+            <span class="arrow-label" style="color:#43A047;border-color:#43A047;">원인 해소</span>
+          </div>
+          <div class="state s-susp" style="min-width:140px;">
+            <div class="icon">🔵</div>
+            <div class="name">일시 중단 (Suspended)</div>
+            <div class="id">정식 ID 유지</div>
+            <div class="note">데이터 접근 차단 · 원인 분석</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="v-arrow">
+        <div class="v-line" style="height:16px;"></div>
+        <div class="arrow-label">KPI 지속 미달 · 업무 변화 · 보안 사고</div>
+        <div class="v-line" style="height:10px;"></div>
+        <div class="v-head"></div>
+      </div>
+
+      <!-- Retired -->
+      <div class="state-row">
+        <div class="state s-retire">
+          <div class="icon">🔴</div>
+          <div class="name">폐기 (Retired)</div>
+          <div class="id">ID 비활성화</div>
+          <div class="note">인벤토리 폐기 등록 · 접근권한 전면 회수</div>
+        </div>
+      </div>
+
+    </div><!-- /states -->
+
+    <div class="retire-note">
+      ⚠️ 폐기 기준: ① 3개월 이상 미사용 ② KPI 기준치 2개 분기 연속 미달 ③ 보안 사고 및 규제 위반 발생 ④ 담당 CREW 부재 + 이관 계획 없음
+    </div>
+  </div><!-- /diagram -->
+
+  <!-- 상태 전환 표 -->
+  <div class="table-section">
+    <div class="tbl-title">📋 상태 전환 시 AX팀 역할</div>
+    <table class="data-table">
+      <thead>
+        <tr><th>전환</th><th>AX팀 역할</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>등록 전<br>→ 🟡 등록신청</td>
+          <td>임시 ID 발급<br>인벤토리 신규 등록</td>
+        </tr>
+        <tr>
+          <td>🟡 → 🟢 Active</td>
+          <td>정식 ID 교체<br>KPI 모니터링 활성화</td>
+        </tr>
+        <tr>
+          <td>🟢 → 🔵 Suspended</td>
+          <td>원인 분석<br>접근권한 일시 차단</td>
+        </tr>
+        <tr>
+          <td>🔵 → 🟢 Active</td>
+          <td>복구 검토<br>재활성화 처리</td>
+        </tr>
+        <tr>
+          <td>* → 🔴 Retired</td>
+          <td>ID 비활성화<br>접근권한 전체 회수<br>폐기 인벤토리 등록</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:14px;">
+      <div class="tbl-title">🔑 Agent ID 유형</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>상황</th><th>ID 형식</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Phase 5 파일럿</td>
+            <td style="font-family:monospace;">AX-DEV-YYYY-XXX</td>
+          </tr>
+          <tr>
+            <td>Phase 6 정식 운영</td>
+            <td style="font-family:monospace;">AX-YYYY-AGT-XXX</td>
+          </tr>
+          <tr>
+            <td>멀티 에이전트 서브</td>
+            <td style="font-family:monospace;">AX-YYYY-MAS-XXX-SUB-A</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /layout -->
+</body>
+</html>
