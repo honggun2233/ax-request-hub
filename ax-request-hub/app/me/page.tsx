@@ -29,7 +29,7 @@ export default function MePage() {
           </div>
           <span className="text-sm text-gray-600">{tokenUsed.toLocaleString()} / {tokenLimit.toLocaleString()}</span>
         </div>
-        {pct >= 80 && <p className="text-xs text-orange-600 mt-1">⚠️ 한도의 {pct.toFixed(0)}% 사용 중</p>}
+        {pct >= 80 && <p className="text-xs text-orange-600 mt-1">한도의 {pct.toFixed(0)}% 사용 중</p>}
       </div>
 
       <div>

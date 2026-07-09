@@ -45,7 +45,7 @@ export default function LiteracyPage() {
                 <div className="flex items-center gap-2">
                   <h3 className="font-medium">{c.title}</h3>
                   {c.isRequired && <span className="text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded">필수</span>}
-                  {done && <span className="text-xs bg-green-50 text-green-600 px-1.5 py-0.5 rounded">✓ 수료</span>}
+                  {done && <span className="text-xs bg-green-50 text-green-600 px-1.5 py-0.5 rounded">수료</span>}
                 </div>
                 <p className="text-sm text-gray-500 mt-1">{c.description}</p>
                 <p className="text-xs text-gray-400 mt-1">소요시간: {c.durationMin}분</p>
