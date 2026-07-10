@@ -20,7 +20,7 @@ const NAV = [
   { href: '/me/usage', label: '사용량' },
   { href: '/me/literacy', label: '리터러시' },
   { section: 'AI 과제' },
-  { href: '/submit', label: '과제 신청' },
+  { href: '/chat', label: '과제 신청' },
   { href: '/dashboard', label: '과제 현황' },
 ]
 
