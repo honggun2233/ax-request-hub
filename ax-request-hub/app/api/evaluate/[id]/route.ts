@@ -13,6 +13,11 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
   const project = await db.project.findUnique({ where: { id } })
   if (!project) return NextResponse.json({ error: '과제를 찾을 수 없습니다.' }, { status: 404 })
 
+  // 이미 평가 완료된 경우 중복 알림 방지
+  if (project.status !== 'submitted') {
+    return NextResponse.json({ message: '이미 처리된 과제입니다.', status: project.status })
+  }
+
   try {
     const extracted: ExtractedProject = {
       title: project.title,
