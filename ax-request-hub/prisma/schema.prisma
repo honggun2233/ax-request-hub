@@ -189,6 +189,9 @@ model UsageAlert {
 
 // Agent.status: ACTIVE | DEPRECATED | RETIRED
 // Agent.deprecationReason: DUPLICATE | PERFORMANCE | POLICY_CHANGE | SCOPE_CHANGE | OTHER
+// Agent.kpiType: ACCURACY | COMPLETION | TIME_SAVING | SATISFACTION
+// Agent.kpiMeasureCycle: MONTHLY | QUARTERLY
+// Agent.performanceFlag: null | WARNING | RETIRE_CANDIDATE
 model Agent {
   id                  String    @id @default(cuid())
   name                String
@@ -204,8 +207,37 @@ model Agent {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
+  // KPI 정의 (신규)
+  kpiName          String?
+  kpiTarget        Float?
+  kpiType          String?
+  kpiMeasureMethod String?
+  kpiMeasureCycle  String?   @default("MONTHLY")
+
+  // 성과 추적 (신규)
+  lastUsedAt       DateTime?
+  kpiMissCount     Int       @default(0)
+  kpiLastScore     Float?
+  performanceFlag  String?
+
   artifacts         AgentArtifact[]
   knowledgeExtracts AgentKnowledgeExtract[]
+  kpiRecords        AgentKpiRecord[]
+}
+
+model AgentKpiRecord {
+  id            String   @id @default(cuid())
+  agentId       String
+  agent         Agent    @relation(fields: [agentId], references: [id])
+  recordMonth   String
+  actualValue   Float
+  targetValue   Float
+  achieveRate   Float
+  tokenCost     Float?
+  performMatrix String?
+  note          String?
+  recordedBy    String
+  createdAt     DateTime @default(now())
 }
 
 model AgentArtifact {

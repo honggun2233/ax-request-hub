@@ -16,12 +16,30 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { name, department, description } = body
+    const {
+      name,
+      department,
+      description,
+      kpiName,
+      kpiTarget,
+      kpiType,
+      kpiMeasureMethod,
+      kpiMeasureCycle,
+    } = body
     if (!name || !department) {
       return NextResponse.json({ error: 'name and department are required' }, { status: 400 })
     }
     const agent = await db.agent.create({
-      data: { name, department, description: description || '' },
+      data: {
+        name,
+        department,
+        description: description || '',
+        kpiName: kpiName ?? null,
+        kpiTarget: kpiTarget != null ? Number(kpiTarget) : null,
+        kpiType: kpiType ?? null,
+        kpiMeasureMethod: kpiMeasureMethod ?? null,
+        kpiMeasureCycle: kpiMeasureCycle ?? 'MONTHLY',
+      },
     })
     return NextResponse.json(agent, { status: 201 })
   } catch (err: any) {

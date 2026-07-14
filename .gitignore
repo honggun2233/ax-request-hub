@@ -1,0 +1,20 @@
+# Word temp/lock files
+~$*.docx
+~$*.xlsx
+
+# Audio files (binary, large)
+*.m4a
+*.mp4
+*.mp3
+
+# Email files
+*.eml
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+.next/
