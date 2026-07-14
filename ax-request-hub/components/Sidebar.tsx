@@ -25,16 +25,16 @@ const NAV = [
 ]
 
 const ADMIN_NAV = [
-  { section: '관리' },
+  { section: 'AI 과제 관리' },
   { href: '/admin/employees', label: '직원 관리' },
   { href: '/admin/distribution', label: '서비스 배분' },
   { href: '/admin/tokens', label: '토큰 관리' },
-  { href: '/admin/agents', label: '에이전트 관리' },
-  { href: '/admin/retired', label: '폐기 아카이브' },
   { href: '/admin/literacy', label: '리터러시 관리' },
+  { section: 'ETF 에이전트' },
+  { href: '/registry', label: '레지스트리 (라이프사이클)' },
+  { href: '/admin/agents', label: '폐기 아카이브' },
   { section: '거버넌스' },
   { href: '/governance', label: '감사 로그' },
-  { href: '/registry', label: '에이전트 레지스트리' },
 ]
 
 type NavItem = { href: string; label: string } | { section: string }
@@ -49,7 +49,7 @@ export default function Sidebar() {
   const allNav: NavItem[] = isAdmin ? [...NAV, ...ADMIN_NAV] : NAV
 
   return (
-    <aside className="w-60 min-h-screen bg-white border-r flex flex-col fixed top-0 left-0 z-10">
+    <aside className="w-60 h-screen bg-white border-r flex flex-col fixed top-0 left-0 z-10 overflow-hidden">
       <div className="p-4 border-b">
         <h1 className="text-sm font-bold text-gray-900">삼성AM AI Hub</h1>
       </div>

@@ -19,7 +19,7 @@ export default function GovernancePage() {
         {(data.stats || []).slice(0, 3).map((s: any) => (
           <div key={s.entityType} className="bg-white rounded-lg border p-4">
             <p className="text-sm text-gray-500">{s.entityType}</p>
-            <p className="text-2xl font-bold text-gray-800">{s._count}</p>
+            <p className="text-2xl font-bold text-gray-800">{typeof s._count === 'object' ? s._count._all ?? 0 : s._count}</p>
           </div>
         ))}
         {(data.stats || []).length === 0 && (
