@@ -315,6 +315,16 @@ model AgentRegistry {
   gate1Passed       Boolean      @default(false)
   gate2Passed       Boolean      @default(false)
   gate3Passed       Boolean      @default(false)
+  lifecycleStage    String       @default("GATE1")
+  gate1PassedAt     DateTime?
+  gate2PassedAt     DateTime?
+  gate3PassedAt     DateTime?
+  operatorTrustScore Int?
+  operatorComment   String?
+  sam30dAccuracy    Float?
+  degradedSince     DateTime?
+  retiredAt         DateTime?
+  retireReason      String?
   lastEvaluatedAt   DateTime?
   nextReviewAt      DateTime?
   notes             String?
