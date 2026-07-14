@@ -300,3 +300,36 @@ model AuditLog {
   detail     String   @default("")
   createdAt  DateTime @default(now())
 }
+
+model AgentRegistry {
+  id                String       @id @default(cuid())
+  agentName         String       @unique
+  agentKey          String       @unique
+  version           String       @default("1.0.0")
+  purpose           String
+  dataSource        String
+  owner             String       @default("CTO")
+  status            String       @default("active")
+  realDataConnected Boolean      @default(false)
+  fallbackRate      Float        @default(1.0)
+  gate1Passed       Boolean      @default(false)
+  gate2Passed       Boolean      @default(false)
+  gate3Passed       Boolean      @default(false)
+  lastEvaluatedAt   DateTime?
+  nextReviewAt      DateTime?
+  notes             String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  scores            AgentScore[]
+}
+
+model AgentScore {
+  id         String        @id @default(cuid())
+  agentId    String
+  agent      AgentRegistry @relation(fields: [agentId], references: [id])
+  ticker     String
+  score      Float
+  rationale  String?
+  dataType   String        @default("mock")
+  recordedAt DateTime      @default(now())
+}

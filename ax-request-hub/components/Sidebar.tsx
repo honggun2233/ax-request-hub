@@ -34,6 +34,7 @@ const ADMIN_NAV = [
   { href: '/admin/literacy', label: '리터러시 관리' },
   { section: '거버넌스' },
   { href: '/governance', label: '감사 로그' },
+  { href: '/registry', label: '에이전트 레지스트리' },
 ]
 
 type NavItem = { href: string; label: string } | { section: string }
