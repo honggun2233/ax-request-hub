@@ -39,6 +39,16 @@ export default async function StatusPage({ params }: { params: Promise<{ id: str
             <p className="text-sm text-gray-500 mt-3 leading-relaxed">
               {project.scoreCard.evaluationRationale}
             </p>
+            {/* Gate 2 기술 표준 */}
+            {project.techStandardsPassed !== undefined && (
+              <div className={`mt-3 rounded-lg px-3 py-2 text-xs border ${project.techStandardsPassed ? 'bg-green-50 border-green-200 text-green-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+                <span className="font-semibold">Gate 2 기술 표준:</span>{' '}
+                {project.techStandardsPassed
+                  ? '통과'
+                  : `보류 — ${(JSON.parse(project.techStandardsFailedItems || '[]') as string[]).join(', ')}`
+                }
+              </div>
+            )}
           </div>
         )}
         <Link href="/" className="text-sm text-blue-600 hover:underline">← 홈으로</Link>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { EvaluationAgent } from '@/src/lib/agents/evaluation'
-import { determineApproval } from '@/src/lib/scoring'
+import { determineApproval, checkTechStandards } from '@/src/lib/scoring'
 import { db } from '@/src/lib/db'
 import { sendTelegramApprovalRequest, sendTelegramNotification } from '@/src/lib/notifications/telegram'
 import { sendApprovalEmail } from '@/src/lib/notifications/email'
@@ -34,6 +34,21 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const scoreCard = await evaluationAgent.evaluate(extracted)
     const decision = determineApproval(extracted.confidentialityLevel, scoreCard.totalScore)
 
+    // Gate 2: 기술 표준 체크리스트 평가
+    const techResult = checkTechStandards({
+      hasApiSpec: project.techHasApiSpec,
+      hasDataClassification: project.techHasDataClassification,
+      hasAuditLogging: project.techHasAuditLogging,
+      hasTestCoverage: project.techHasTestCoverage,
+    })
+    await db.project.update({
+      where: { id: project.id },
+      data: {
+        techStandardsPassed: techResult.passed,
+        techStandardsFailedItems: JSON.stringify(techResult.failedItems),
+      },
+    })
+
     await db.scoreCard.upsert({
       where: { projectId: project.id },
       update: { ...scoreCard },
@@ -53,14 +68,17 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
         where: { id: project.id },
         data: { status: 'evaluated', totalScore: scoreCard.totalScore },
       })
+      const gate2Note = techResult.passed
+        ? ''
+        : `\n⚠️ Gate2 미충족: ${techResult.failedItems.join(', ')}`
       await sendTelegramApprovalRequest({
         projectId: project.id, title: project.title, department: project.department,
-        totalScore: scoreCard.totalScore, rationale: scoreCard.evaluationRationale,
+        totalScore: scoreCard.totalScore, rationale: scoreCard.evaluationRationale + gate2Note,
         approvalUrl: `${baseUrl}/dashboard?review=${project.id}`,
       })
       await sendApprovalEmail({ to: project.requesterEmail, projectTitle: project.title, totalScore: scoreCard.totalScore, isAutoApproved: false })
     }
-    return NextResponse.json({ scoreCard, decision })
+    return NextResponse.json({ scoreCard, decision, techStandards: techResult })
   } catch (error) {
     await db.project.update({ where: { id: project.id }, data: { status: 'evaluated' } })
     await sendTelegramNotification(`⚠️ 평가 오류 — ${project.title}: 수동 검토 필요`)

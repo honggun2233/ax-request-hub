@@ -25,6 +25,13 @@ model Project {
   autoApproved         Boolean     @default(false)
   approvedBy           String?
   decisionNote         String?
+  // Gate 2: 기술 표준 체크리스트 (ai-agent-standards 기준)
+  techHasApiSpec            Boolean @default(false)
+  techHasDataClassification Boolean @default(false)
+  techHasAuditLogging       Boolean @default(false)
+  techHasTestCoverage       Boolean @default(false)
+  techStandardsPassed       Boolean @default(false)
+  techStandardsFailedItems  String  @default("[]")
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 

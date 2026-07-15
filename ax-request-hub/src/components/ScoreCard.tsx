@@ -7,6 +7,8 @@ interface ScoreCardProps {
   strategyScore: number
   totalScore: number
   evaluationRationale: string
+  techStandardsPassed?: boolean
+  techStandardsFailedItems?: string
 }
 
 const DIMENSIONS: Array<{ key: keyof ScoreCardProps; label: string; max: number }> = [
@@ -42,6 +44,17 @@ export function ScoreCard(props: ScoreCardProps) {
         ))}
       </div>
       <p className="text-xs text-gray-500 mt-3 leading-relaxed">{props.evaluationRationale}</p>
+
+      {/* Gate 2 기술 표준 결과 */}
+      {props.techStandardsPassed !== undefined && (
+        <div className={`mt-3 rounded-lg px-3 py-2 text-xs border ${props.techStandardsPassed ? 'bg-green-50 border-green-200 text-green-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
+          <span className="font-semibold">Gate 2 기술 표준:</span>{' '}
+          {props.techStandardsPassed ? '통과' : (() => {
+            const items = props.techStandardsFailedItems ? JSON.parse(props.techStandardsFailedItems) as string[] : []
+            return `보류 — ${items.join(', ')}`
+          })()}
+        </div>
+      )}
     </div>
   )
 }
