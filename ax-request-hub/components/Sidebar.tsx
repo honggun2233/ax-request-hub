@@ -24,13 +24,18 @@ const NAV = [
   { href: '/dashboard', label: '과제 현황' },
 ]
 
+const C_LEVEL_NAV = [
+  { section: '경영진 뷰' },
+  { href: '/executive', label: '경영진 AI 현황' },
+]
+
 const ADMIN_NAV = [
   { section: 'AI 과제 관리' },
   { href: '/admin/employees', label: '직원 관리' },
   { href: '/admin/distribution', label: '서비스 배분' },
   { href: '/admin/tokens', label: '토큰 관리' },
   { href: '/admin/literacy', label: '리터러시 관리' },
-  { section: 'ETF 에이전트' },
+  { section: '에이전트 관리' },
   { href: '/registry', label: '레지스트리 (라이프사이클)' },
   { href: '/admin/agents', label: '폐기 아카이브' },
   { section: '거버넌스' },
@@ -46,7 +51,9 @@ export default function Sidebar() {
   const isAdmin = ['AX_TEAM', 'C_LEVEL'].includes(role)
   const level = (session?.user as any)?.currentLevel ?? 'L0'
 
-  const allNav: NavItem[] = isAdmin ? [...NAV, ...ADMIN_NAV] : NAV
+  const allNav: NavItem[] = isAdmin
+    ? [...NAV, ...C_LEVEL_NAV, ...ADMIN_NAV]
+    : NAV
 
   return (
     <aside className="w-60 h-screen bg-white border-r flex flex-col fixed top-0 left-0 z-10 overflow-hidden">
