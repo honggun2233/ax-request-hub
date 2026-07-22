@@ -88,6 +88,42 @@ model Employee {
   usageRecords         UsageRecord[]       @relation("EmployeeUsage")
   inputUsageRecords    UsageRecord[]       @relation("InputterUsage")
   usageAlerts          UsageAlert[]
+  toolAccounts         ToolAccount[]
+}
+
+model DepartmentQuota {
+  id          String        @id @default(cuid())
+  department  String
+  toolType    String        // "GPT_CHAT" | "GPT_EXCEL" | "GEMINI"
+  totalQuota  Int           @default(0)
+  aiDensity   String        @default("STANDARD") // "HIGH" | "MEDIUM" | "STANDARD"
+  managedBy   String        // 부서장 이메일
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  toolAccounts ToolAccount[]
+
+  @@unique([department, toolType])
+}
+
+model ToolAccount {
+  id               String          @id @default(cuid())
+  employeeId       String
+  employee         Employee        @relation(fields: [employeeId], references: [id])
+  quotaId          String?
+  quota            DepartmentQuota? @relation(fields: [quotaId], references: [id])
+  toolType         String          // "GPT_CHAT" | "GPT_EXCEL" | "GEMINI"
+  toolTier         String          // "CHAT" | "EXCEL" | "ENTERPRISE"
+  status           String          @default("PENDING") // "PENDING" | "APPROVED" | "ACTIVE" | "SUSPENDED" | "RETURNED"
+  requestReason    String          @default("")
+  assignedByEmail  String?         // 배정한 부서장 이메일
+  approvedBy       String?
+  approvedAt       DateTime?
+  activatedAt      DateTime?
+  lastUsedAt       DateTime?
+  returnedAt       DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 }
 
 model LevelApplication {
@@ -338,6 +374,35 @@ model AgentRegistry {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   scores            AgentScore[]
+  projects          AgentProjectLink[]
+}
+
+// ─── 프로젝트-에이전트 M:N 관리 ─────────────────────────────
+
+model AXProject {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  domain      String
+  description String   @default("")
+  owner       String
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agents      AgentProjectLink[]
+}
+
+model AgentProjectLink {
+  id        String        @id @default(cuid())
+  agentId   String
+  agent     AgentRegistry @relation(fields: [agentId], references: [id])
+  projectId String
+  project   AXProject     @relation(fields: [projectId], references: [id])
+  role      String        @default("PRIMARY")
+  addedAt   DateTime      @default(now())
+
+  @@unique([agentId, projectId])
 }
 
 model AgentScore {

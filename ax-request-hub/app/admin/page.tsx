@@ -15,6 +15,7 @@ export default async function AdminPage() {
             { href: "/admin/employees", title: "직원 레벨 관리" },
             { href: "/admin/distribution", title: "서비스 배분" },
             { href: "/admin/tokens", title: "토큰·비용" },
+            { href: "/admin/tools", title: "AI 도구 계정 관리" },
           ].map((item) => (
             <a
               key={item.href}
