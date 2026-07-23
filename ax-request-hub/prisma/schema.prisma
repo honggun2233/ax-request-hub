@@ -35,8 +35,9 @@ model Project {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
-  scoreCard   ScoreCard?
-  chatSession ChatSession?
+  scoreCard    ScoreCard?
+  chatSession  ChatSession?
+  dataRequests DataRequest[]
 }
 
 model ScoreCard {
@@ -65,12 +66,13 @@ model ChatSession {
 
 // ─── AI Hub 신규 모델 ─────────────────────────────
 
-// Employee.role 허용값 (P3-3a: EXECUTIVE 역할 추가)
-// EMPLOYEE   — 일반 직원 (기본값)
-// DEPT_HEAD  — 부서장: 부서 AI 도구 배분 권한
-// AX_TEAM    — AX팀(ADMIN): 전체 관리 권한
-// C_LEVEL    — C레벨 경영진: 전체 조회 + 승인 권한
-// EXECUTIVE  — 임원: /executive 대시보드 전용 접근 (C_LEVEL 하위 집합)
+// Employee.role 허용값 (P3-3a: EXECUTIVE, v3: DATA_PLATFORM 추가)
+// EMPLOYEE      — 일반 직원 (기본값)
+// DEPT_HEAD     — 부서장: 부서 AI 도구 배분 권한
+// AX_TEAM       — AX팀(ADMIN): 전체 관리 권한
+// C_LEVEL       — C레벨 경영진: 전체 조회 + 승인 권한
+// EXECUTIVE     — 임원: /executive 대시보드 전용 접근 (C_LEVEL 하위 집합)
+// DATA_PLATFORM — 데이터플랫폼팀: 데이터 자산 관리 및 데이터 요청 심사 권한
 
 model Employee {
   id             String   @id @default(cuid())
@@ -380,8 +382,23 @@ model AgentRegistry {
   notes             String?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
-  scores            AgentScore[]
-  projects          AgentProjectLink[]
+
+  // v3 추가 필드: 이중 라이프사이클 및 데이터 플랫폼 연동
+  name           String?      // Agent.name 매칭용 (이관 후 필수)
+  projectId      String?      // 연계 Project (이관 후 필수)
+  phase          String       @default("DEVELOPMENT") // AgentPhase: DEVELOPMENT|PRODUCTION|CLOSED
+  devStage       String?      // DevStage — phase=DEVELOPMENT 전용
+  prodStatus     String?      // ProdStatus — phase=PRODUCTION 전용
+  trustScore     Int?         // (operatorTrustScore 별칭)
+  pilotKpiTarget String?      // JSON 4필드 — 전환 근거
+  prodKpiTarget  String?      // JSON 4필드 — 협의회 승인 시 확정
+  retireFlag     Boolean      @default(false)
+  lastUsedAt     DateTime?
+  productionAt   DateTime?    // 협의회 승인 → 상용 전환 일시
+
+  scores        AgentScore[]
+  projects      AgentProjectLink[]
+  councilItems  CouncilAgendaItem[]
 }
 
 // ─── 프로젝트-에이전트 M:N 관리 ─────────────────────────────
@@ -416,11 +433,19 @@ model AgentScore {
   id         String        @id @default(cuid())
   agentId    String
   agent      AgentRegistry @relation(fields: [agentId], references: [id])
-  ticker     String
-  score      Float
+  // 기존 Gate 평가 점수 필드 (ETF 도메인)
+  ticker     String?
+  score      Float?
   rationale  String?
   dataType   String        @default("mock")
   recordedAt DateTime      @default(now())
+  // v3 추가 필드: KPI 월별 실적 (phase=DEVELOPMENT → 파일럿 / phase=PRODUCTION → 상용)
+  phase      String?       // AgentPhase: DEVELOPMENT|PRODUCTION|CLOSED
+  month      String?       // "2026-07"
+  kpiActual  String?       // JSON 4필드
+  achieveRate Int?          // 달성률 %
+
+  @@unique([agentId, phase, month])
 }
 
 // ── AI 스킬 카탈로그 (AX_전사AI운영체계_제안 §1) ────────────────────────────
@@ -458,6 +483,91 @@ model SkillRating {
   createdAt DateTime @default(now())
 
   @@unique([skillId, employeeEmail])
+}
+
+// ─── v3: SQLite는 enum 미지원 → String 필드 + 코드 레벨 제약 ──────────
+// DataClassification: G1(공개) | G2(내부) | G3(기밀)
+// DataRequestType:    ACCESS(기존 자산 이용) | NEW(신규 수집 요청)
+// DataRequestStatus:  REQUESTED | REVIEWING | SEC_REVIEW | APPROVED | COLLECTING | REJECTED | PROVISIONED | EXPIRED | REVOKED
+// AgentPhase:         DEVELOPMENT | PRODUCTION | CLOSED
+// DevStage:           SUBMITTED | EVALUATED | GATE1 | GATE2 | GATE3 | PILOT_PROVEN | COUNCIL_PENDING | COND_APPROVED | DEV_REJECTED
+// ProdStatus:         ACTIVE | SUSPENDED | DEPRECATED | RETIRED
+// CouncilDecision:    APPROVED | CONDITIONAL | REMANDED | REJECTED | DEFERRED
+
+// ─── v3: 협의회 모델 ─────────────────────────────────────────────────
+
+model CouncilMeeting {
+  id        String              @id @default(cuid())
+  meetingNo Int                 @unique
+  heldAt    DateTime
+  notes     String?
+  items     CouncilAgendaItem[]
+}
+
+model CouncilAgendaItem {
+  id           String         @id @default(cuid())
+  meetingId    String
+  meeting      CouncilMeeting @relation(fields: [meetingId], references: [id])
+  agentId      String
+  agent        AgentRegistry  @relation(fields: [agentId], references: [id])
+  itemType     String         // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE
+  packageMeta  String         // 심의 패키지 스냅샷 (JSON)
+  decision     String?        // CouncilDecision: APPROVED|CONDITIONAL|REMANDED|REJECTED|DEFERRED
+  decisionNote String?
+  conditions   String?        // JSON: [{condition, done, checkedBy}]
+  decidedAt    DateTime?
+}
+
+// ─── v3: 데이터 플랫폼 모델 ──────────────────────────────────────────
+
+model DataAsset {
+  id             String    @id @default(cuid())
+  name           String
+  description    String
+  ownerDept      String
+  classification String    // DataClassification: G1|G2|G3
+  schemaMeta     String?
+  deliveryModes  String    // "API,FILE,DB"
+  updateCycle    String?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  requests       DataRequest[]
+}
+
+model DataRequest {
+  id             String    @id @default(cuid())
+  type           String    // DataRequestType: ACCESS|NEW
+  status         String    @default("REQUESTED") // DataRequestStatus
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id])
+  agentId        String?
+  assetId        String?
+  asset          DataAsset? @relation(fields: [assetId], references: [id])
+  requesterId    String
+  purpose        String
+  requestedSpec  String?
+  classification String    // DataClassification: G1|G2|G3
+  periodMonths   Int
+  forProduction  Boolean   @default(false)
+  rejectReason   String?
+  reviewerId     String?
+  prevRequestId  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  provision      DataProvision?
+}
+
+model DataProvision {
+  id            String      @id @default(cuid())
+  requestId     String      @unique
+  request       DataRequest @relation(fields: [requestId], references: [id])
+  deliveryMode  String      // API | FILE | DB
+  connectionRef String      // 시크릿 저장소 키
+  providedAt    DateTime    @default(now())
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  revokeReason  String?
 }
 
 // ── 이의제기 (P1-3: 신청자 재심 요청 절차) ─────────────────────────────────
