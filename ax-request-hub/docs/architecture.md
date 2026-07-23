@@ -50,21 +50,49 @@ graph TD
     Next --> Auth["NextAuth.js\n세션 관리"]
     Prisma --> DB["ax_hub.db\nSQLite 20+ 모델"]
 
-    subgraph Pages ["앱 라우트 (/app)"]
-        P1["/ 홈 대시보드"]
-        P2["/submit 과제 신청"]
-        P3["/dashboard 관리자 현황"]
-        P4["/governance 감사 로그"]
-        P5["/registry 에이전트 레지스트리"]
-        P6["/skills AI 스킬 라이브러리"]
-        P7["/executive C레벨 대시보드"]
-        P8["/dept/tools 부서 도구 관리"]
-        P9["/docs 거버넌스 문서 뷰어"]
-        P10["/admin/* 관리자 메뉴"]
-        P11["/me/* 내 정보"]
+    subgraph Employee ["일반 직원 (EMPLOYEE)"]
+        E1["/ 홈 대시보드"]
+        E2["/submit 과제 신청"]
+        E3["/status/[id] 과제 현황"]
+        E4["/chat AI 상담 챗봇"]
+        E5["/skills AI 스킬 라이브러리"]
+        E6["/docs 거버넌스 문서 뷰어"]
+        E7["/me/* 내 정보·레벨·수강"]
+        E8["/me/tools 내 AI 도구 현황"]
+        E9["/me/usage 토큰 사용 내역"]
     end
 
-    Next --> Pages
+    subgraph DeptHead ["부서장 (DEPT_HEAD)"]
+        D1["/dept/tools AI 도구 배정·회수"]
+    end
+
+    subgraph Admin ["관리자 (AX팀 / ADMIN)"]
+        A1["/dashboard 관리자 현황"]
+        A2["/governance 감사 로그"]
+        A3["/registry 에이전트 레지스트리"]
+        A4["/admin/agents 에이전트·KPI 관리"]
+        A5["/admin/retired 폐기 에이전트"]
+        A6["/admin/skills 스킬 라이브러리 관리"]
+        A7["/admin/docs 거버넌스 문서 관리"]
+        A8["/admin/tools AI 도구 계정 관리"]
+        A9["/admin/employees 직원 권한 관리"]
+        A10["/admin/tokens 토큰 정책"]
+        A11["/admin/distribution 배분 정책"]
+    end
+
+    subgraph CLevel ["경영진 (C_LEVEL / EXECUTIVE)"]
+        X1["/executive C레벨 대시보드"]
+    end
+
+    Next --> Employee
+    Next --> DeptHead
+    Next --> Admin
+    Next --> CLevel
+
+    E5 <-->|"스킬 데이터 공유\n(Skill 모델)"| A6
+    E6 <-->|"문서 메타 공유\n(GovernanceDoc 모델)"| A7
+    E4 -->|"POST /api/chat\nClaude 스트리밍"| Claude
+    E2 -->|"POST /api/projects\n자동 평가"| Claude
 ```
 
 ---
