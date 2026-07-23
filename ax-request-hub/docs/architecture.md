@@ -537,13 +537,14 @@ ANTHROPIC_API_KEY="..."
 | ~~AgentRegistry + Agent 역할 경계 미명문화~~ | ✅ 완료 — §7-B 역할 경계 + 동기화 규칙 섹션 추가 | P2-1 |
 | AgentRegistry + Agent 모델 **완전 통합** | 역할 경계 명문화 완료; 단일 모델 통합은 차기 작업 | P2-1 |
 | ~~통합 상태 전이표 문서화~~ | ✅ 완료 — registry-lifecycle-design.md §8 추가 | P2-2 |
-| SQLite → PostgreSQL 전환 | 전사 동시성·백업·다중 인스턴스 한계 | P3-4 |
-| 감사로그 보존기간·위변조 방지 명세 | 전자금융감독규정 관점 | P3-4 |
-| 시크릿 관리 체계 (사내 배포 시) | NEXTAUTH_SECRET, ANTHROPIC_API_KEY 관리 정책 필요 | P3-4 |
-| KPI 자동 판정 로직 실행 주체 | "3개월 60% 미달" 배치 자동 vs 수동 명확화 | P3-4 |
+| SQLite → PostgreSQL 전환 | 전사 동시성·백업·다중 인스턴스 한계 → [OI-001](OPEN_ISSUES.md#oi-001) | P3-4 |
+| 감사로그 보존기간·위변조 방지 명세 | 전자금융감독규정 관점 → [OI-002](OPEN_ISSUES.md#oi-002) | P3-4 |
+| 시크릿 관리 체계 (사내 배포 시) | Vault 등 KMS 연동 필요 → [OI-003](OPEN_ISSUES.md#oi-003) | P3-4 |
+| KPI 자동 판정 로직 실행 주체 | 배치 스케줄러 옵션 포함 → [OI-004](OPEN_ISSUES.md#oi-004) | P3-4 |
+| 이의제기 SLA 미정의 | API 구현 완료, SLA·통보 미명세 → [OI-005](OPEN_ISSUES.md#oi-005) | P3-4 |
 | ~~EXECUTIVE 역할 분리~~ | ✅ 완료 — `/api/executive` C_LEVEL + AX_TEAM + EXECUTIVE 허용, proxy.ts 매처 추가 | P3-3a |
 | ~~부서장(DEPT_HEAD) 지정 절차~~ | ✅ 완료 — `/api/admin/users/[id]/role` PATCH (AX_TEAM 전용) 신설 | P3-3b |
 
 ---
 
-*최초 생성: 2026-07-10 | 최종 갱신: 2026-07-23 — §7-B Agent vs AgentRegistry 역할 경계 추가, P2-1/P2-2/P3-3 완료 반영*
+*최초 생성: 2026-07-10 | 최종 갱신: 2026-07-23 — P3-1 mermaid 갱신, P3-4 OPEN_ISSUES.md 링크 추가*
