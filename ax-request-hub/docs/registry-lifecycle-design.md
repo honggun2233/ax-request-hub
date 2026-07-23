@@ -1,21 +1,46 @@
-# AX Hub 에이전트 레지스트리 — 라이프사이클 관리 UI 페이퍼 설계
+# AX Hub 에이전트 레지스트리 — 설계 문서
 
-작성일: 2026-07-14  
-목적: /registry 페이지를 라이프사이클 기반으로 재설계하여 "각 단계에서 무엇을 봐야 하고, 무슨 액션을 취해야 하는지" 명확하게 만든다.
-
----
-
-## 1. 핵심 문제 정의
-
-현재 /registry의 문제:
-- 에이전트가 어느 라이프사이클 단계에 있는지 표시 없음
-- Gate 배지(✅/❌)만 있고 "그래서 지금 뭘 해야 하는지" 없음
-- 18개가 Gate2 대기 중인데 누가 리뷰해야 하는지 보이지 않음
-- 폐기/아카이브가 왜 필요한지 맥락이 없음
+작성일: 2026-07-14 (초안) / 2026-07-15 (M:N 구조 반영 개정)  
+목적: `/registry` 페이지의 라이프사이클 + 프로젝트-에이전트 M:N 구조 설계 기록
 
 ---
 
-## 2. 라이프사이클 정의
+## 1. 핵심 개념 — 에이전트 ↔ 프로젝트 M:N
+
+에이전트는 **재사용 가능한 자산**, 프로젝트는 **업무 맥락**이다.  
+하나의 에이전트가 여러 프로젝트에 참여할 수 있고, 하나의 프로젝트에 여러 에이전트가 붙는다.
+
+```
+AXProject (5개)          AgentRegistry (27개+)
+─────────────            ──────────────────────
+ETF SAM LAB   ──M:N──── MomentumAgent (GATE2)
+DMS                      ThematicAgent (GATE2)
+IT 예산관리               ComplianceSignalAgent (ACTIVE)
+업무효율화                DMS-Classifier (GATE3)
+AX Hub 내부              ...
+```
+
+**AgentProjectLink 필드:**
+- `agentId` — AgentRegistry FK
+- `projectId` — AXProject FK
+- `role` — PRIMARY / SUPPORTING / EXPERIMENTAL
+- `addedAt` — 연결 일시
+
+---
+
+## 2. AXProject 등록 현황 (2026-07-15 기준)
+
+| key | name | domain | 설명 |
+|-----|------|--------|------|
+| etf-samlab | ETF SAM LAB | ETF | 가상 ETF 운용 시뮬레이션 플랫폼 앙상블 에이전트 |
+| dms | DMS 문서관리 | 운영 | 사내 문서 자동 분류·검색 AI |
+| it-budget | IT 예산관리 | 운영 | IT 예산 편성·집행 모니터링 AI |
+| bizops | 업무효율화 | 효율화 | STT 회의록·공시 보고서 자동화 |
+| ax-hub | AX Hub 내부 | 거버넌스 | 과제 자동 평가·AI 리터러시 코칭 |
+
+---
+
+## 3. 라이프사이클 단계 정의
 
 ```
 DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE → DEGRADED → RETIRED
@@ -23,7 +48,7 @@ DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE → DEGRADED → RETIRED
 
 | 단계 | 의미 | 통과 기준 | 담당 |
 |------|------|-----------|------|
-| DEVELOPING | 코드 작성 중, 아직 QA 미제출 | 코드 PR 머지 | CTO |
+| DEVELOPING | 코드 작성 중, QA 미제출 | 코드 PR 머지 | CTO |
 | GATE1 | 기능 검증 | fallback율 ≤ 30%, 정상 AgentSignal 반환 | QA |
 | GATE2 | 도메인 검증 | SAM LAB 30일 정확도 ≥ 55%, 운용역 신뢰점수 ≥ 3/5 | 운용역 |
 | GATE3 | 스트레스 검증 | 데이터 없음/이상값 시 크래시 0, fallback 정상 | QA |
@@ -33,197 +58,230 @@ DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE → DEGRADED → RETIRED
 
 ---
 
-## 3. 페이지 레이아웃 와이어프레임
+## 4. 페이지 구성 — 듀얼 뷰
 
-### 3-1. 상단: 라이프사이클 파이프라인 뷰
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│  에이전트 레지스트리                               총 19개 | 활성 1개    │
-├──────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  [DEV]  →  [GATE1]  →  [GATE2]  →  [GATE3]  →  [ACTIVE]  →  [RETIRED] │
-│   0           0          18 ←클릭     0            1            0        │
-│  (회색)      (파랑)     (주황/선택)  (파랑)       (초록)      (회색)     │
-│                           ↑                                              │
-│                      ⚠ 액션 필요                                         │
-│                                                                          │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-- 단계 클릭 → 해당 단계 에이전트만 필터
-- 숫자 옆 ⚠ 표시 = 액션 필요 (Gate 대기 중, 성능 저하 등)
-- GATE2가 18개 → 주황색으로 강조 (병목 시각화)
-
----
-
-### 3-2. 중단: 액션 배너 (단계 선택 시 동적으로 변경)
+### 4-1. 공통 헤더
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│  📋 GATE2 단계 — 18개 에이전트 도메인 검증 대기 중                       │
-│                                                                          │
-│  지금 해야 할 일:                                                         │
-│  1. SAM LAB에서 30일 누적 데이터 확인 → http://localhost:8601            │
-│  2. 운용역에게 신뢰점수 태깅 요청 (5점 척도)                              │
-│  3. 정확도 ≥ 55% + 신뢰점수 ≥ 3인 에이전트 → Gate2 통과 처리            │
-│                                                                          │
-│  [운용역 리뷰 요청 이메일 발송]  [SAM LAB 열기]  [일괄 처리]             │
-└──────────────────────────────────────────────────────────────────────────┘
+에이전트 레지스트리                    총 27개 | 활성 N개    [에이전트 뷰] [프로젝트 뷰]
+전사 AI 에이전트 라이프사이클 관리 — DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE
 ```
 
-단계별 액션 배너 내용:
-
-| 단계 | 배너 메시지 | 버튼 |
-|------|------------|------|
-| DEVELOPING | "CTO에 Gate1 테스트 요청 대기 중" | [GitHub 이슈 생성] |
-| GATE1 | "QA가 fallback율 30% 이하 검증 중" | [테스트 결과 업로드] |
-| GATE2 | "운용역 도메인 리뷰 필요 — SAM LAB 30일 데이터 확인 후 태깅" | [리뷰 요청] [SAM LAB] |
-| GATE3 | "QA 스트레스 테스트 실행 필요" | [테스트 실행] |
-| ACTIVE | "정상 운영 중. 주간 score 모니터링" | [성능 추이 보기] |
-| DEGRADED | "⚠ 성능 저하 감지 — 즉시 점검 필요" | [이슈 생성] [임시 비활성화] |
-| RETIRED | "폐기 완료. 아카이브에서 이력 확인 가능" | [아카이브 보기] |
-
----
-
-### 3-3. 에이전트 카드 그리드
+### 4-2. 에이전트 뷰
 
 ```
-┌─────────────────────────────┐  ┌─────────────────────────────┐
-│ MomentumAgent        [GATE2]│  │ ComplianceSignalAgent [ACTIVE]│
-│ 가격 모멘텀 분석             │  │ KRX 규정 준수 검증           │
-│                             │  │                             │
-│ Gate 진행도                 │  │ Gate 진행도                 │
-│ ✅ G1  ⏳ G2  ─ G3          │  │ ✅ G1  ✅ G2  ✅ G3          │
-│                             │  │                             │
-│ Fallback율  ████████░░ 82%  │  │ Fallback율  █░░░░░░░░░ 10%  │
-│ 마지막 Score  —             │  │ 마지막 Score  72.4          │
-│ 데이터소스  yfinance ⚠      │  │ 데이터소스  KRX API ✅       │
-│                             │  │                             │
-│ [Gate2 리뷰 요청]           │  │ [성능 추이]                  │
-└─────────────────────────────┘  └─────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│  라이프사이클 단계 (클릭 → 필터)                                        │
+│  [DEV:0] → [GATE1:N] → [GATE2:N ⚠] → [GATE3:N] → [ACTIVE:N] → ...  │
+└───────────────────────────────────────────────────────────────────────┘
+단계 선택 시 → 액션 배너 (무엇을 해야 하는지 안내)
+
+에이전트 카드 그리드
+  ┌──────────────────────────┐
+  │ MomentumAgent   [GATE2]  │
+  │ 가격 모멘텀 분석          │
+  │ [ETF SAM LAB]            │  ← 소속 프로젝트 태그
+  │ G1✓ G2– G3–              │  ← Gate 진행도
+  │ Fallback율 ████░ 82%     │
+  └──────────────────────────┘
+카드 클릭 → 슬라이드오버
 ```
 
-카드 색상 코딩:
-- GATE2 대기: 주황 테두리
-- ACTIVE: 초록 테두리
-- DEGRADED: 빨간 테두리 + ⚠
-- RETIRED: 회색, 투명도 50%
-
----
-
-### 3-4. 에이전트 상세 슬라이드오버 (카드 클릭 시)
+### 4-3. 프로젝트 뷰
 
 ```
-                              ┌────────────────────────────────┐
-                              │ MomentumAgent           [닫기 ×]│
-                              │ 가격 모멘텀 분석                 │
-                              ├────────────────────────────────┤
-                              │ 라이프사이클 타임라인            │
-                              │                                │
-                              │ 2026-07-14 ──●── GATE2 진입    │
-                              │ 2026-07-14 ──●── GATE1 통과    │
-                              │ 2026-07-14 ──●── 등록          │
-                              │                                │
-                              ├────────────────────────────────┤
-                              │ Gate 상세                       │
-                              │ Gate1 ✅ fallback율 82% → 통과  │
-                              │   (기준: ≤30% 기능검증 통과)    │
-                              │ Gate2 ⏳ 30일 데이터 누적 중    │
-                              │   SAM LAB 시작일: 2026-07-14   │
-                              │   측정 가능일: 2026-08-13       │
-                              │ Gate3 ─ 미시작                  │
-                              ├────────────────────────────────┤
-                              │ Score 추이 (30일)               │
-                              │ [차트 — 데이터 없음, 수집 중]   │
-                              ├────────────────────────────────┤
-                              │ 운용역 코멘트                   │
-                              │ (아직 없음 — Gate2 리뷰 후 작성)│
-                              ├────────────────────────────────┤
-                              │ 관련 링크                       │
-                              │ 코드: ETF- /agents/momentum.py │
-                              │ 이슈: 없음                      │
-                              └────────────────────────────────┘
+ETF SAM LAB (19개)  [운영 1 · Gate2 11 · Gate1 6 · 개발중 1]   ▲
+  ├── ComplianceSignalAgent  주에이전트  ✓G1 ✓G2 ✓G3  [ACTIVE]
+  ├── MomentumAgent          주에이전트  ✓G1 –G2 –G3  [GATE2]
+  └── ...
+
+DMS 문서관리 (2개)  [Gate3 1 · ACTIVE 1]                        ▲
+  ├── DMS-Classifier         주에이전트  ✓G1 ✓G2 –G3  [GATE3]
+  └── DMS-SearchAssist       주에이전트  ✓G1 ✓G2 ✓G3  [ACTIVE]
+```
+
+### 4-4. 슬라이드오버 (카드 클릭 시)
+
+```
+ AgentName             [닫기 ×]
+ 에이전트 목적 설명
+
+ 소속 프로젝트          [+ 연결]
+  [ETF SAM LAB  주에이전트  ✕]
+  → 연결 추가 시 프로젝트 선택 + 역할 선택
+
+ Gate 진행도
+  Gate1 ✓ 통과 (2026-07-14)  fallback율 ≤ 30%, AgentSignal 정상
+  Gate2 ○ 대기 중            30일 정확도 ≥ 55%, 신뢰점수 ≥ 3
+  Gate3 ○ 미시작
+
+ 운용역 리뷰 태깅 (GATE2 단계에서만 표시)
+  신뢰점수 [1][2][3][4][5]
+  코멘트 ____________________
+
+ 주요 지표
+  데이터소스 / 실데이터 연결 / Fallback율 / 30일 정확도 / 최근 Score
+
+ [→ GATE2로 진행] 또는 [✓ ACTIVE 전환] 등 다음 단계 버튼
+ [폐기 처리 (RETIRED)]
 ```
 
 ---
 
-## 4. 사이드바 재구성
+## 5. DB 스키마 (AgentRegistry 핵심 필드)
 
-### 현재 (목적 불명확)
-```
-관리
-├── 직원 관리
-├── 서비스 배분
-├── 토큰 관리
-├── 에이전트 관리     ← AI 서비스 관리와 ETF 에이전트가 혼재
-├── 폐기 아카이브     ← 무엇의 폐기인지 불명확
-└── 리터러시 관리
+```prisma
+model AgentRegistry {
+  id                String   @id @default(cuid())
+  agentName         String   @unique
+  agentKey          String   @unique
+  version           String   @default("1.0.0")
+  purpose           String
+  dataSource        String
+  owner             String   @default("CTO")
+  status            String   @default("active")
+  realDataConnected Boolean  @default(false)
+  fallbackRate      Float    @default(1.0)
+  gate1Passed       Boolean  @default(false)
+  gate2Passed       Boolean  @default(false)
+  gate3Passed       Boolean  @default(false)
+  lifecycleStage    String   @default("GATE1")
+  gate1PassedAt     DateTime?
+  gate2PassedAt     DateTime?
+  gate3PassedAt     DateTime?
+  operatorTrustScore Int?
+  operatorComment   String?
+  sam30dAccuracy    Float?
+  degradedSince     DateTime?
+  retiredAt         DateTime?
+  retireReason      String?
+  scores            AgentScore[]
+  projects          AgentProjectLink[]  // M:N 프로젝트 연결
+}
 
-거버넌스
-├── 감사 로그
-└── 에이전트 레지스트리  ← 여기에 ETF 에이전트 있음
-```
+model AXProject {
+  id          String   @id @default(cuid())
+  key         String   @unique   // "etf-samlab"
+  name        String             // "ETF SAM LAB"
+  domain      String             // "ETF" | "운영" | "효율화" | "거버넌스"
+  description String
+  owner       String
+  status      String   @default("ACTIVE")
+  agents      AgentProjectLink[]
+}
 
-### 변경안 (목적 명확화)
-```
-AI 과제 관리          ← 회사 전체 AI 서비스 트랙
-├── 과제 현황 (대시보드)
-├── 직원 관리
-├── 서비스 배분
-└── 토큰 관리
-
-ETF 에이전트          ← ETF 전용 에이전트 관리 트랙 (NEW)
-├── 레지스트리 (라이프사이클)  ← 핵심 페이지, 전면 재설계
-├── Gate 리뷰 큐       ← Gate 통과 대기 에이전트만 모아서
-└── 폐기 아카이브      ← RETIRED된 에이전트 이력
-
-거버넌스
-├── 감사 로그
-└── 리터러시 관리
+model AgentProjectLink {
+  id        String        @id @default(cuid())
+  agentId   String
+  agent     AgentRegistry @relation(...)
+  projectId String
+  project   AXProject     @relation(...)
+  role      String        @default("PRIMARY")  // PRIMARY | SUPPORTING | EXPERIMENTAL
+  addedAt   DateTime      @default(now())
+  @@unique([agentId, projectId])
+}
 ```
 
 ---
 
-## 5. DB 스키마 추가 필요 항목
+## 6. API 엔드포인트
 
-현재 AgentRegistry에 없는 필드:
-```sql
-ALTER TABLE AgentRegistry ADD COLUMN lifecycleStage TEXT DEFAULT 'GATE2';
--- 값: DEVELOPING | GATE1 | GATE2 | GATE3 | ACTIVE | DEGRADED | RETIRED
+| Route | Method | 용도 |
+|-------|--------|------|
+| `/api/registry` | GET | 전체 에이전트 목록 + 단계별 카운트 + 소속 프로젝트 |
+| `/api/registry` | PATCH | 라이프사이클 단계 전환 + 신뢰점수 저장 |
+| `/api/registry/links` | POST | 에이전트-프로젝트 연결 추가 |
+| `/api/registry/links` | DELETE | 에이전트-프로젝트 연결 해제 |
+| `/api/ax-projects` | GET | AXProject 목록 + 연결 에이전트 포함 조회 |
 
-ALTER TABLE AgentRegistry ADD COLUMN gate1PassedAt TEXT;  -- ISO date
-ALTER TABLE AgentRegistry ADD COLUMN gate2PassedAt TEXT;
-ALTER TABLE AgentRegistry ADD COLUMN gate3PassedAt TEXT;
-ALTER TABLE AgentRegistry ADD COLUMN operatorTrustScore INTEGER;  -- 1~5
-ALTER TABLE AgentRegistry ADD COLUMN operatorComment TEXT;
-ALTER TABLE AgentRegistry ADD COLUMN sam30dAccuracy REAL;  -- 0.0~1.0
-ALTER TABLE AgentRegistry ADD COLUMN degradedSince TEXT;  -- ISO date, null if not degraded
-ALTER TABLE AgentRegistry ADD COLUMN retiredAt TEXT;
-ALTER TABLE AgentRegistry ADD COLUMN retireReason TEXT;
+---
+
+## 7. 설계 원칙
+
+1. **에이전트 = 재사용 자산** — 하나의 에이전트가 여러 프로젝트에 참여 가능
+2. **프로젝트 = 맥락** — "어느 업무에 붙어 있는가"를 추적하기 위한 단위
+3. **액션 중심 UI** — 단계별로 "지금 무엇을 해야 하는가"를 배너로 명시
+4. **병목 가시화** — 파이프라인 바에서 단계별 에이전트 수 한눈에 파악
+5. **이원 뷰** — 에이전트 자산 관리(재사용)와 프로젝트별 현황 파악을 동시에 지원
+
+---
+
+## 8. 통합 상태 전이표 (P2-2)
+
+> 갱신: 2026-07-23  
+> AX Hub는 세 개의 독립적인 상태 체계를 운용한다. 아래 표는 각 체계의 상태값과 전환 조건을 통합하여 정리한다.
+
+### 8-1. 세 상태 체계 매핑
+
+| 체계 | 필드 | 모델 | 상태값 |
+|------|------|------|--------|
+| **과제 플로우** | `Project.status` | Project | submitted → evaluated → pilot → production → closed |
+| **에이전트 운영 상태** | `Agent.status` | Agent (레거시) | ACTIVE → DEPRECATED → RETIRED |
+| **레지스트리 Gate** | `AgentRegistry.lifecycleStage` | AgentRegistry | DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE → DEGRADED → RETIRED |
+
+### 8-2. 과제 플로우 상태 전이
+
+```
+submitted ──→ evaluated ──→ pilot ──→ production ──→ closed
+    │               │           │
+    │               │           └── 30일 + Gate2 통과 → ACTIVE 전환
+    │               └── 자동 스코어링 또는 AX팀 수동 평가
+    └── 신청 접수 (GET /submit)
 ```
 
----
+| 전환 | 트리거 | 조건 | 담당 |
+|------|--------|------|------|
+| submitted → evaluated | `/api/evaluate/[id]` POST | 자동 스코어링 완료 | AX팀 또는 자동 |
+| evaluated → pilot | `/api/approve/[id]` POST (action: approve) | AX팀/C_LEVEL 승인 | AX팀 |
+| evaluated → closed | `/api/approve/[id]` POST (action: reject) | AX팀/C_LEVEL 반려 | AX팀 |
+| pilot → production | 수동 전환 | **30일 누적 운용 + Gate2 리뷰 통과** (아래 §8-4 참조) | 운용역 + AX팀 |
+| production → closed | 수동 전환 | KPI 3개월 60% 미달 또는 정책 변경 | AX팀 |
 
-## 6. 구현 우선순위
+### 8-3. 에이전트 운영 상태 전이 (Agent 모델)
 
-| 우선순위 | 항목 | 예상 소요 |
-|----------|------|-----------|
-| P0 | DB 스키마 마이그레이션 (lifecycleStage 컬럼 추가) | 30분 |
-| P0 | 라이프사이클 파이프라인 뷰 (상단 카운터 바) | 2시간 |
-| P0 | 에이전트 카드 Gate 진행도 + 액션 버튼 | 2시간 |
-| P1 | 단계별 액션 배너 | 1시간 |
-| P1 | 에이전트 상세 슬라이드오버 | 3시간 |
-| P2 | 사이드바 재구성 | 1시간 |
-| P2 | Gate 리뷰 큐 페이지 | 2시간 |
+```
+ACTIVE ──→ DEPRECATED ──→ RETIRED
+               │
+               └── (성과 미달·중복·정책변경)
+```
 
-**총 예상 구현 시간**: P0만 → 반나절 / 전체 → 1~2일
+| 전환 | 트리거 | 조건 | 담당 |
+|------|--------|------|------|
+| ACTIVE → DEPRECATED | `/api/agents/[id]/deprecate` POST | 폐기 사유 입력 필수 (DUPLICATE/PERFORMANCE/POLICY_CHANGE/SCOPE_CHANGE/OTHER) | AX팀 |
+| DEPRECATED → RETIRED | `/api/agents/[id]/retire` POST | DEPRECATED 상태 + 지식 추출 완료 권장 | AX팀/C_LEVEL |
 
----
+### 8-4. 레지스트리 Gate 라이프사이클 (AgentRegistry 모델)
 
-## 7. 핵심 설계 원칙
+```
+DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE
+                                          │
+                                     DEGRADED ──→ RETIRED
+```
 
-1. **액션 중심**: 각 단계에서 "지금 뭘 해야 하는지" 항상 명확하게
-2. **병목 가시화**: 18개가 GATE2에 쌓여 있는 것처럼, 어디서 막히는지 한눈에
-3. **자동 감지**: DEGRADED는 수동이 아닌 fallback율/정확도 기준으로 자동 전환
-4. **트랙 분리**: 회사 AI 과제 관리 ↔ ETF 에이전트 관리는 목적이 다름 → 사이드바에서 명확히 분리
+| 전환 | Gate 통과 기준 | 담당 |
+|------|---------------|------|
+| → GATE1 | PR 머지 + QA 제출 완료 | CTO |
+| → GATE2 | fallback율 ≤ 30%, AgentSignal 정상 반환 | QA |
+| → GATE3 | SAM LAB 30일 정확도 ≥ 55%, 운용역 신뢰점수 ≥ 3/5 | 운용역 |
+| → ACTIVE | 데이터 없음/이상값 시 크래시 0, fallback 정상 | QA |
+| ACTIVE → DEGRADED | 정확도 < 50% 또는 fallback율 > 70% — 2주 연속 | 자동 감지 |
+| → RETIRED | 운용역/CTO 합의 후 수동 처리 | 운용역 |
+
+### 8-5. pilot → ACTIVE(production) 졸업 기준 명문화
+
+**조건 1: 30일 누적 운용**  
+- `pilot` 상태 진입일로부터 30 calendar day 이상 경과  
+- 해당 기간 내 심각(Critical) 버그 0건, 롤백 0회
+
+**조건 2: 운용역 Gate2 리뷰 통과**  
+- `AgentRegistry.lifecycleStage == GATE2` 상태의 연결 에이전트에 대해  
+- 운용역이 신뢰점수 ≥ 3/5 평가 + `gate2Passed = true` 기록  
+- `operatorTrustScore`, `sam30dAccuracy` 필드에 수치 입력 필수
+
+**졸업 프로세스:**  
+1. 운용역 → `/api/registry` PATCH로 Gate2 리뷰 점수 입력  
+2. AX팀 → `/api/approve/[id]` POST (action: approve로 pilot → production 전환)  
+3. 전환 시 AuditLog 자동 기록  
+4. 이메일 알림 발송 (신청자)
+
+> **예외:** 연결된 AgentRegistry가 없는 일반 과제(비에이전트 자동화)는 30일 운용 기간만 충족하면 AX팀 단독 승인으로 production 전환 가능.
