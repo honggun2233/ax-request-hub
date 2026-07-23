@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AX Request Hub — 전체 시스템 구조서 v1.0</title>
+<style>
+  :root {
+    --blue: #2563eb; --blue-light: #dbeafe; --blue-dark: #1d4ed8;
+    --green: #16a34a; --green-light: #dcfce7;
+    --yellow: #ca8a04; --yellow-light: #fef9c3;
+    --red: #dc2626; --red-light: #fee2e2;
+    --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+    --gray-400: #94a3b8; --gray-600: #475569; --gray-800: #1e293b; --gray-900: #0f172a;
+    --purple: #7c3aed; --purple-light: #ede9fe;
+    --orange: #ea580c; --orange-light: #fff7ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--gray-800);
+    background: var(--gray-50);
+  }
+
+  /* ── Layout ────────────────────────────────────────── */
+  .wrap { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--gray-900);
+    color: #cbd5e1;
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+  .sidebar-logo { padding: 0 20px 20px; border-bottom: 1px solid #334155; }
+  .sidebar-logo h2 { font-size: 13px; font-weight: 700; color: #f1f5f9; letter-spacing: 0.05em; }
+  .sidebar-logo p { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .sidebar nav { padding: 12px 0; }
+  .sidebar nav a {
+    display: block;
+    padding: 7px 20px;
+    font-size: 12.5px;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .sidebar nav a:hover { color: #f1f5f9; background: #1e293b; }
+  .sidebar nav a.active { color: #60a5fa; border-left-color: #60a5fa; background: #1e293b; }
+  .sidebar nav .section-label {
+    padding: 14px 20px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #475569;
+    text-transform: uppercase;
+  }
+
+  /* Main */
+  .main { flex: 1; min-width: 0; }
+
+  /* Header */
+  .header {
+    background: white;
+    border-bottom: 1px solid var(--gray-200);
+    padding: 28px 40px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-meta { display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+  .badge-yellow { background: var(--yellow-light); color: var(--yellow); }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-purple { background: var(--purple-light); color: var(--purple); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-gray { background: var(--gray-100); color: var(--gray-600); }
+  .header h1 { font-size: 22px; font-weight: 800; color: var(--gray-900); }
+  .header-sub { font-size: 13px; color: var(--gray-400); margin-top: 4px; }
+
+  /* Content */
+  .content { padding: 36px 40px; max-width: 1100px; }
+
+  /* Sections */
+  .section { margin-bottom: 52px; scroll-margin-top: 120px; }
+  .section-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gray-900);
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--gray-200);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .icon { font-size: 20px; }
+  .subsection { margin-bottom: 28px; }
+  .subsection-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 12px;
+    padding-left: 10px;
+    border-left: 3px solid var(--blue);
+  }
+
+  /* KV grid (purpose table) */
+  .kv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .kv-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .kv-card dt { font-size: 11px; font-weight: 700; color: var(--blue); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .kv-card dd { font-size: 13px; color: var(--gray-800); }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--gray-200); }
+  table { width: 100%; border-collapse: collapse; background: white; }
+  thead { background: var(--gray-50); }
+  thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray-600);
+    border-bottom: 1px solid var(--gray-200);
+  }
+  tbody td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 13px;
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--gray-50); }
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11.5px;
+    background: var(--gray-100);
+    color: var(--blue-dark);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* Role matrix */
+  .role-chip {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    margin: 1px;
+  }
+  .role-EMPLOYEE { background: #e0f2fe; color: #0369a1; }
+  .role-DEPT_HEAD { background: #f0fdf4; color: #15803d; }
+  .role-DATA_PLATFORM { background: #faf5ff; color: #7e22ce; }
+  .role-EXECUTIVE { background: #fff7ed; color: #c2410c; }
+  .role-ADMIN { background: #fef2f2; color: #b91c1c; }
+
+  /* Flow diagram */
+  .flow-box {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 24px;
+    overflow-x: auto;
+  }
+  .flow { display: flex; flex-direction: column; gap: 0; }
+  .flow-row { display: flex; align-items: flex-start; gap: 0; flex-wrap: wrap; }
+  .flow-node {
+    background: var(--blue-light);
+    border: 1.5px solid var(--blue);
+    color: var(--blue-dark);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin: 4px 2px;
+  }
+  .flow-node.green { background: var(--green-light); border-color: var(--green); color: var(--green); }
+  .flow-node.red { background: var(--red-light); border-color: var(--red); color: var(--red); }
+  .flow-node.purple { background: var(--purple-light); border-color: var(--purple); color: var(--purple); }
+  .flow-node.orange { background: var(--orange-light); border-color: var(--orange); color: var(--orange); }
+  .flow-node.gray { background: var(--gray-100); border-color: var(--gray-400); color: var(--gray-600); }
+  .flow-arrow { font-size: 18px; color: var(--gray-400); margin: 4px 2px; line-height: 36px; }
+
+  /* Stack info */
+  .stack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .stack-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .stack-card dt { font-size: 10px; font-weight: 700; color: var(--gray-400); margin-bottom: 4px; text-transform: uppercase; }
+  .stack-card dd { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+
+  /* Issue grid */
+  .issue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .issue-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 12px 14px;
+    border-left: 4px solid var(--gray-200);
+  }
+  .issue-card.p1 { border-left-color: var(--red); }
+  .issue-card.p2 { border-left-color: var(--orange); }
+  .issue-card.p3 { border-left-color: var(--blue); }
+  .issue-title { font-size: 13px; font-weight: 600; color: var(--gray-900); margin-bottom: 4px; }
+  .issue-desc { font-size: 12px; color: var(--gray-600); }
+
+  /* Lifecycle visual */
+  .lc-row { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .lc-stage {
+    background: var(--blue-light);
+    color: var(--blue-dark);
+    border-radius: 6px;
+    padding: 5px 11px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .lc-stage.dim { opacity: 0.4; }
+  .lc-stage.gate { background: var(--green-light); color: var(--green); }
+  .lc-stage.warn { background: var(--yellow-light); color: var(--yellow); }
+  .lc-stage.danger { background: var(--red-light); color: var(--red); }
+  .lc-arrow { color: var(--gray-400); font-size: 14px; }
+  .lc-label { font-size: 11px; font-weight: 700; color: var(--gray-600); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  /* Info bar */
+  .info-bar {
+    background: var(--blue-light);
+    border: 1px solid #93c5fd;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--blue-dark);
+    margin-bottom: 16px;
+  }
+  .info-bar strong { font-weight: 700; }
+
+  /* Principles */
+  .principle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .principle-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .principle-card dt { font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+  .principle-card dd { font-size: 12.5px; color: var(--gray-600); }
+
+  /* Scroll top */
+  #top { scroll-margin-top: 0; }
+
+  /* Print */
+  @media print {
+    .sidebar { display: none; }
+    .header { position: static; }
+    .content { padding: 20px; }
+  }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .content { padding: 20px 16px; }
+    .header { padding: 16px; }
+    .kv-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h2>AX Request Hub</h2>
+    <p>전체 구조서 v1.0 · 2026-07-23</p>
+  </div>
+  <nav>
+    <div class="section-label">개요</div>
+    <a href="#purpose">1. 시스템 목표</a>
+    <a href="#stack">2. 기술 스택</a>
+
+    <div class="section-label">라우트</div>
+    <a href="#routes-ui">3. UI 라우트</a>
+    <a href="#routes-api">4. API 라우트</a>
+
+    <div class="section-label">역할·데이터</div>
+    <a href="#roles">5. 역할 & 권한</a>
+    <a href="#models">6. DB 모델 (32종)</a>
+
+    <div class="section-label">서브시스템</div>
+    <a href="#proj-flow">7-1. 과제 신청·평가</a>
+    <a href="#lifecycle">7-2. 에이전트 라이프사이클</a>
+    <a href="#data-prov">7-3. 데이터 프로비저닝</a>
+    <a href="#tools">7-4. AI 도구·토큰</a>
+    <a href="#council">7-5. 협의회</a>
+    <a href="#audit">7-6. 감사 & 거버넌스</a>
+
+    <div class="section-label">부록</div>
+    <a href="#principles">8. 설계 원칙</a>
+    <a href="#issues">9. 미결 사항</a>
+    <a href="#history">10. 문서 이력</a>
+  </nav>
+</aside>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Header -->
+  <div class="header" id="top">
+    <div class="header-meta">
+      <span class="badge badge-blue">AX-ARCH-2026-001</span>
+      <span class="badge badge-green">v1.0</span>
+      <span class="badge badge-gray">2026-07-23</span>
+      <span class="badge badge-purple">32 모델</span>
+      <span class="badge badge-orange">30+ 라우트</span>
+    </div>
+    <h1>AX Request Hub — 전체 시스템 구조서</h1>
+    <p class="header-sub">삼성자산운용 전사 AI 거버넌스 허브 · 내부 배포용 참고문서 (honggun2233/ax-request-hub PRIVATE)</p>
+  </div>
+
+  <div class="content">
+
+    <!-- ① 시스템 목표 -->
+    <section class="section" id="purpose">
+      <h2 class="section-title"><span class="icon">🎯</span> 1. 시스템 목표</h2>
+      <p style="color:var(--gray-600); margin-bottom:16px; font-size:13px;">
+        삼성자산운용 전사 AI 도입을 <strong>신청 → 평가 → 데이터 연계 → 개발/파일럿 → 협의회 상용 전환 → 운영/폐기</strong> 전 과정을 하나의 시스템으로 추적·거버넌스한다.
+      </p>
+      <dl class="kv-grid">
+        <div class="kv-card">
+          <dt>문제</dt>
+          <dd>AI 도입 과제가 파악 안 됨</dd>
+        </div>
+        <div class="kv-card">
+          <dt>답</dt>
+          <dd>정형 신청 폼 + 자동 스코어카드로 전수 등록</dd>
+        </div>
+        <div class="kv-card">
+          <dt>문제</dt>
+          <dd>승인 근거가 남지 않음</dd>
+        </div>
+        <div class="kv-card">
+          <dt>답</dt>
+          <dd>AuditLog + ScoreCard + CouncilAgendaItem으로 모든 의사결정 추적</dd>
+        </div>
+        <div class="kv-card">
+          <dt>문제</dt>
+          <dd>데이터 사용 통제 불가</dd>
+        </div>
+        <div class="kv-card">
+          <dt>답</dt>
+          <dd>DataRequest → DataProvision 흐름으로 데이터 이력 관리</dd>
+        </div>
+        <div class="kv-card">
+          <dt>문제</dt>
+          <dd>에이전트 상태를 아무도 모름</dd>
+        </div>
+        <div class="kv-card">
+          <dt>답</dt>
+          <dd>AgentRegistry 단일 모델 + 이중 라이프사이클</dd>
+        </div>
+        <div class="kv-card">
+          <dt>문제</dt>
+          <dd>AI 도구 계정 난립</dd>
+        </div>
+        <div class="kv-card">
+          <dt>답</dt>
+          <dd>ToolAccount + DepartmentQuota + DistributionPolicy로 통제</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- ② 기술 스택 -->
+    <section class="section" id="stack">
+      <h2 class="section-title"><span class="icon">⚙️</span> 2. 기술 스택</h2>
+      <dl class="stack-grid">
+        <div class="stack-card"><dt>Framework</dt><dd>Next.js 16 (App Router)</dd></div>
+        <div class="stack-card"><dt>Language</dt><dd>TypeScript</dd></div>
+        <div class="stack-card"><dt>Styling</dt><dd>Tailwind CSS + shadcn/ui</dd></div>
+        <div class="stack-card"><dt>Auth</dt><dd>NextAuth.js (credentials)</dd></div>
+        <div class="stack-card"><dt>ORM</dt><dd>Prisma 6</dd></div>
+        <div class="stack-card"><dt>DB</dt><dd>SQLite → PostgreSQL 전환 예정</dd></div>
+        <div class="stack-card"><dt>AI</dt><dd>Claude API (claude-sonnet-4-5)</dd></div>
+        <div class="stack-card"><dt>Middleware</dt><dd>proxy.ts (withAuth 기반)</dd></div>
+        <div class="stack-card"><dt>Port</dt><dd>localhost:3005</dd></div>
+      </dl>
+    </section>
+
+    <!-- ③ UI 라우트 -->
+    <section class="section" id="routes-ui">
+      <h2 class="section-title"><span class="icon">🗺️</span> 3. UI 라우트 전체 목록</h2>
+
+      <div class="subsection">
+        <h3 class="subsection-title">공개 · 전 직원</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>라우트</th><th>설명</th><th>접근 역할</th></tr></thead>
+            <tbody>
+              <tr><td><code>/</code></td><td>홈 — 시스템 소개</td><td>누구나</td></tr>
+              <tr><td><code>/login</code></td><td>로그인</td><td>미인증</td></tr>
+              <tr><td><code>/submit</code></td><td>AI 도입 과제 신청</td><td>로그인 전체</td></tr>
+              <tr><td><code>/chat</code></td><td>AI 상담 챗 (과제 구체화)</td><td>로그인 전체</td></tr>
+              <tr><td><code>/skills</code></td><td>AI 스킬 라이브러리 열람</td><td>로그인 전체</td></tr>
+              <tr><td><code>/docs</code></td><td>거버넌스 문서 뷰어</td><td>로그인 전체</td></tr>
+              <tr><td><code>/data/catalog</code></td><td>데이터 자산 카탈로그 탐색 + 이용 신청</td><td>로그인 전체</td></tr>
+              <tr><td><code>/status/[id]</code></td><td>내 과제 상태 상세 조회</td><td>로그인 전체</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">/me — 내 정보</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>라우트</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>/me</code></td><td>내 프로필 + AI 리터러시 레벨</td></tr>
+              <tr><td><code>/me/tools</code></td><td>내 AI 도구 계정 목록</td></tr>
+              <tr><td><code>/me/usage</code></td><td>내 토큰 사용량 현황</td></tr>
+              <tr><td><code>/me/level</code></td><td>AI 리터러시 레벨 신청</td></tr>
+              <tr><td><code>/me/literacy</code></td><td>리터러시 교육 이수 현황</td></tr>
+              <tr><td><code>/me/data</code></td><td>내 데이터 신청 + 제공 현황</td></tr>
+              <tr><td><code>/me/services</code></td><td>내 사용 서비스 목록</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">/dept, /dp, /executive</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>라우트</th><th>설명</th><th>역할</th></tr></thead>
+            <tbody>
+              <tr><td><code>/dept/tools</code></td><td>부서 AI 도구 배정·관리</td><td><span class="role-chip role-DEPT_HEAD">DEPT_HEAD</span></td></tr>
+              <tr><td><code>/dp/requests</code></td><td>데이터 신청 검토·승인·제공 처리</td><td><span class="role-chip role-DATA_PLATFORM">DATA_PLATFORM</span></td></tr>
+              <tr><td><code>/executive</code></td><td>전사 AI 현황 경영진 대시보드</td><td><span class="role-chip role-EXECUTIVE">EXECUTIVE</span> <span class="role-chip role-ADMIN">ADMIN</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">/admin — AX팀 관리자</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>라우트</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>/dashboard</code></td><td>전체 과제 KPI + 칸반 보드</td></tr>
+              <tr><td><code>/governance</code></td><td>감사 로그 전체 이력</td></tr>
+              <tr><td><code>/registry</code></td><td>에이전트 레지스트리 (개발/상용 이중 라이프사이클)</td></tr>
+              <tr><td><code>/admin/employees</code></td><td>직원 계정 + 역할 관리</td></tr>
+              <tr><td><code>/admin/tokens</code></td><td>토큰 정책 + 배분 현황</td></tr>
+              <tr><td><code>/admin/tools</code></td><td>AI 도구 계정 전체 관리</td></tr>
+              <tr><td><code>/admin/tools/quota-setup</code></td><td>부서별 쿼터 설정</td></tr>
+              <tr><td><code>/admin/skills</code></td><td>스킬 등록·검수·폐기</td></tr>
+              <tr><td><code>/admin/docs</code></td><td>거버넌스 문서 등록·관리</td></tr>
+              <tr><td><code>/admin/distribution</code></td><td>토큰 배분 정책 설정</td></tr>
+              <tr><td><code>/admin/literacy</code></td><td>AI 리터러시 레벨 심사</td></tr>
+              <tr><td><code>/admin/agents</code></td><td>레거시 에이전트 관리</td></tr>
+              <tr><td><code>/admin/retired</code></td><td>폐기 에이전트 아카이브</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ④ API 라우트 -->
+    <section class="section" id="routes-api">
+      <h2 class="section-title"><span class="icon">🔌</span> 4. API 라우트 전체 목록</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>메서드</th><th>경로</th><th>권한</th><th>설명</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-blue">GET POST</span></td><td><code>/api/projects</code></td><td>로그인</td><td>과제 목록 / 신청</td></tr>
+            <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/projects/[id]</code></td><td>로그인</td><td>단건 조회</td></tr>
+            <tr><td><span class="badge badge-yellow">PATCH</span></td><td><code>/api/projects/[id]</code></td><td>ADMIN</td><td>상태 변경</td></tr>
+            <tr><td><span class="badge badge-blue">GET POST PATCH</span></td><td><code>/api/projects/[id]/appeal</code></td><td>본인/ADMIN</td><td>이의제기 신청·조회·처리</td></tr>
+            <tr><td><span class="badge badge-red">POST</span></td><td><code>/api/evaluate/[id]</code></td><td>ADMIN</td><td>과제 AI 재평가 (G3 에스컬레이션)</td></tr>
+            <tr><td><span class="badge badge-blue">GET POST</span></td><td><code>/api/registry</code></td><td>ADMIN</td><td>에이전트 레지스트리 목록/등록</td></tr>
+            <tr><td><span class="badge badge-yellow">PATCH</span></td><td><code>/api/registry/[id]</code></td><td>ADMIN</td><td>단계 전환 + 신뢰점수</td></tr>
+            <tr><td><span class="badge badge-blue">GET POST</span></td><td><code>/api/data/assets</code></td><td>로그인 / DATA_PLATFORM</td><td>자산 목록 / 등록</td></tr>
+            <tr><td><span class="badge badge-blue">GET PATCH</span></td><td><code>/api/data/assets/[id]</code></td><td>로그인 / DATA_PLATFORM</td><td>단건 조회 / 수정</td></tr>
+            <tr><td><span class="badge badge-blue">GET POST</span></td><td><code>/api/data/requests</code></td><td>로그인</td><td>데이터 신청 목록 / 신청</td></tr>
+            <tr><td><span class="badge badge-blue">GET PATCH</span></td><td><code>/api/data/requests/[id]</code></td><td>로그인 / DATA_PLATFORM</td><td>단건 / 상태 변경</td></tr>
+            <tr><td><span class="badge badge-red">POST</span></td><td><code>/api/data/provisions</code></td><td>DATA_PLATFORM</td><td>데이터 제공 처리</td></tr>
+            <tr><td><span class="badge badge-blue">GET POST</span></td><td><code>/api/tools</code></td><td>ADMIN</td><td>도구 목록/등록</td></tr>
+            <tr><td><span class="badge badge-blue">GET POST PATCH</span></td><td><code>/api/admin/tools/quota</code></td><td>ADMIN</td><td>부서 쿼터 관리</td></tr>
+            <tr><td><span class="badge badge-blue">GET POST</span></td><td><code>/api/skills</code></td><td>전체 / ADMIN</td><td>스킬 목록/등록</td></tr>
+            <tr><td><span class="badge badge-blue">GET POST</span></td><td><code>/api/governance-docs</code></td><td>전체 / ADMIN</td><td>거버넌스 문서</td></tr>
+            <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/governance</code></td><td>ADMIN</td><td>감사 로그</td></tr>
+            <tr><td><span class="badge badge-green">GET</span></td><td><code>/api/executive</code></td><td>EXECUTIVE/ADMIN</td><td>경영진 대시보드 데이터</td></tr>
+            <tr><td><span class="badge badge-gray">*</span></td><td><code>/api/auth/*</code></td><td>—</td><td>NextAuth 인증</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ⑤ 역할 -->
+    <section class="section" id="roles">
+      <h2 class="section-title"><span class="icon">🔐</span> 5. 사용자 역할 & 접근 권한</h2>
+      <div class="table-wrap" style="margin-bottom:16px;">
+        <table>
+          <thead><tr><th>역할</th><th>설명</th><th>주요 접근 범위</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="role-chip role-EMPLOYEE">EMPLOYEE</span></td>
+              <td>일반 직원</td>
+              <td>/submit, /chat, /me/*, /skills, /docs, /data/catalog</td>
+            </tr>
+            <tr>
+              <td><span class="role-chip role-DEPT_HEAD">DEPT_HEAD</span></td>
+              <td>부서장</td>
+              <td>EMPLOYEE + /dept/tools (AI 도구 배정·위임)</td>
+            </tr>
+            <tr>
+              <td><span class="role-chip role-DATA_PLATFORM">DATA_PLATFORM</span></td>
+              <td>데이터플랫폼팀</td>
+              <td>EMPLOYEE + /dp/requests (데이터 신청 검토·제공)</td>
+            </tr>
+            <tr>
+              <td><span class="role-chip role-EXECUTIVE">EXECUTIVE</span></td>
+              <td>C레벨 임원</td>
+              <td>/executive (읽기 전용 경영진 대시보드)</td>
+            </tr>
+            <tr>
+              <td><span class="role-chip role-ADMIN">ADMIN</span></td>
+              <td>AX팀</td>
+              <td>전체 페이지 (/admin/*, /dashboard, /governance, /registry)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="info-bar">
+        <strong>직무 분리 원칙:</strong> 데이터 승인·제공 → DATA_PLATFORM 전용 · 상용 전환 의결 → 협의회 필수 · 감사 로그 → 자동 기록 (수동 삭제 불가)
+      </div>
+    </section>
+
+    <!-- ⑥ DB 모델 -->
+    <section class="section" id="models">
+      <h2 class="section-title"><span class="icon">🗄️</span> 6. DB 모델 전체 목록 (32종)</h2>
+
+      <div class="subsection">
+        <h3 class="subsection-title">과제 관련 (3)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>모델</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>Project</code></td><td>AI 도입 과제 (신청~승인~파일럿)</td></tr>
+              <tr><td><code>ScoreCard</code></td><td>6차원 자동 평가 결과</td></tr>
+              <tr><td><code>ProjectAppeal</code></td><td>이의제기 신청·처리 이력</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">직원 & 계정 (2)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>모델</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>Employee</code></td><td>임직원 계정 (role: EMPLOYEE/DEPT_HEAD/DATA_PLATFORM/EXECUTIVE/ADMIN)</td></tr>
+              <tr><td><code>ChatSession</code></td><td>AI 상담 챗 세션</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">AI 도구 & 토큰 (7)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>모델</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>ToolAccount</code></td><td>AI 도구 계정 (GPT/Gemini 등)</td></tr>
+              <tr><td><code>DepartmentQuota</code></td><td>부서별 AI 도구 쿼터 (석수·밀도·부서장 위임)</td></tr>
+              <tr><td><code>ServiceAllocation</code></td><td>도구 계정 배정 이력</td></tr>
+              <tr><td><code>TokenPolicy</code></td><td>전사 토큰 정책 (월 한도·초과 처리)</td></tr>
+              <tr><td><code>DistributionPolicy</code></td><td>토큰 배분 정책</td></tr>
+              <tr><td><code>UsageRecord</code></td><td>토큰 사용 이력</td></tr>
+              <tr><td><code>UsageAlert</code></td><td>토큰 초과 알림</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">AI 리터러시 (4)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>모델</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>LevelApplication</code></td><td>AI 리터러시 레벨 신청 (L0~L4)</td></tr>
+              <tr><td><code>LevelHistory</code></td><td>레벨 이력</td></tr>
+              <tr><td><code>LiteracyCourse</code></td><td>리터러시 교육 과정</td></tr>
+              <tr><td><code>LiteracyEnrollment</code></td><td>교육 이수 현황</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">에이전트 레지스트리 (8)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>모델</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>AgentRegistry</code></td><td>에이전트 단일 SSOT (phase + devStage/prodStatus)</td></tr>
+              <tr><td><code>AgentScore</code></td><td>에이전트 KPI 실적 (개발/상용 분리)</td></tr>
+              <tr><td><code>AXProject</code></td><td>AX 프로젝트 (ETF SAM LAB 등 5종)</td></tr>
+              <tr><td><code>AgentProjectLink</code></td><td>에이전트-프로젝트 M:N 연결</td></tr>
+              <tr><td><code>CouncilMeeting</code></td><td>협의회 회의록</td></tr>
+              <tr><td><code>CouncilAgendaItem</code></td><td>협의회 안건 (PROD_APPROVAL 등 5종)</td></tr>
+              <tr><td><code>AgentArtifact</code></td><td>에이전트 산출물</td></tr>
+              <tr><td><code>AgentKnowledgeExtract</code></td><td>에이전트 지식 추출 결과</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:11.5px; color:var(--gray-400); margin-top:8px;">* 레거시 <code>Agent</code>, <code>AgentKpiRecord</code> — v3 이관 완료, 향후 제거 예정</p>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">스킬 & 문서 (3)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>모델</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>Skill</code></td><td>AI 스킬 (프롬프트 라이브러리)</td></tr>
+              <tr><td><code>SkillRating</code></td><td>스킬 평가</td></tr>
+              <tr><td><code>GovernanceDoc</code></td><td>거버넌스 문서 등록·버전</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">데이터 프로비저닝 (3)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>모델</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>DataAsset</code></td><td>데이터 자산 카탈로그 (G1/G2/G3 분류)</td></tr>
+              <tr><td><code>DataRequest</code></td><td>데이터 이용/신규 신청 (ACCESS/NEW)</td></tr>
+              <tr><td><code>DataProvision</code></td><td>데이터 제공 이력 (연결정보·이용기간·회수)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3 class="subsection-title">감사 (1)</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>모델</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>AuditLog</code></td><td>모든 자동승인·에스컬레이션·상태변경 추적</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ⑦ 서브시스템 -->
+    <section class="section" id="proj-flow">
+      <h2 class="section-title"><span class="icon">📋</span> 7-1. 과제 신청 · 평가 · 승인 플로우</h2>
+
+      <div class="flow-box">
+        <div class="flow">
+          <div class="flow-row">
+            <div class="flow-node">직원 /submit 신청</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node orange">G3 판정?</div>
+          </div>
+          <div style="margin-left:20px; border-left:2px dashed var(--gray-200); padding-left:16px; margin-top:8px; margin-bottom:8px;">
+            <div class="flow-row" style="margin-bottom:6px;">
+              <div class="flow-node red" style="font-size:11px;">G3 → Claude API 생략</div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node" style="background:var(--orange-light); border-color:var(--orange); color:var(--orange); font-size:11px;">AX팀 + 데이터플랫폼 이중 심사</div>
+            </div>
+            <div class="flow-row">
+              <div class="flow-node" style="font-size:11px;">G1/G2 → 6차원 Claude 스코어링</div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node green" style="font-size:11px;">70점+ → 자동 파일럿 승인</div>
+              <div class="flow-arrow">/</div>
+              <div class="flow-node" style="font-size:11px;">미만 → AX팀 에스컬레이션</div>
+            </div>
+          </div>
+          <div class="flow-row">
+            <div class="flow-node green">파일럿 착수 (devStage=GATE1)</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node">AgentRegistry 생성</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;" class="table-wrap">
+        <table>
+          <thead><tr><th>차원</th><th>만점</th><th>주요 평가 요소</th></tr></thead>
+          <tbody>
+            <tr><td>파급 영향력</td><td>25</td><td>영향 인원수, 업무빈도, 직접 업무 연관성</td></tr>
+            <tr><td>ROI</td><td>25</td><td>시간 절감, 비용 절감, 수익 기여</td></tr>
+            <tr><td>기밀등급</td><td>15</td><td>G1=15 / G2=10 / G3=3</td></tr>
+            <tr><td>구현 용이성</td><td>15</td><td>복잡도, 예상 소요 기간</td></tr>
+            <tr><td>실행 준비도</td><td>10</td><td>데이터 가용성, 챔피언 존재, As-Is 구체성</td></tr>
+            <tr><td>AX 전략 정합성</td><td>10</td><td>AX 100일 로드맵 등대과제 정합성</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="lifecycle">
+      <h2 class="section-title"><span class="icon">🔄</span> 7-2. 에이전트 이중 라이프사이클</h2>
+
+      <div class="flow-box">
+        <div class="lc-label">개발 트랙 (DEVELOPMENT)</div>
+        <div class="lc-row">
+          <div class="lc-stage">SUBMITTED</div><div class="lc-arrow">→</div>
+          <div class="lc-stage">EVALUATED</div><div class="lc-arrow">→</div>
+          <div class="lc-stage gate">GATE1</div><div class="lc-arrow">→</div>
+          <div class="lc-stage gate">GATE2</div><div class="lc-arrow">→</div>
+          <div class="lc-stage gate">GATE3</div><div class="lc-arrow">→</div>
+          <div class="lc-stage">PILOT_PROVEN</div><div class="lc-arrow">→</div>
+          <div class="lc-stage warn">COUNCIL_PENDING</div><div class="lc-arrow">→</div>
+          <div class="lc-stage warn">COND_APPROVED</div>
+        </div>
+
+        <div style="margin: 16px 0; padding: 10px 14px; background: var(--yellow-light); border-radius:8px; font-size:12.5px; color:var(--yellow);">
+          ⚠️ <strong>협의회 의결(CouncilAgendaItem) 없이는 상용 전환 불가</strong> — AX팀 단독 결정 금지
+        </div>
+
+        <div class="lc-label">상용 트랙 (PRODUCTION)</div>
+        <div class="lc-row">
+          <div class="lc-stage green">ACTIVE</div><div class="lc-arrow">→</div>
+          <div class="lc-stage warn">SUSPENDED</div><div class="lc-arrow">/</div>
+          <div class="lc-stage warn">DEPRECATED</div><div class="lc-arrow" style="font-size:10px;">(30일 예고)</div><div class="lc-arrow">→</div>
+          <div class="lc-stage danger">RETIRED</div>
+        </div>
+        <p style="font-size:11.5px; color:var(--gray-400); margin-top:8px;">폐기 시 연결된 DataProvision 전건 자동 회수 필요 (미결)</p>
+      </div>
+    </section>
+
+    <section class="section" id="data-prov">
+      <h2 class="section-title"><span class="icon">📦</span> 7-3. 데이터 프로비저닝 플로우</h2>
+
+      <div class="flow-box">
+        <div class="flow">
+          <div class="flow-row">
+            <div class="flow-node">/data/catalog 탐색</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node">DataRequest 신청 (ACCESS/NEW)</div>
+          </div>
+          <div class="flow-row" style="margin-top:8px;">
+            <div class="flow-arrow" style="line-height:24px; font-size:14px;">↓</div>
+          </div>
+          <div class="flow-row">
+            <div class="flow-node purple">/dp/requests — DATA_PLATFORM 검토</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node red">G3: 정보보호 협의 추가</div>
+          </div>
+          <div class="flow-row" style="margin-top:8px;">
+            <div class="flow-arrow" style="line-height:24px; font-size:14px;">↓</div>
+          </div>
+          <div class="flow-row">
+            <div class="flow-node green">DataProvision 생성</div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-node gray">deliveryMode: API/FILE/DB + expiresAt</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-bar" style="margin-top:16px;">
+        <strong>Gate 조건:</strong> DataRequest 전건 PROVISIONED 상태여야 GATE1→GATE2 전환 가능 · 상용 전환 시 재신청 필수
+      </div>
+    </section>
+
+    <section class="section" id="tools">
+      <h2 class="section-title"><span class="icon">🛠️</span> 7-4. AI 도구 & 토큰 관리</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>흐름</th><th>설명</th></tr></thead>
+          <tbody>
+            <tr><td>쿼터 설정</td><td>ADMIN이 /admin/tools/quota-setup에서 부서별 석수 배분 (GPT 150 + Gemini 50 = 200)</td></tr>
+            <tr><td>배정</td><td>DEPT_HEAD가 /dept/tools에서 팀원에게 ToolAccount 배정</td></tr>
+            <tr><td>사용 추적</td><td>UsageRecord 자동 적재 → UsageAlert 초과 감지</td></tr>
+            <tr><td>회수</td><td>ADMIN이 ServiceAllocation 비활성화</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="council">
+      <h2 class="section-title"><span class="icon">🏛️</span> 7-5. 협의회(AX위원회) 심의</h2>
+      <div class="table-wrap" style="margin-bottom:16px;">
+        <table>
+          <thead><tr><th>안건 유형</th><th>설명</th></tr></thead>
+          <tbody>
+            <tr><td><code>PROD_APPROVAL</code></td><td>파일럿 → 상용 전환 승인</td></tr>
+            <tr><td><code>RETIRE_APPROVAL</code></td><td>상용 에이전트 폐기 승인</td></tr>
+            <tr><td><code>MAJOR_CHANGE</code></td><td>상용 에이전트 주요 변경</td></tr>
+            <tr><td><code>PILOT_EXTENSION</code></td><td>파일럿 기간 연장</td></tr>
+            <tr><td><code>EMERGENCY</code></td><td>긴급 안건</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>의결 유형</th><th>결과</th></tr></thead>
+          <tbody>
+            <tr><td><code>APPROVED</code></td><td>상용 전환 확정</td></tr>
+            <tr><td><code>CONDITIONAL</code></td><td>조건부 승인 (조건 충족 후 전환)</td></tr>
+            <tr><td><code>REMANDED</code></td><td>파일럿 복귀</td></tr>
+            <tr><td><code>REJECTED</code></td><td>최종 반려</td></tr>
+            <tr><td><code>DEFERRED</code></td><td>심의 연기</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="audit">
+      <h2 class="section-title"><span class="icon">🔍</span> 7-6. 감사 로그 & 거버넌스</h2>
+      <ul style="font-size:13px; color:var(--gray-700); line-height:2; padding-left:20px;">
+        <li>AuditLog: 자동승인·에스컬레이션·협의회 의결·데이터 제공 등 모든 주요 이벤트 자동 기록</li>
+        <li>/governance에서 AX팀 전체 이력 조회 (삭제 불가 설계)</li>
+        <li>소급 승인(제0차 협의회): v3 이관 시 기존 상용 에이전트 7건 일괄 추인 안건 생성됨</li>
+        <li>G3 과제 데이터 신청 → AuditLog에 별도 플래그 기록</li>
+      </ul>
+    </section>
+
+    <!-- ⑧ 설계 원칙 -->
+    <section class="section" id="principles">
+      <h2 class="section-title"><span class="icon">📐</span> 8. 설계 원칙</h2>
+      <dl class="principle-grid">
+        <div class="principle-card">
+          <dt>거버넌스 추적 가능성</dt>
+          <dd>AuditLog 전수 기록 — 사후 추적 항상 가능</dd>
+        </div>
+        <div class="principle-card">
+          <dt>자동화 + 인간 검토</dt>
+          <dd>6차원 자동 스코어링 → 임계값 이상 자동승인, 나머지 에스컬레이션</dd>
+        </div>
+        <div class="principle-card">
+          <dt>상용 확정 = 협의회 의결</dt>
+          <dd>AgentRegistry prodStatus는 CouncilAgendaItem APPROVED 없이 변경 불가</dd>
+        </div>
+        <div class="principle-card">
+          <dt>기밀등급 관통</dt>
+          <dd>G1/G2/G3 필수 부여, G3 이중 승인, 산출물 등급 상속</dd>
+        </div>
+        <div class="principle-card">
+          <dt>데이터 직무 분리</dt>
+          <dd>승인·제공 = DATA_PLATFORM 전용, 감독 = ADMIN(읽기)</dd>
+        </div>
+        <div class="principle-card">
+          <dt>단일 진실 소스</dt>
+          <dd>Prisma + SQLite SSOT, 상태 중복 없음</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- ⑨ 미결 사항 -->
+    <section class="section" id="issues">
+      <h2 class="section-title"><span class="icon">⚠️</span> 9. 미결 사항</h2>
+      <div class="issue-grid">
+        <div class="issue-card p1">
+          <div class="issue-title">SQLite → PostgreSQL 전환</div>
+          <div class="issue-desc">전사 배포 시 동시성·백업 필수. 배포 전 선행 조건.</div>
+        </div>
+        <div class="issue-card p1">
+          <div class="issue-title">감사로그 보존기간·위변조 방지</div>
+          <div class="issue-desc">전자금융감독규정 준수 요구. 배포 전 필수.</div>
+        </div>
+        <div class="issue-card p1">
+          <div class="issue-title">시크릿 관리</div>
+          <div class="issue-desc">NEXTAUTH_SECRET, ANTHROPIC_API_KEY 환경 분리 필요.</div>
+        </div>
+        <div class="issue-card p1">
+          <div class="issue-title">G3 신청서 마스킹</div>
+          <div class="issue-desc">외부 API 전송 전 G3 내용 마스킹 or 선판정 구현.</div>
+        </div>
+        <div class="issue-card p2">
+          <div class="issue-title">KPI 자동 판정 스케줄러</div>
+          <div class="issue-desc">3개월 60% 미달 자동 판정 배치 미구현.</div>
+        </div>
+        <div class="issue-card p2">
+          <div class="issue-title">레거시 모델 제거</div>
+          <div class="issue-desc">Agent, AgentKpiRecord — v3 이관 완료 후 drop 필요.</div>
+        </div>
+        <div class="issue-card p2">
+          <div class="issue-title">폐기 시 DataProvision 자동 회수</div>
+          <div class="issue-desc">RETIRED 전환 시 연결 제공 이력 만료 처리 미구현.</div>
+        </div>
+        <div class="issue-card p2">
+          <div class="issue-title">/council UI 미구현</div>
+          <div class="issue-desc">협의회 안건 관리 페이지 없음 (API/DB만 존재).</div>
+        </div>
+        <div class="issue-card p3">
+          <div class="issue-title">알림 채널 교체</div>
+          <div class="issue-desc">Telegram → 사내 메일/메신저로 교체 필요.</div>
+        </div>
+        <div class="issue-card p3">
+          <div class="issue-title">이의제기 SLA 미명세</div>
+          <div class="issue-desc">API만 있고 처리 기한 명세 없음.</div>
+        </div>
+      </div>
+      <div style="margin-top:12px; font-size:11.5px; color:var(--gray-400);">
+        <span style="display:inline-block;width:10px;height:10px;background:var(--red);border-radius:2px;margin-right:4px;"></span>P1 — 배포 전 필수 &nbsp;
+        <span style="display:inline-block;width:10px;height:10px;background:var(--orange);border-radius:2px;margin-right:4px;"></span>P2 — 기능 완결 &nbsp;
+        <span style="display:inline-block;width:10px;height:10px;background:var(--blue);border-radius:2px;margin-right:4px;"></span>P3 — 운영 편의
+      </div>
+    </section>
+
+    <!-- ⑩ 문서 이력 -->
+    <section class="section" id="history">
+      <h2 class="section-title"><span class="icon">📋</span> 10. 문서 이력</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>버전</th><th>날짜</th><th>변경 내용</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-green">v1.0</span></td>
+              <td>2026-07-23</td>
+              <td>최초 작성 — 전체 구조 통합 (라우트 32개, 모델 32종, 역할 5종, 서브시스템 8개)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:11.5px; color:var(--gray-400); margin-top:16px;">
+        본 문서는 <code>docs/architecture_v3_통합본.md</code>(설계 상세)와 거버넌스 문서 체계(<code>AX_거버넌스_문서체계_v1.3.md</code>)를 보완하는 구조 요약서입니다. 코드 변경 시 동기화가 필요합니다.
+      </p>
+    </section>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /wrap -->
+
+<script>
+  // Active sidebar link on scroll
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('.sidebar nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const link = document.querySelector(`.sidebar nav a[href="#${e.target.id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.2, rootMargin: '-120px 0px -40% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
