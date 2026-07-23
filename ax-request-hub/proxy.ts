@@ -16,6 +16,11 @@ export default withAuth(
         return NextResponse.redirect(new URL("/me", req.url))
       }
     }
+    if (pathname.startsWith("/dp")) {
+      if (!token || !["AX_TEAM", "DATA_PLATFORM"].includes((token as any).role)) {
+        return NextResponse.redirect(new URL("/me", req.url))
+      }
+    }
     return NextResponse.next()
   },
   {
@@ -35,5 +40,5 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: ["/me/:path*", "/admin/:path*", "/submit/:path*", "/executive/:path*"],
+  matcher: ["/me/:path*", "/admin/:path*", "/submit/:path*", "/executive/:path*", "/dp/:path*"],
 }
