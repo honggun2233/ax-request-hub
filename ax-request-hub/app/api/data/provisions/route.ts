@@ -8,6 +8,7 @@ export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const role = (session.user as any)?.role
+    const userId = (session.user as any)?.id
 
     if (role !== 'DATA_PLATFORM') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.dataRequest.update({
       where: { id: requestId },
-      data: { status: 'PROVISIONED' },
+      data: { status: 'PROVISIONED', reviewerId: userId },
     })
 
     return NextResponse.json(provision, { status: 201 })

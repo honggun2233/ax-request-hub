@@ -41,9 +41,15 @@ export async function PATCH(
     const { id } = await params
     const body = await req.json()
 
+    const { name, description, ownerDept, classification, deliveryModes, updateCycle, schemaMeta, isActive } = body
+    const data = Object.fromEntries(
+      Object.entries({ name, description, ownerDept, classification, deliveryModes, updateCycle, schemaMeta, isActive })
+        .filter(([, v]) => v !== undefined)
+    )
+
     const asset = await prisma.dataAsset.update({
       where: { id },
-      data: body,
+      data,
     })
 
     return NextResponse.json(asset)
