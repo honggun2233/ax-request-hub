@@ -1,7 +1,17 @@
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { db } from '@/src/lib/db'
 
+// P3-3a: EXECUTIVE 역할 분리 — AX_TEAM(ADMIN), C_LEVEL(경영진), EXECUTIVE(임원) 허용
+const ALLOWED_ROLES = ['AX_TEAM', 'C_LEVEL', 'EXECUTIVE']
+
 export async function GET() {
+  const session = await getServerSession(authOptions)
+  if (!session || !ALLOWED_ROLES.includes((session.user as any)?.role)) {
+    return NextResponse.json({ error: '권한 없음 — AX팀 또는 경영진만 접근 가능' }, { status: 403 })
+  }
+
   const [
     agentByStage,
     projectByStatus,

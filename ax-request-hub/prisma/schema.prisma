@@ -65,6 +65,13 @@ model ChatSession {
 
 // ─── AI Hub 신규 모델 ─────────────────────────────
 
+// Employee.role 허용값 (P3-3a: EXECUTIVE 역할 추가)
+// EMPLOYEE   — 일반 직원 (기본값)
+// DEPT_HEAD  — 부서장: 부서 AI 도구 배분 권한
+// AX_TEAM    — AX팀(ADMIN): 전체 관리 권한
+// C_LEVEL    — C레벨 경영진: 전체 조회 + 승인 권한
+// EXECUTIVE  — 임원: /executive 대시보드 전용 접근 (C_LEVEL 하위 집합)
+
 model Employee {
   id             String   @id @default(cuid())
   employeeId     String   @unique
@@ -414,4 +421,78 @@ model AgentScore {
   rationale  String?
   dataType   String        @default("mock")
   recordedAt DateTime      @default(now())
+}
+
+// ── AI 스킬 카탈로그 (AX_전사AI운영체계_제안 §1) ────────────────────────────
+model Skill {
+  id            String    @id @default(cuid())
+  skillId       String    @unique   // e.g. "skill-etf-nav-check"
+  name          String
+  version       String    @default("1.0.0")
+  category      String    // 업무자동화 | ETF운용 | 리서치 | 문서작성 | 데이터분석 | 기타
+  author        String
+  approvedBy    String    @default("")
+  approvedAt    DateTime?
+  status        String    @default("draft")   // active | draft | deprecated
+  targetUsers   String    @default("[]")      // JSON array of roles
+  securityLevel String    @default("G1")      // G1(일반) | G2(내부) | G3(기밀)
+  purpose       String    @default("")
+  instructions  String    @default("")
+  promptText    String    @default("")
+  examples      String    @default("")
+  cautions      String    @default("")
+  usageCount    Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  ratings       SkillRating[]
+}
+
+model SkillRating {
+  id        String   @id @default(cuid())
+  skillId   String
+  skill     Skill    @relation(fields: [skillId], references: [id])
+  employeeEmail String
+  score     Int      // 1~5
+  comment   String   @default("")
+  createdAt DateTime @default(now())
+
+  @@unique([skillId, employeeEmail])
+}
+
+// ── 이의제기 (P1-3: 신청자 재심 요청 절차) ─────────────────────────────────
+model ProjectAppeal {
+  id              String    @id @default(cuid())
+  projectId       String
+  requesterEmail  String                         // 신청자 이메일
+  reason          String                         // 이의 사유
+  evidenceNote    String    @default("")         // 근거 자료·보충 설명
+  status          String    @default("PENDING")  // PENDING | UNDER_REVIEW | ACCEPTED | REJECTED
+  reviewedBy      String?                        // AX팀 검토자 이메일
+  reviewNote      String    @default("")         // AX팀 검토 의견
+  resolvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ── 거버넌스 문서 메타데이터 (AX_전사AI운영체계_제안 §2) ─────────────────────
+// docId 체계: AX-{TYPE}-{YYYY}-{NNN}
+//   REG=규정 | OPS=운영방안 | GUI=지침 | GDL=가이드라인 | MAN=매뉴얼 | DEV=개발표준 | TEC=기술문서
+model GovernanceDoc {
+  id            String    @id @default(cuid())
+  docId         String    @unique   // e.g. "AX-REG-2026-001"
+  fileName      String    @unique   // docs/ 하위 파일명 e.g. "AX-GUIDELINE-2026-001_AI거버넌스기본지침.md"
+  type          String    // 규정|운영방안|지침|가이드라인|매뉴얼|개발표준|기술문서
+  level         String    @default("L2")  // L1|L2|L3|L4
+  title         String
+  version       String    @default("v1.0")
+  author        String    @default("")
+  approvedBy    String    @default("")
+  approvedAt    DateTime?
+  securityLevel String    @default("G2")  // G1|G2|G3
+  status        String    @default("active")  // active|draft|deprecated
+  description   String    @default("")
+  relatedDocs   String    @default("[]")  // JSON: 관련 문서 docId 배열
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
