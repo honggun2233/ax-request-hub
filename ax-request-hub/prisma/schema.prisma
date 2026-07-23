@@ -35,9 +35,11 @@ model Project {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
-  scoreCard    ScoreCard?
-  chatSession  ChatSession?
-  dataRequests DataRequest[]
+  scoreCard      ScoreCard?
+  chatSession    ChatSession?
+  dataRequests   DataRequest[]
+  agentRegistries AgentRegistry[]
+  appeals         ProjectAppeal[]
 }
 
 model ScoreCard {
@@ -399,6 +401,7 @@ model AgentRegistry {
   scores        AgentScore[]
   projects      AgentProjectLink[]
   councilItems  CouncilAgendaItem[]
+  project       Project?            @relation(fields: [projectId], references: [id])
 }
 
 // ─── 프로젝트-에이전트 M:N 관리 ─────────────────────────────
@@ -574,6 +577,7 @@ model DataProvision {
 model ProjectAppeal {
   id              String    @id @default(cuid())
   projectId       String
+  project         Project   @relation(fields: [projectId], references: [id])
   requesterEmail  String                         // 신청자 이메일
   reason          String                         // 이의 사유
   evidenceNote    String    @default("")         // 근거 자료·보충 설명
@@ -605,4 +609,17 @@ model GovernanceDoc {
   relatedDocs   String    @default("[]")  // JSON: 관련 문서 docId 배열
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+// v3.1 — 인앱 알림 (Telegram 대체 1단계)
+model Notification {
+  id             String    @id @default(cuid())
+  recipientEmail String
+  title          String
+  body           String
+  link           String?
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([recipientEmail, readAt])
 }

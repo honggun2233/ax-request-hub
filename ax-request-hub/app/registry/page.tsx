@@ -11,18 +11,31 @@ const LIFECYCLE_STAGES = [
   { key: 'RETIRED',    label: '폐기',            color: 'bg-gray-100 text-gray-400 border-gray-200' },
 ]
 
-const STAGE_ACTIONS: Record<string, { msg: string; buttons: { label: string; action?: string }[] }> = {
-  DEVELOPING: { msg: 'CTO에 Gate1 테스트 요청 대기 중. PR 머지 후 fallback율 측정 필요.', buttons: [{ label: 'GitHub 이슈 생성' }] },
-  GATE1:      { msg: 'QA가 fallback율 ≤ 30%, AgentSignal 정상 반환 검증 중.', buttons: [{ label: '테스트 결과 업로드' }] },
-  GATE2:      { msg: '운용역 도메인 리뷰 필요 — SAM LAB 30일 데이터 누적 후 신뢰점수 태깅. 누적 시작 2026-07-14, 측정 가능일 2026-08-13.', buttons: [{ label: 'SAM LAB 열기', action: 'samlab' }, { label: '신뢰점수 태깅' }] },
-  GATE3:      { msg: 'QA 스트레스 테스트 실행 필요. 데이터 없음/이상값 시 크래시 0 확인.', buttons: [{ label: '스트레스 테스트 실행' }] },
-  ACTIVE:     { msg: '정상 운영 중. 주간 score 및 fallback율 모니터링.', buttons: [{ label: 'SAM LAB 열기', action: 'samlab' }] },
-  DEGRADED:   { msg: '⚠ 성능 저하 감지 — 즉시 점검 필요. fallback율 증가 또는 정확도 하락.', buttons: [{ label: '개선 이슈 생성' }, { label: 'SAM LAB 열기', action: 'samlab' }] },
-  RETIRED:    { msg: '폐기 완료. 아카이브에서 이력 확인 가능.', buttons: [] },
+const DOMAIN_COLOR: Record<string, string> = {
+  ETF:    'bg-blue-50 border-blue-200 text-blue-800',
+  운영:   'bg-teal-50 border-teal-200 text-teal-800',
+  효율화: 'bg-purple-50 border-purple-200 text-purple-800',
+  거버넌스:'bg-orange-50 border-orange-200 text-orange-800',
+}
+
+const STAGE_ACTIONS: Record<string, { msg: string }> = {
+  DEVELOPING: { msg: '개발 중. Gate1 진입 전 단계 — 기능 테스트 80% 이상, 데이터 플로우 다이어그램 작성 후 Gate1 신청.' },
+  GATE1:      { msg: 'QA 검증 단계 — fallback율 ≤ 30%, 핵심 기능 정상 반환 확인 중.' },
+  GATE2:      { msg: '도메인 리뷰 단계 — 담당 부서의 업무 적합성 검토 및 운용역/현업 신뢰점수 태깅 필요.' },
+  GATE3:      { msg: 'QA 스트레스 테스트 단계 — 데이터 없음/이상값 처리 및 장시간 안정성 확인 중.' },
+  ACTIVE:     { msg: '정상 운영 중. 주간 KPI 및 fallback율 모니터링.' },
+  DEGRADED:   { msg: '⚠ 성능 저하 감지 — 즉시 점검 필요. fallback율 증가 또는 정확도 하락.' },
+  RETIRED:    { msg: '폐기 완료. 아카이브에서 이력 확인 가능.' },
 }
 
 const NEXT_STAGE: Record<string, string> = {
   DEVELOPING: 'GATE1', GATE1: 'GATE2', GATE2: 'GATE3', GATE3: 'ACTIVE', DEGRADED: 'RETIRED',
+}
+
+const ROLE_LABEL: Record<string, string> = {
+  PRIMARY:      '주에이전트',
+  SUPPORTING:   '보조',
+  EXPERIMENTAL: '실험적',
 }
 
 function GateBar({ g1, g2, g3 }: { g1: boolean; g2: boolean; g3: boolean }) {
@@ -56,10 +69,23 @@ function StageBadge({ stage }: { stage: string }) {
   return <span className={`text-xs px-2 py-0.5 rounded-full border font-medium whitespace-nowrap ${s.color}`}>{s.label}</span>
 }
 
-function SlideOver({ agent, onClose, onStageChange }: { agent: any; onClose: () => void; onStageChange: () => void }) {
+// ── 슬라이드오버 ───────────────────────────────────────────────
+function SlideOver({ agent, allProjects, onClose, onStageChange }: {
+  agent: any
+  allProjects: any[]
+  onClose: () => void
+  onStageChange: () => void
+}) {
   const [trustScore, setTrustScore] = useState<number>(agent.operatorTrustScore ?? 3)
   const [comment, setComment] = useState<string>(agent.operatorComment ?? '')
   const [saving, setSaving] = useState(false)
+  const [linkSaving, setLinkSaving] = useState(false)
+  const [addingProject, setAddingProject] = useState(false)
+  const [selectedProjectId, setSelectedProjectId] = useState('')
+  const [selectedRole, setSelectedRole] = useState('PRIMARY')
+
+  const linkedProjectIds = new Set((agent.projects ?? []).map((p: any) => p.projectId))
+  const unlinkableProjects = allProjects.filter(p => !linkedProjectIds.has(p.id))
 
   const advanceStage = async (newStage: string) => {
     setSaving(true)
@@ -73,12 +99,35 @@ function SlideOver({ agent, onClose, onStageChange }: { agent: any; onClose: () 
     onClose()
   }
 
+  const addLink = async () => {
+    if (!selectedProjectId) return
+    setLinkSaving(true)
+    await fetch('/api/registry/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId: agent.id, projectId: selectedProjectId, role: selectedRole }),
+    })
+    setLinkSaving(false)
+    setAddingProject(false)
+    setSelectedProjectId('')
+    onStageChange()
+  }
+
+  const removeLink = async (projectId: string) => {
+    await fetch('/api/registry/links', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agentId: agent.id, projectId }),
+    })
+    onStageChange()
+  }
+
   const nextStage = NEXT_STAGE[agent.lifecycleStage]
 
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className="w-[420px] bg-white shadow-2xl flex flex-col overflow-y-auto border-l">
+      <div className="w-[440px] bg-white shadow-2xl flex flex-col overflow-y-auto border-l">
         <div className="flex items-start justify-between p-5 border-b bg-gray-50">
           <div>
             <h2 className="font-semibold text-gray-900 text-base">{agent.agentName}</h2>
@@ -89,13 +138,65 @@ function SlideOver({ agent, onClose, onStageChange }: { agent: any; onClose: () 
         </div>
 
         <div className="p-5 space-y-5 flex-1">
+
+          {/* 소속 프로젝트 */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">소속 프로젝트</p>
+              <button onClick={() => setAddingProject(!addingProject)}
+                className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                {addingProject ? '취소' : '+ 연결'}
+              </button>
+            </div>
+
+            {(agent.projects ?? []).length === 0 && !addingProject && (
+              <p className="text-xs text-gray-400 italic">연결된 프로젝트 없음</p>
+            )}
+
+            <div className="space-y-1.5">
+              {(agent.projects ?? []).map((link: any) => (
+                <div key={link.projectId}
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg border text-sm ${DOMAIN_COLOR[link.project?.domain] ?? 'bg-gray-50 border-gray-200'}`}>
+                  <div>
+                    <span className="font-medium">{link.project?.name}</span>
+                    <span className="ml-2 text-xs opacity-60">{ROLE_LABEL[link.role] ?? link.role}</span>
+                  </div>
+                  <button onClick={() => removeLink(link.projectId)}
+                    className="text-gray-400 hover:text-red-500 text-xs ml-2">✕</button>
+                </div>
+              ))}
+            </div>
+
+            {addingProject && (
+              <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-100 space-y-2">
+                <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)}
+                  className="w-full text-sm border border-gray-200 rounded-lg p-2 focus:outline-none focus:border-blue-300">
+                  <option value="">프로젝트 선택...</option>
+                  {unlinkableProjects.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} ({p.domain})</option>
+                  ))}
+                </select>
+                <select value={selectedRole} onChange={e => setSelectedRole(e.target.value)}
+                  className="w-full text-sm border border-gray-200 rounded-lg p-2 focus:outline-none focus:border-blue-300">
+                  <option value="PRIMARY">주에이전트 (PRIMARY)</option>
+                  <option value="SUPPORTING">보조 (SUPPORTING)</option>
+                  <option value="EXPERIMENTAL">실험적 (EXPERIMENTAL)</option>
+                </select>
+                <button onClick={addLink} disabled={!selectedProjectId || linkSaving}
+                  className="w-full py-2 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50">
+                  {linkSaving ? '저장 중...' : '연결 추가'}
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* Gate 진행도 */}
           <div>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Gate 진행도</p>
             <div className="space-y-2">
               {[
                 { label: 'Gate1 — QA 기능 검증',  passed: agent.gate1Passed, at: agent.gate1PassedAt, criteria: 'fallback율 ≤ 30%, AgentSignal 정상' },
-                { label: 'Gate2 — 도메인 검증',   passed: agent.gate2Passed, at: agent.gate2PassedAt, criteria: 'SAM LAB 30일 정확도 ≥ 55%, 신뢰점수 ≥ 3' },
+                { label: 'Gate2 — 도메인 검증',   passed: agent.gate2Passed, at: agent.gate2PassedAt, criteria: '30일 정확도 ≥ 55%, 신뢰점수 ≥ 3' },
                 { label: 'Gate3 — 스트레스 검증', passed: agent.gate3Passed, at: agent.gate3PassedAt, criteria: '이상값/데이터없음 시 크래시 0' },
               ].map(g => (
                 <div key={g.label} className={`rounded-lg px-3 py-2.5 ${g.passed ? 'bg-green-50 border border-green-100' : 'bg-gray-50 border border-gray-100'}`}>
@@ -120,7 +221,7 @@ function SlideOver({ agent, onClose, onStageChange }: { agent: any; onClose: () 
                 { label: '데이터소스',    value: agent.dataSource },
                 { label: '실데이터 연결', value: agent.realDataConnected ? '연결됨' : 'Mock 사용' },
                 { label: 'Fallback율',    value: `${Math.round(agent.fallbackRate * 100)}%`, warn: agent.fallbackRate > 0.7 },
-                { label: '30일 정확도',  value: agent.sam30dAccuracy != null ? `${Math.round(agent.sam30dAccuracy * 100)}%` : '측정 중 (30일 필요)' },
+                { label: '30일 정확도',  value: agent.sam30dAccuracy != null ? `${Math.round(agent.sam30dAccuracy * 100)}%` : '측정 중' },
                 { label: '최근 Score',    value: agent.scores?.[0]?.score?.toFixed(1) ?? '없음' },
               ].map(row => (
                 <div key={row.label} className="flex justify-between px-3 py-2 text-sm">
@@ -131,7 +232,7 @@ function SlideOver({ agent, onClose, onStageChange }: { agent: any; onClose: () 
             </div>
           </div>
 
-          {/* Gate2 운용역 리뷰 입력 */}
+          {/* Gate2 운용역 리뷰 */}
           {agent.lifecycleStage === 'GATE2' && (
             <div>
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">운용역 리뷰 태깅</p>
@@ -164,7 +265,7 @@ function SlideOver({ agent, onClose, onStageChange }: { agent: any; onClose: () 
 
         {(nextStage || agent.lifecycleStage === 'GATE3') && (
           <div className="p-4 border-t bg-gray-50 space-y-2">
-            {nextStage && (
+            {nextStage && nextStage !== 'ACTIVE' && (
               <button disabled={saving} onClick={() => advanceStage(nextStage)}
                 className="w-full py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors">
                 {saving ? '저장 중...' : `→ ${LIFECYCLE_STAGES.find(s => s.key === nextStage)?.label} 로 진행`}
@@ -189,17 +290,109 @@ function SlideOver({ agent, onClose, onStageChange }: { agent: any; onClose: () 
   )
 }
 
+// ── 프로젝트 뷰 ──────────────────────────────────────────────
+function ProjectView({ projects, onAgentClick }: { projects: any[]; onAgentClick: (agent: any) => void }) {
+  const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set(projects.map(p => p.key)))
+
+  const toggle = (key: string) => {
+    setExpandedKeys(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }
+
+  if (projects.length === 0) {
+    return <div className="text-center py-16 text-gray-400 text-sm">프로젝트 데이터 없음</div>
+  }
+
+  return (
+    <div className="space-y-3">
+      {projects.map(project => {
+        const isExpanded = expandedKeys.has(project.key)
+        const agents = project.agents ?? []
+        const activeCnt  = agents.filter((l: any) => l.agent?.lifecycleStage === 'ACTIVE').length
+        const gate2Cnt   = agents.filter((l: any) => l.agent?.lifecycleStage === 'GATE2').length
+        const domainClass = DOMAIN_COLOR[project.domain] ?? 'bg-gray-50 border-gray-200 text-gray-800'
+
+        return (
+          <div key={project.key} className="bg-white border rounded-xl overflow-hidden">
+            {/* 프로젝트 헤더 */}
+            <button onClick={() => toggle(project.key)}
+              className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors text-left">
+              <div className="flex items-center gap-3">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${domainClass}`}>{project.domain}</span>
+                <div>
+                  <p className="font-semibold text-gray-900 text-sm">{project.name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{project.description}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 ml-4 flex-shrink-0">
+                <div className="text-right text-xs text-gray-500">
+                  <div className="font-medium text-gray-900">{agents.length}개 에이전트</div>
+                  <div>운영 {activeCnt} · Gate2 {gate2Cnt}</div>
+                </div>
+                <span className="text-gray-400 text-sm">{isExpanded ? '▲' : '▼'}</span>
+              </div>
+            </button>
+
+            {/* 에이전트 목록 */}
+            {isExpanded && (
+              <div className="border-t divide-y divide-gray-50">
+                {agents.length === 0 ? (
+                  <p className="text-xs text-gray-400 px-5 py-3 italic">연결된 에이전트 없음</p>
+                ) : (
+                  agents.map((link: any) => {
+                    const agent = link.agent
+                    if (!agent) return null
+                    const isRetired = agent.lifecycleStage === 'RETIRED'
+                    return (
+                      <button key={link.id} onClick={() => !isRetired && onAgentClick(agent)}
+                        disabled={isRetired}
+                        className={`w-full flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors text-left ${isRetired ? 'opacity-40 cursor-default' : 'cursor-pointer'}`}>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium text-gray-900 truncate">{agent.agentName}</p>
+                            <span className="text-xs text-gray-400 flex-shrink-0">{ROLE_LABEL[link.role] ?? link.role}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 truncate mt-0.5">{agent.purpose}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <GateBar g1={agent.gate1Passed} g2={agent.gate2Passed} g3={agent.gate3Passed} />
+                          <StageBadge stage={agent.lifecycleStage} />
+                        </div>
+                      </button>
+                    )
+                  })
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── 메인 페이지 ──────────────────────────────────────────────
 export default function RegistryPage() {
-  const [data, setData] = useState<{ agents: any[]; stageCounts: Record<string, number> }>({ agents: [], stageCounts: {} })
+  const [agentData, setAgentData] = useState<{ agents: any[]; stageCounts: Record<string, number> }>({ agents: [], stageCounts: {} })
+  const [projects, setProjects] = useState<any[]>([])
   const [selectedStage, setSelectedStage] = useState<string | null>(null)
   const [selectedAgent, setSelectedAgent] = useState<any | null>(null)
+  const [viewMode, setViewMode] = useState<'agent' | 'project'>('agent')
   const [loading, setLoading] = useState(true)
 
   const load = async () => {
     try {
-      const res = await fetch('/api/registry')
-      const json = await res.json()
-      setData(json)
+      const [regRes, projRes] = await Promise.all([
+        fetch('/api/registry'),
+        fetch('/api/ax-projects'),
+      ])
+      const regJson  = await regRes.json()
+      const projJson = await projRes.json()
+      setAgentData(regJson)
+      setProjects(projJson.projects ?? [])
     } catch { /* ignore */ } finally {
       setLoading(false)
     }
@@ -207,125 +400,148 @@ export default function RegistryPage() {
 
   useEffect(() => { load() }, [])
 
-  const filtered = selectedStage ? data.agents.filter(a => a.lifecycleStage === selectedStage) : data.agents
+  const filtered = selectedStage ? agentData.agents.filter(a => a.lifecycleStage === selectedStage) : agentData.agents
   const stageAction = selectedStage ? STAGE_ACTIONS[selectedStage] : null
 
-  const handleBannerButton = (action?: string) => {
-    if (action === 'samlab') window.open('http://localhost:8601', '_blank')
+  // 슬라이드오버에서 에이전트 클릭 시 최신 데이터 사용
+  const openAgent = (agent: any) => {
+    const fresh = agentData.agents.find(a => a.id === agent.id) ?? agent
+    setSelectedAgent(fresh)
   }
 
   return (
     <div className="space-y-5">
+      {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">ETF 에이전트 레지스트리</h1>
-          <p className="text-sm text-gray-500 mt-0.5">라이프사이클 기반 관리 — DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE</p>
+          <h1 className="text-xl font-bold text-gray-900">에이전트 레지스트리</h1>
+          <p className="text-sm text-gray-500 mt-0.5">전사 AI 에이전트 라이프사이클 관리 — DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE</p>
         </div>
-        <div className="text-right text-sm">
-          <div className="font-medium text-gray-900">총 {data.agents.length}개</div>
-          <div className="text-gray-500">활성 {data.stageCounts['ACTIVE'] ?? 0}개</div>
-        </div>
-      </div>
-
-      {/* 라이프사이클 파이프라인 바 */}
-      <div className="bg-white border rounded-xl p-4">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">라이프사이클 단계 (클릭 → 필터)</p>
-        <div className="flex items-stretch gap-1 flex-wrap">
-          {LIFECYCLE_STAGES.map((s, i) => {
-            const count = data.stageCounts[s.key] ?? 0
-            const isSelected = selectedStage === s.key
-            const needsAttention = (s.key === 'GATE2' && count > 5) || (s.key === 'DEGRADED' && count > 0)
-            return (
-              <div key={s.key} className="flex items-center">
-                <button
-                  onClick={() => setSelectedStage(isSelected ? null : s.key)}
-                  disabled={count === 0}
-                  className={`flex flex-col items-center px-4 py-2.5 rounded-lg border text-center transition-all min-w-[80px] ${
-                    count === 0
-                      ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-default'
-                      : isSelected
-                      ? `${s.color} ring-2 ring-offset-1 ring-blue-500 shadow-sm`
-                      : `${s.color} hover:shadow-sm cursor-pointer`
-                  }`}>
-                  <span className="text-xs opacity-70 font-medium">{s.label}</span>
-                  <span className="text-2xl font-bold leading-tight mt-0.5">{count}</span>
-                  {needsAttention && <span className="text-xs mt-0.5 opacity-80">⚠ 필요</span>}
-                </button>
-                {i < LIFECYCLE_STAGES.length - 1 && (
-                  <span className="text-gray-200 mx-1 text-lg">→</span>
-                )}
-              </div>
-            )
-          })}
+        <div className="flex items-center gap-4">
+          <div className="text-right text-sm">
+            <div className="font-medium text-gray-900">총 {agentData.agents.length}개</div>
+            <div className="text-gray-500">활성 {agentData.stageCounts['ACTIVE'] ?? 0}개</div>
+          </div>
+          {/* 뷰 전환 탭 */}
+          <div className="flex bg-gray-100 rounded-lg p-0.5">
+            <button onClick={() => setViewMode('agent')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'agent' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              에이전트 뷰
+            </button>
+            <button onClick={() => setViewMode('project')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${viewMode === 'project' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              프로젝트 뷰
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 액션 배너 */}
-      {stageAction && (
-        <div className={`rounded-xl border p-4 ${selectedStage === 'DEGRADED' ? 'bg-red-50 border-red-200' : selectedStage === 'GATE2' ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
+      {loading ? (
+        <div className="text-center py-16 text-gray-400 text-sm">로딩 중...</div>
+      ) : viewMode === 'agent' ? (
+        <>
+          {/* 라이프사이클 파이프라인 바 */}
+          <div className="bg-white border rounded-xl p-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">라이프사이클 단계 (클릭 → 필터)</p>
+            <div className="flex items-stretch gap-1 flex-wrap">
+              {LIFECYCLE_STAGES.map((s, i) => {
+                const count = agentData.stageCounts[s.key] ?? 0
+                const isSelected = selectedStage === s.key
+                const needsAttention = (s.key === 'GATE2' && count > 5) || (s.key === 'DEGRADED' && count > 0)
+                return (
+                  <div key={s.key} className="flex items-center">
+                    <button
+                      onClick={() => setSelectedStage(isSelected ? null : s.key)}
+                      disabled={count === 0}
+                      className={`flex flex-col items-center px-4 py-2.5 rounded-lg border text-center transition-all min-w-[80px] ${
+                        count === 0
+                          ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-default'
+                          : isSelected
+                          ? `${s.color} ring-2 ring-offset-1 ring-blue-500 shadow-sm`
+                          : `${s.color} hover:shadow-sm cursor-pointer`
+                      }`}>
+                      <span className="text-xs opacity-70 font-medium">{s.label}</span>
+                      <span className="text-2xl font-bold leading-tight mt-0.5">{count}</span>
+                      {needsAttention && <span className="text-xs mt-0.5 opacity-80">⚠ 필요</span>}
+                    </button>
+                    {i < LIFECYCLE_STAGES.length - 1 && (
+                      <span className="text-gray-200 mx-1 text-lg">→</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* 액션 배너 */}
+          {stageAction && (
+            <div className={`rounded-xl border p-4 ${selectedStage === 'DEGRADED' ? 'bg-red-50 border-red-200' : selectedStage === 'GATE2' ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                {LIFECYCLE_STAGES.find(s => s.key === selectedStage)?.label} — {data.stageCounts[selectedStage ?? ''] ?? 0}개 에이전트
+                {LIFECYCLE_STAGES.find(s => s.key === selectedStage)?.label} — {agentData.stageCounts[selectedStage ?? ''] ?? 0}개 에이전트
               </p>
               <p className="text-sm text-gray-700 leading-relaxed">{stageAction.msg}</p>
             </div>
-            {stageAction.buttons.length > 0 && (
-              <div className="flex gap-2 flex-shrink-0 flex-wrap justify-end">
-                {stageAction.buttons.map(btn => (
-                  <button key={btn.label} onClick={() => handleBannerButton(btn.action)}
-                    className="text-xs px-3 py-1.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 whitespace-nowrap shadow-sm transition-colors">
-                    {btn.label}
-                  </button>
-                ))}
+          )}
+
+          {/* 에이전트 카드 그리드 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {filtered.map(agent => {
+              const isRetired  = agent.lifecycleStage === 'RETIRED'
+              const isDegraded = agent.lifecycleStage === 'DEGRADED'
+              const borderClass = isDegraded ? 'border-red-200 bg-red-50/30' :
+                agent.lifecycleStage === 'ACTIVE'  ? 'border-green-200' :
+                agent.lifecycleStage === 'GATE2'   ? 'border-orange-200' : 'border-gray-200'
+              const agentProjects = agent.projects ?? []
+              return (
+                <button key={agent.id} onClick={() => !isRetired && openAgent(agent)}
+                  className={`bg-white border rounded-xl p-4 text-left transition-all group ${borderClass} ${isRetired ? 'opacity-40 cursor-default' : 'hover:shadow-md cursor-pointer'}`}>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <p className="font-semibold text-gray-900 text-sm group-hover:text-blue-700 transition-colors leading-tight">
+                      {isDegraded && '⚠ '}{agent.agentName}
+                    </p>
+                    <StageBadge stage={agent.lifecycleStage} />
+                  </div>
+                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{agent.purpose}</p>
+                  {/* 소속 프로젝트 태그 */}
+                  {agentProjects.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {agentProjects.map((link: any) => (
+                        <span key={link.projectId}
+                          className={`text-xs px-1.5 py-0.5 rounded border font-medium ${DOMAIN_COLOR[link.project?.domain] ?? 'bg-gray-50 border-gray-200 text-gray-600'}`}>
+                          {link.project?.name}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <GateBar g1={agent.gate1Passed} g2={agent.gate2Passed} g3={agent.gate3Passed} />
+                  <FallbackBar rate={agent.fallbackRate} />
+                  <div className="mt-2 flex justify-between text-xs text-gray-400">
+                    <span className="truncate max-w-[140px]">{agent.dataSource.split(' ')[0]}</span>
+                    <span className={agent.realDataConnected ? 'text-green-500' : 'text-gray-300'}>
+                      {agent.realDataConnected ? '✓ 실데이터' : '○ Mock'}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
+            {filtered.length === 0 && (
+              <div className="col-span-3 text-center py-16 text-gray-400 text-sm">
+                {selectedStage ? `${LIFECYCLE_STAGES.find(s => s.key === selectedStage)?.label} 단계 에이전트 없음` : '에이전트 없음'}
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* 에이전트 카드 그리드 */}
-      {loading ? (
-        <div className="text-center py-16 text-gray-400 text-sm">로딩 중...</div>
+        </>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          {filtered.map(agent => {
-            const isRetired = agent.lifecycleStage === 'RETIRED'
-            const isDegraded = agent.lifecycleStage === 'DEGRADED'
-            const borderClass = isDegraded ? 'border-red-200 bg-red-50/30' :
-              agent.lifecycleStage === 'ACTIVE'  ? 'border-green-200' :
-              agent.lifecycleStage === 'GATE2'   ? 'border-orange-200' : 'border-gray-200'
-            return (
-              <button key={agent.id} onClick={() => !isRetired && setSelectedAgent(agent)}
-                className={`bg-white border rounded-xl p-4 text-left transition-all group ${borderClass} ${isRetired ? 'opacity-40 cursor-default' : 'hover:shadow-md cursor-pointer'}`}>
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  <p className="font-semibold text-gray-900 text-sm group-hover:text-blue-700 transition-colors leading-tight">
-                    {isDegraded && '⚠ '}{agent.agentName}
-                  </p>
-                  <StageBadge stage={agent.lifecycleStage} />
-                </div>
-                <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{agent.purpose}</p>
-                <GateBar g1={agent.gate1Passed} g2={agent.gate2Passed} g3={agent.gate3Passed} />
-                <FallbackBar rate={agent.fallbackRate} />
-                <div className="mt-2 flex justify-between text-xs text-gray-400">
-                  <span className="truncate max-w-[140px]">{agent.dataSource.split(' ')[0]}</span>
-                  <span className={agent.realDataConnected ? 'text-green-500' : 'text-gray-300'}>
-                    {agent.realDataConnected ? '✓ 실데이터' : '○ Mock'}
-                  </span>
-                </div>
-              </button>
-            )
-          })}
-          {filtered.length === 0 && (
-            <div className="col-span-3 text-center py-16 text-gray-400 text-sm">
-              {selectedStage ? `${LIFECYCLE_STAGES.find(s => s.key === selectedStage)?.label} 단계 에이전트 없음` : '에이전트 없음'}
-            </div>
-          )}
-        </div>
+        <ProjectView projects={projects} onAgentClick={openAgent} />
       )}
 
       {selectedAgent && (
-        <SlideOver agent={selectedAgent} onClose={() => setSelectedAgent(null)} onStageChange={load} />
+        <SlideOver
+          agent={selectedAgent}
+          allProjects={projects}
+          onClose={() => setSelectedAgent(null)}
+          onStageChange={load}
+        />
       )}
     </div>
   )
