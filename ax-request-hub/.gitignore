@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma sqlite db (로컬 전용)
+prisma/dev.db
+prisma/dev.db-journal
+
+# 로컬 로그
+dev.log
+
+# 바이너리·압축 파일
+docs/*.exe
+docs/*.zip

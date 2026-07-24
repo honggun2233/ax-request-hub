@@ -8,7 +8,8 @@ import { displayName } from "@/lib/council-eligibility";
  * 오프라인 협의회 의결 결과 입력 (AX팀 간사).
  * 의결 유형별 후속 처리를 한 트랜잭션으로 수행한다.
  */
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const auth = await requireRole("AX_TEAM");
   if ("error" in auth) return auth.error;
   const { decision, decisionNote, conditions, prodKpiTarget } = await req.json();
@@ -22,7 +23,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     return NextResponse.json({ error: "조건부 승인은 조건 목록이 필요합니다" }, { status: 400 });
 
   const item = await prisma.councilAgendaItem.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { agent: true },
   });
   if (!item) return NextResponse.json({ error: "안건을 찾을 수 없습니다" }, { status: 404 });

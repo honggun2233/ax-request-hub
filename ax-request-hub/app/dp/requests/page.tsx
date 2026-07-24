@@ -326,10 +326,8 @@ export default function DPRequestsPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') router.push('/login')
-    if (status === 'authenticated' && !['AX_TEAM', 'DATA_PLATFORM'].includes(role)) {
-      router.replace('/me')
-    }
-  }, [status, role, router])
+    // 개발 단계: role 제한 없음
+  }, [status, router])
 
   const fetchRequests = useCallback(async () => {
     setLoading(true)

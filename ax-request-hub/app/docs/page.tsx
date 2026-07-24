@@ -79,19 +79,36 @@ function MarkdownRenderer({ content }: { content: string }) {
       elements.push(
         <div key={elements.length} className="overflow-x-auto my-3">
           <table className="text-xs border-collapse w-full">
-            {tableLines.map((row, ri) => {
-              const cells = row.split('|').filter((_, ci) => ci > 0 && ci < row.split('|').length - 1)
-              if (cells.every(c => c.trim().match(/^[-:]+$/))) return null
-              const isHeader = ri === 0
-              return (
-                <tr key={ri} className={isHeader ? 'bg-gray-100' : 'border-t border-gray-100 hover:bg-gray-50'}>
-                  {cells.map((cell, ci) => isHeader
-                    ? <th key={ci} className="px-3 py-1.5 text-left font-semibold text-gray-700 border border-gray-200">{cell.trim()}</th>
-                    : <td key={ci} className="px-3 py-1.5 text-gray-600 border border-gray-100" dangerouslySetInnerHTML={{ __html: renderInline(cell.trim()) }} />
-                  )}
-                </tr>
-              )
-            })}
+            <thead>
+              {tableLines.filter((row, ri) => {
+                const cells = row.split('|').filter((_, ci) => ci > 0 && ci < row.split('|').length - 1)
+                return ri === 0 && !cells.every(c => c.trim().match(/^[-:]+$/))
+              }).map((row, ri) => {
+                const cells = row.split('|').filter((_, ci) => ci > 0 && ci < row.split('|').length - 1)
+                return (
+                  <tr key={ri} className="bg-gray-100">
+                    {cells.map((cell, ci) => (
+                      <th key={ci} className="px-3 py-1.5 text-left font-semibold text-gray-700 border border-gray-200">{cell.trim()}</th>
+                    ))}
+                  </tr>
+                )
+              })}
+            </thead>
+            <tbody>
+              {tableLines.filter((row, ri) => {
+                const cells = row.split('|').filter((_, ci) => ci > 0 && ci < row.split('|').length - 1)
+                return ri > 0 && !cells.every(c => c.trim().match(/^[-:]+$/))
+              }).map((row, ri) => {
+                const cells = row.split('|').filter((_, ci) => ci > 0 && ci < row.split('|').length - 1)
+                return (
+                  <tr key={ri} className="border-t border-gray-100 hover:bg-gray-50">
+                    {cells.map((cell, ci) => (
+                      <td key={ci} className="px-3 py-1.5 text-gray-600 border border-gray-100" dangerouslySetInnerHTML={{ __html: renderInline(cell.trim()) }} />
+                    ))}
+                  </tr>
+                )
+              })}
+            </tbody>
           </table>
         </div>
       )

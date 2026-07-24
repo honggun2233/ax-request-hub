@@ -17,14 +17,20 @@ const STATUS_LABEL: Record<string, { text: string; color: string }> = {
   RETURNED:  { text: '반납됨',  color: 'text-gray-500 bg-gray-50' },
 }
 
+const ADMIN_ROLES = ['AX_TEAM', 'EXECUTIVE', 'C_LEVEL']
+
 export default async function DeptToolsPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) redirect('/login')
 
   const email = session.user.email
+  const role = (session.user as any)?.role ?? 'EMPLOYEE'
+
+  // AX_TEAM·EXECUTIVE는 전체 쿼타, 부서장은 자신이 관리하는 것만
+  const isAdmin = ADMIN_ROLES.includes(role)
 
   const quotas = await db.departmentQuota.findMany({
-    where: { managedBy: email },
+    where: isAdmin ? {} : { managedBy: email },
     include: {
       toolAccounts: {
         include: { employee: { select: { name: true, email: true } } },
@@ -38,8 +44,8 @@ export default async function DeptToolsPage() {
     return (
       <div className="min-h-screen bg-gray-50 p-8 flex items-center justify-center">
         <div className="text-center text-gray-400">
-          <div className="text-lg font-medium mb-2">접근 권한 없음</div>
-          <div className="text-sm">AI 도구 쿼터를 관리하는 부서장·본부장만 이용 가능합니다.</div>
+          <div className="text-lg font-medium mb-2">쿼타 없음</div>
+          <div className="text-sm">등록된 AI 도구 쿼타가 없습니다. AX팀에 문의하세요.</div>
         </div>
       </div>
     )

@@ -31,7 +31,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = (user as any).role
+        token.role = "AX_TEAM" // 개발 단계: 모든 사용자 최고 권한
         token.currentLevel = (user as any).currentLevel
         token.department = (user as any).department
       }

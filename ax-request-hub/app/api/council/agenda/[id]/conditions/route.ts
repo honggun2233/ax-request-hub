@@ -3,12 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/authz";
 
 /** 조건 이행 체크 — 전건 이행 시 상용 전환 (재상정 불필요, v3 §8-2) */
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const auth = await requireRole("AX_TEAM");
   if ("error" in auth) return auth.error;
   const { index, done } = await req.json();
 
-  const item = await prisma.councilAgendaItem.findUnique({ where: { id: params.id } });
+  const item = await prisma.councilAgendaItem.findUnique({ where: { id } });
   if (!item || item.decision !== "CONDITIONAL" || !item.conditions)
     return NextResponse.json({ error: "조건부 승인 안건이 아닙니다" }, { status: 400 });
 

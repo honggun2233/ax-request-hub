@@ -7,12 +7,8 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    const role = (session.user as any)?.role
+    // 개발 단계: role 제한 없음
     const userId = (session.user as any)?.id
-
-    if (role !== 'DATA_PLATFORM') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
 
     const body = await req.json()
     const { requestId, deliveryMode, connectionRef, expiresAt } = body

@@ -15,6 +15,9 @@ async function main() {
     { employeeId: "EMP0006", name: "윤채원", email: "cwYoon@samsungam.com", department: "마케팅팀", jobTitle: "대리", role: "EMPLOYEE", currentLevel: "L0" },
     { employeeId: "EMP0007", name: "강민서", email: "mskang@samsungam.com", department: "경영기획팀", jobTitle: "과장", role: "EMPLOYEE", currentLevel: "L1" },
     { employeeId: "EMP0008", name: "오현석", email: "hsoh@samsungam.com", department: "데이터플랫폼팀", jobTitle: "차장", role: "MANAGER", currentLevel: "L3" },
+    { employeeId: "TST0001", name: "부서장테스트", email: "dept@samsungam.com", department: "운용본부", jobTitle: "팀장", role: "DEPT_HEAD", currentLevel: "L3" },
+    { employeeId: "TST0002", name: "경영진테스트", email: "exec@samsungam.com", department: "경영기획팀", jobTitle: "본부장", role: "EXECUTIVE", currentLevel: "L4" },
+    { employeeId: "TST0003", name: "데이터플랫폼테스트", email: "dp@samsungam.com", department: "데이터플랫폼팀", jobTitle: "선임", role: "DATA_PLATFORM", currentLevel: "L3" },
   ]
 
   const createdEmployees: Record<string, any> = {}

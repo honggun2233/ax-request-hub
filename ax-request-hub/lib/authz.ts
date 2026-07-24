@@ -24,11 +24,9 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   };
 }
 
-/** 역할 미충족 시 error(NextResponse) 반환, 충족 시 user 반환 */
-export async function requireRole(...roles: Role[]) {
+/** 역할 체크 — 개발 단계에서는 로그인만 확인, 역할 제한 없음 */
+export async function requireRole(..._roles: Role[]) {
   const user = await getSessionUser();
   if (!user) return { error: NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 }) };
-  if (roles.length && !roles.includes(user.role))
-    return { error: NextResponse.json({ error: "권한이 없습니다" }, { status: 403 }) };
   return { user };
 }

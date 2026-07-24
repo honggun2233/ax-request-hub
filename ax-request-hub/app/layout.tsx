@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
-import Sidebar from "@/components/Sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import type { Role } from "@/lib/authz";
 
 export const metadata: Metadata = {
   title: "삼성AM AI Hub",
@@ -16,13 +17,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await getServerSession(authOptions);
+  const role = ((session?.user as any)?.role ?? "EMPLOYEE") as Role;
   return (
     <html lang="ko">
       <body className="bg-gray-50">
         <Providers>
           {session ? (
             <div className="flex">
-              <Sidebar />
+              <aside className="w-60 h-screen fixed top-0 left-0 z-10">
+                <AppSidebar role={role} />
+              </aside>
               <main className="ml-60 flex-1 min-h-screen p-6">{children}</main>
             </div>
           ) : (

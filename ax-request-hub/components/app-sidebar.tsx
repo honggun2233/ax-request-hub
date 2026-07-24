@@ -1,13 +1,22 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import {
   Home, Plus, MessageCircle, ListChecks, Database, FileText, Star, Book,
   User, Wrench, Users, BarChart3, Scale, Cpu, Gavel, Archive, Coins,
-  GraduationCap, Shield,
+  GraduationCap, Shield, LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/authz";
+
+const LEVEL_BADGE: Record<string, string> = {
+  L0: "bg-gray-100 text-gray-600",
+  L1: "bg-blue-100 text-blue-700",
+  L2: "bg-green-100 text-green-700",
+  L3: "bg-orange-100 text-orange-700",
+  L4: "bg-purple-100 text-purple-700",
+};
 
 type NavItem = { href: string; label: string; icon: React.ElementType; roles?: Role[] };
 type NavGroup = { title?: string; items: NavItem[]; roles?: Role[] };
@@ -18,8 +27,7 @@ const NAV: NavGroup[] = [
   {
     title: "AI 과제",
     items: [
-      { href: "/submit", label: "과제 신청", icon: Plus },
-      { href: "/chat", label: "AI 상담", icon: MessageCircle },
+      { href: "/chat", label: "과제 신청 (AI 상담)", icon: Plus },
       { href: "/me/projects", label: "내 과제", icon: ListChecks },
     ],
   },
@@ -106,33 +114,65 @@ const NAV: NavGroup[] = [
 
 export function AppSidebar({ role }: { role: Role }) {
   const pathname = usePathname();
-  const visible = NAV.filter((g) => !g.roles || g.roles.includes(role));
+  const { data: session } = useSession();
+  const level = (session?.user as any)?.currentLevel ?? "L0";
+  const visible = NAV; // 개발 단계: 모든 메뉴 표시
   return (
-    <nav className="flex h-full w-60 flex-col gap-1 overflow-y-auto border-r bg-background px-3 py-4">
-      {visible.map((group, gi) => (
-        <div key={gi} className="mb-2">
-          {group.title && (
-            <p className="px-2 pb-1 pt-2 text-xs font-medium text-muted-foreground">{group.title}</p>
-          )}
-          {group.items.map((item) => {
-            const active = pathname === item.href.split("?")[0];
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
-                  active ? "bg-accent font-medium text-accent-foreground" : "text-foreground/80 hover:bg-accent/50"
-                )}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                {item.label}
-              </Link>
-            );
-          })}
+    <aside className="flex h-full w-60 flex-col border-r bg-white">
+      <div className="px-4 py-3 border-b">
+        <p className="text-sm font-bold text-gray-900">삼성AM AI Hub</p>
+      </div>
+      <nav className="flex-1 overflow-y-auto px-2 py-2">
+        {visible.map((group, gi) => (
+          <div key={gi} className="mb-1">
+            {group.title && (
+              <p className="px-2 pb-1 pt-3 text-xs font-medium text-gray-400 uppercase tracking-wide">
+                {group.title}
+              </p>
+            )}
+            {group.items.map((item) => {
+              const active = pathname === item.href.split("?")[0];
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors",
+                    active
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+      {session && (
+        <div className="p-3 border-t">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
+              {session.user?.name?.[0] ?? "?"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-900 truncate">{session.user?.name}</p>
+              <span className={cn("text-xs px-1.5 py-0.5 rounded font-medium", LEVEL_BADGE[level] ?? LEVEL_BADGE.L0)}>
+                {level}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => signOut()}
+            className="flex items-center gap-1.5 w-full text-xs text-gray-500 hover:text-red-500 py-1"
+          >
+            <LogOut className="h-3 w-3" /> 로그아웃
+          </button>
         </div>
-      ))}
-    </nav>
+      )}
+    </aside>
   );
 }

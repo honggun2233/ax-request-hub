@@ -5,8 +5,9 @@ import { db } from '@/src/lib/db'
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const session = await getServerSession(authOptions)
   if (!session || !['AX_TEAM', 'C_LEVEL'].includes((session.user as any).role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -21,7 +22,7 @@ export async function PATCH(
 
   const now = new Date()
   const updated = await db.toolAccount.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       ...(status && { status }),
       ...(status === 'APPROVED' && { approvedBy: session.user?.email ?? '', approvedAt: now }),
