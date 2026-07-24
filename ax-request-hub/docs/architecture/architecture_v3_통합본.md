@@ -78,20 +78,45 @@ graph TD
     Prisma --> DB["ax_hub.db<br/>SQLite 25+ 모델"]
 
     subgraph Pages ["앱 라우트 (/app)"]
-        P1["/ 홈 대시보드"]
-        P2["/submit 과제 신청"]
-        P3["/dashboard 관리자 현황"]
-        P4["/governance 감사 로그"]
-        P5["/registry 레지스트리 (개발/상용 탭)"]
-        P6["/skills AI 스킬 라이브러리"]
-        P7["/executive C레벨 대시보드"]
-        P8["/dept/tools 부서 도구 관리"]
-        P9["/docs 거버넌스 문서 뷰어"]
-        P10["/data 데이터 카탈로그·신청"]
-        P11["/dp 데이터플랫폼팀 처리"]
-        P12["/council 협의회 안건 관리"]
-        P13["/admin/* 관리자 메뉴"]
-        P14["/me/* 내 정보"]
+        subgraph EMPLOYEE_PAGES ["직원"]
+            P1["/submit 과제 신청"]
+            P2["/status/id 과제 현황"]
+            P3["/chat AI 상담"]
+            P4["/data/catalog 데이터 카탈로그·신청"]
+            P5["/skills AI 스킬 라이브러리"]
+            P6["/docs 거버넌스 문서 뷰어"]
+            P7["/me/projects 내 과제"]
+            P8["/me/tools 내 도구"]
+            P9["/me/usage 내 사용량"]
+            P10["/me/data 내 데이터 신청 현황"]
+            P11["/me/level 내 AI 레벨"]
+            P12["/me/literacy AI 리터러시 과정"]
+            P13["/me/services 배분된 AI 서비스"]
+        end
+        subgraph DEPT_PAGES ["부서장"]
+            P14["/dept/tools AI 도구 부서 배정"]
+        end
+        subgraph DP_PAGES ["데이터플랫폼팀"]
+            P15["/dp/requests 데이터 요청 처리"]
+            P16["/dp/catalog 카탈로그 관리"]
+        end
+        subgraph ADMIN_PAGES ["AX팀"]
+            P17["/dashboard 과제 관리"]
+            P18["/registry 레지스트리 개발/상용"]
+            P19["/council 협의회 안건·의결"]
+            P20["/governance 감사 로그"]
+            P21["/executive 경영진 보고"]
+            P22["/admin/tools 도구 계정"]
+            P23["/admin/tokens 토큰 한도 정책"]
+            P24["/admin/employees 직원 신청 승인"]
+            P25["/admin/agents 에이전트 관리"]
+            P26["/admin/appeals 이의신청 처리"]
+            P27["/admin/distribution AI 서비스 배분 정책"]
+            P28["/admin/literacy 리터러시 과정 관리"]
+            P29["/admin/skills 스킬 관리"]
+            P30["/admin/docs 문서 관리"]
+            P31["/admin/retired 폐기 에이전트"]
+        end
     end
 
     Next --> Pages
@@ -102,26 +127,34 @@ graph TD
 ## 4. 사용자 역할 & 접근 권한
 
 ```
-┌────────────────────────────────────────────────────────────────────┐
-│  역할            접근 가능 페이지              주요 기능             │
-├────────────────────────────────────────────────────────────────────┤
-│  EMPLOYEE        /submit, /status, /chat,      과제 신청·조회        │
-│                  /me/*, /skills, /docs,        데이터 카탈로그 검색  │
-│                  /data/catalog,                데이터 이용/신규 신청 │
-│                  /data/requests/[id]           스킬·문서 열람        │
-├────────────────────────────────────────────────────────────────────┤
-│  DEPT_HEAD       /dept/tools                   AI 도구 부서 배정     │
-│  (부서장)                                      할당·회수 위임        │
-├────────────────────────────────────────────────────────────────────┤
-│  DATA_PLATFORM   /dp/requests, /dp/catalog     데이터 요청 검토·승인 │
-│  (데이터플랫폼팀)                              카탈로그 등록·관리    │
-│                                                제공 실행·회수        │
-├────────────────────────────────────────────────────────────────────┤
-│  ADMIN           전체 페이지                   과제 평가·승인        │
-│  (AX팀)          /admin/*, /governance,        레지스트리·협의회 간사│
-│                  /dashboard, /executive,       직원 권한·토큰 정책   │
-│                  /council, /dp/* (읽기전용)    감사 로그·도구 계정   │
-└────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│  역할            접근 가능 페이지                        주요 기능                    │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│  EMPLOYEE        /submit, /status/[id], /chat            과제 신청·조회·AI 상담      │
+│                  /skills, /docs                          스킬·문서 열람              │
+│                  /data/catalog                           데이터 카탈로그 검색·신청   │
+│                  /me/projects, /me/tools, /me/usage      내 과제·도구·사용량 조회   │
+│                  /me/data                                내 데이터 신청 현황         │
+│                  /me/level, /me/literacy                 AI 레벨 신청·리터러시 수강 │
+│                  /me/services                            배분된 AI 서비스 확인       │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│  DEPT_HEAD       /dept/tools                             AI 도구 부서 배정·할당      │
+│  (부서장)                                                할당·회수 위임              │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│  DATA_PLATFORM   /dp/requests, /dp/catalog               데이터 요청 검토·승인       │
+│  (데이터플랫폼팀)                                        카탈로그 등록·관리          │
+│                                                          제공 실행·회수              │
+├──────────────────────────────────────────────────────────────────────────────────────┤
+│  ADMIN           전체 페이지 접근                        과제 평가·승인              │
+│  (AX팀)          /dashboard, /registry, /council         레지스트리·협의회 간사      │
+│                  /governance, /executive                 감사 로그·경영진 보고        │
+│                  /admin/tools, /admin/tokens             도구 계정·토큰 한도 정책    │
+│                  /admin/employees, /admin/distribution   직원 신청 승인·서비스 배분  │
+│                  /admin/agents, /admin/appeals           에이전트 관리·이의신청 처리 │
+│                  /admin/literacy, /admin/skills          리터러시 과정·스킬 관리     │
+│                  /admin/docs, /admin/retired             문서 관리·폐기 에이전트     │
+│                  /dp/* (읽기전용)                        데이터 현황 열람            │
+└──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 - 직무 분리: 데이터 승인·제공 행위는 DATA_PLATFORM 전용, ADMIN은 /dp/* 읽기 전용 열람.

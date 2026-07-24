@@ -2,7 +2,7 @@
 
 > 이 파일은 AX AI 거버넌스 문서 전체를 관리하는 마스터 인덱스다.
 > 새 문서 추가·개정 시 반드시 이 파일을 함께 갱신한다.
-> 최종 갱신: 2026-07-23
+> 최종 갱신: 2026-07-24
 
 ---
 
@@ -102,56 +102,75 @@ AI 도구 계정 배정
 
 ---
 
-## AX Hub 시스템 연결 구조 (v3)
+## AX Hub 시스템 연결 구조 (v3.1)
 
 ```mermaid
 graph TD
     subgraph 직원
-        E1[과제 신청\n/submit]
-        E2[과제 현황·상담\n/status · /chat]
-        E3[데이터 카탈로그·신청\n/data/*]
-        E4[스킬 조회\n/skills]
-        E5[문서 열람\n/docs]
-        E6[내 정보\n/me/* — 레벨·도구·사용량·데이터]
+        E1["과제 신청\n/submit"]
+        E2["과제 현황·상담\n/status · /chat"]
+        E3["데이터 카탈로그·신청\n/data/catalog"]
+        E4["스킬 조회\n/skills"]
+        E5["문서 열람\n/docs"]
+        E6["내 과제·도구·사용량\n/me/projects · /me/tools · /me/usage"]
+        E7["내 데이터 신청 현황\n/me/data"]
+        E8["AI 레벨 신청·리터러시\n/me/level · /me/literacy"]
+        E9["배분된 AI 서비스\n/me/services"]
     end
 
     subgraph 부서장
-        D1[AI 도구 배정\n/dept/tools]
+        D1["AI 도구 부서 배정\n/dept/tools"]
     end
 
     subgraph 데이터플랫폼팀
-        DP1[데이터 요청 처리\n/dp/requests]
-        DP2[카탈로그 관리\n/dp/catalog]
+        DP1["데이터 요청 처리\n/dp/requests"]
+        DP2["카탈로그 관리\n/dp/catalog"]
     end
 
-    subgraph AX팀 관리자
-        A1[과제 관리\n/dashboard]
-        A2[레지스트리 개발/상용\n/registry]
-        A3[협의회 안건·의결\n/council]
-        A4[도구 계정 관리\n/admin/tools]
-        A5[스킬 관리\n/admin/skills]
-        A6[문서 관리\n/admin/docs]
-        A7[감사 로그\n/governance]
-        A8[경영진 보고\n/executive]
+    subgraph "AX팀 관리자"
+        A1["과제 관리\n/dashboard"]
+        A2["레지스트리 개발·상용\n/registry"]
+        A3["협의회 안건·의결\n/council"]
+        A4["도구 계정·토큰 정책\n/admin/tools · /admin/tokens"]
+        A5["스킬 관리\n/admin/skills"]
+        A6["문서 관리\n/admin/docs"]
+        A7["감사 로그\n/governance"]
+        A8["경영진 보고\n/executive"]
+        A9["에이전트 관리\n/admin/agents"]
+        A10["이의신청 처리\n/admin/appeals"]
+        A11["직원 신청 승인\n/admin/employees"]
+        A12["AI 서비스 배분 정책\n/admin/distribution"]
+        A13["리터러시 과정 관리\n/admin/literacy"]
+        A14["폐기 에이전트\n/admin/retired"]
     end
 
     E1 --> A1
-    A1 -->|승인 → 에이전트 등록| A2
+    A1 -->|"승인 → 에이전트 등록"| A2
     E2 --- E1
     E3 --> DP1
-    DP1 -->|신규 적재| DP2
-    DP2 -->|카탈로그 제공| E3
-    DP1 -->|PROVISIONED → Gate 진행| A2
-    A2 -->|상정 요건 충족| A3
-    A3 -->|의결 → 상용 전환/폐기| A2
+    DP1 -->|"신규 적재"| DP2
+    DP2 -->|"카탈로그 제공"| E3
+    DP1 -->|"PROVISIONED"| E7
+    DP1 -->|"PROVISIONED → Gate 진행"| A2
+    A2 --> A9
+    A9 -->|"이의신청"| A10
+    A10 -->|"결정 반영"| A2
+    A2 -->|"상정 요건 충족"| A3
+    A3 -->|"의결 → 상용 전환/폐기"| A2
+    A2 --> A14
     A5 --> E4
     A6 --> E5
     D1 --> A4
     A4 --> E6
+    A11 -->|"승인 → 레벨 부여"| E8
+    E8 -->|"레벨 신청"| A11
+    A12 -->|"서비스 배분"| E9
+    A13 --> E8
     A2 --> A8
     A1 --> A7
     DP1 --> A7
     A3 --> A7
+    A10 --> A7
 ```
 
 ---
@@ -165,3 +184,4 @@ graph TD
 | v1.2 | 2026-07-22 | 보완 문서 2종 추가(registry-lifecycle-design, 전사AI운영체계 제안), 시스템 연결 구조도 신설, architecture.md 갱신 반영 |
 | v1.3 | 2026-07-23 | architecture.md **v3 통합**(데이터 프로비저닝·이중 라이프사이클·협의회 승인) 반영, 검토보고 문서 등재, 시스템 연결 구조도 v3 개편(고립 노드 해소, /data·/dp·/council 추가), 참조 현황에 반영 필요 항목 4건 등재, 과제 적용 문서 흐름에 데이터 확보·상용 전환·상용 운영 단계 신설 |
 | v1.4 | 2026-07-23 | 참조 현황 ⬜ 4건 → ✅ 완료 처리: REGULATION 제1조·제5조, POLICY 제9~10장, POLICY 제19~27조, MANUAL 데이터 신청 가이드 — 각 규정 문서 v1.1/v4.1/v1.1로 개정 |
+| v1.5 | 2026-07-24 | 시스템 연결 구조도 v3.1 업데이트 — 실제 구현된 라우트 전체 반영: /me/data·/me/level·/me/literacy·/me/services·/me/projects(직원), /admin/agents·/admin/appeals·/admin/employees·/admin/distribution·/admin/literacy·/admin/tokens·/admin/retired(AX팀) 추가. 에이전트 이의신청·레벨 승인·서비스 배분 흐름 연결선 추가. architecture_v3_통합본 Pages·역할표 동기화 |
