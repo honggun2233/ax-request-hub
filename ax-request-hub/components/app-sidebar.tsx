@@ -5,7 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   Home, Plus, MessageCircle, ListChecks, Database, FileText, Star, Book,
   User, Wrench, Users, BarChart3, Scale, Cpu, Gavel, Archive, Coins,
-  GraduationCap, Shield, LogOut,
+  GraduationCap, Shield, LogOut, LayoutDashboard, TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/authz";
@@ -74,6 +74,8 @@ const NAV: NavGroup[] = [
     title: "과제 운영",
     roles: ["AX_TEAM"],
     items: [
+      { href: "/admin", label: "AX팀 콘솔", icon: LayoutDashboard },
+      { href: "/admin/benefits", label: "PI 효과 실현", icon: TrendingUp },
       { href: "/dashboard", label: "과제 대시보드", icon: BarChart3 },
       { href: "/dashboard?tab=appeals", label: "이의제기 처리", icon: Scale },
     ],
