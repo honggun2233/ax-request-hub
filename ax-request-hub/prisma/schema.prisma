@@ -25,7 +25,7 @@ model Project {
   autoApproved         Boolean     @default(false)
   approvedBy           String?
   decisionNote         String?
-  // Gate 2: 기술 표준 체크리스트 (ai-agent-standards 기준)
+  // Gate 2: 기술 ?��? 체크리스??(ai-agent-standards 기�?)
   techHasApiSpec            Boolean @default(false)
   techHasDataClassification Boolean @default(false)
   techHasAuditLogging       Boolean @default(false)
@@ -35,8 +35,8 @@ model Project {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
-  // PI 효과 실현 추적 (v3.2)
-  expectedBenefitValue Float?   // 정량 예상 효과 (연간 환산)
+  // PI ?�과 ?�현 추적 (v3.2)
+  expectedBenefitValue Float?   // ?�량 ?�상 ?�과 (?�간 ?�산)
   expectedBenefitUnit  String?  // "HOURS_YEAR" | "KRW_10K_YEAR"
 
   scoreCard      ScoreCard?
@@ -71,15 +71,15 @@ model ChatSession {
   completedAt DateTime?
 }
 
-// ─── AI Hub 신규 모델 ─────────────────────────────
+// ?�?�?� AI Hub ?�규 모델 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
-// Employee.role 허용값 (P3-3a: EXECUTIVE, v3: DATA_PLATFORM 추가)
-// EMPLOYEE      — 일반 직원 (기본값)
-// DEPT_HEAD     — 부서장: 부서 AI 도구 배분 권한
-// AX_TEAM       — AX팀(ADMIN): 전체 관리 권한
-// C_LEVEL       — C레벨 경영진: 전체 조회 + 승인 권한
-// EXECUTIVE     — 임원: /executive 대시보드 전용 접근 (C_LEVEL 하위 집합)
-// DATA_PLATFORM — 데이터플랫폼팀: 데이터 자산 관리 및 데이터 요청 심사 권한
+// Employee.role ?�용�?(P3-3a: EXECUTIVE, v3: DATA_PLATFORM 추�?)
+// EMPLOYEE      ???�반 직원 (기본�?
+// DEPT_HEAD     ??부?�장: 부??AI ?�구 배분 권한
+// AX_TEAM       ??AX?�(ADMIN): ?�체 관�?권한
+// C_LEVEL       ??C?�벨 경영�? ?�체 조회 + ?�인 권한
+// EXECUTIVE     ???�원: /executive ?�?�보???�용 ?�근 (C_LEVEL ?�위 집합)
+// DATA_PLATFORM ???�이?�플?�폼?�: ?�이???�산 관�?�??�이???�청 ?�사 권한
 
 model Employee {
   id             String   @id @default(cuid())
@@ -113,7 +113,7 @@ model DepartmentQuota {
   toolType    String        // "GPT_CHAT" | "GPT_EXCEL" | "GEMINI"
   totalQuota  Int           @default(0)
   aiDensity   String        @default("STANDARD") // "HIGH" | "MEDIUM" | "STANDARD"
-  managedBy   String        // 부서장 이메일
+  managedBy   String        // 부?�장 ?�메??
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -132,7 +132,7 @@ model ToolAccount {
   toolTier         String          // "CHAT" | "EXCEL" | "ENTERPRISE"
   status           String          @default("PENDING") // "PENDING" | "APPROVED" | "ACTIVE" | "SUSPENDED" | "RETURNED"
   requestReason    String          @default("")
-  assignedByEmail  String?         // 배정한 부서장 이메일
+  assignedByEmail  String?         // 배정??부?�장 ?�메??
   approvedBy       String?
   approvedAt       DateTime?
   activatedAt      DateTime?
@@ -244,7 +244,7 @@ model UsageAlert {
   createdAt    DateTime @default(now())
 }
 
-// ─── Module 8: 폐기 에이전트 거버넌스 ─────────────────────────────
+// ?�?�?� Module 8: ?�기 ?�이?�트 거버?�스 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
 // Agent.status: ACTIVE | DEPRECATED | RETIRED
 // Agent.deprecationReason: DUPLICATE | PERFORMANCE | POLICY_CHANGE | SCOPE_CHANGE | OTHER
@@ -266,14 +266,14 @@ model Agent {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  // KPI 정의 (신규)
+  // KPI ?�의 (?�규)
   kpiName          String?
   kpiTarget        Float?
   kpiType          String?
   kpiMeasureMethod String?
   kpiMeasureCycle  String?   @default("MONTHLY")
 
-  // 성과 추적 (신규)
+  // ?�과 추적 (?�규)
   lastUsedAt       DateTime?
   kpiMissCount     Int       @default(0)
   kpiLastScore     Float?
@@ -324,7 +324,7 @@ model AgentKnowledgeExtract {
   extractedAt    DateTime @default(now())
 }
 
-// ─── AI Hub 리터러시 + 거버넌스 ─────────────────────────────
+// ?�?�?� AI Hub 리터?�시 + 거버?�스 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
 model LiteracyCourse {
   id          String   @id @default(cuid())
@@ -390,18 +390,18 @@ model AgentRegistry {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  // v3 추가 필드: 이중 라이프사이클 및 데이터 플랫폼 연동
-  name           String?      // Agent.name 매칭용 (이관 후 필수)
-  projectId      String?      // 연계 Project (이관 후 필수)
+  // v3 추�? ?�드: ?�중 ?�이?�사?�클 �??�이???�랫???�동
+  name           String?      // Agent.name 매칭??(?��? ???�수)
+  projectId      String?      // ?�계 Project (?��? ???�수)
   phase          String       @default("DEVELOPMENT") // AgentPhase: DEVELOPMENT|PRODUCTION|CLOSED
-  devStage       String?      // DevStage — phase=DEVELOPMENT 전용
-  prodStatus     String?      // ProdStatus — phase=PRODUCTION 전용
+  devStage       String?      // DevStage ??phase=DEVELOPMENT ?�용
+  prodStatus     String?      // ProdStatus ??phase=PRODUCTION ?�용
   trustScore     Int?         // (operatorTrustScore 별칭)
-  pilotKpiTarget String?      // JSON 4필드 — 전환 근거
-  prodKpiTarget  String?      // JSON 4필드 — 협의회 승인 시 확정
+  pilotKpiTarget String?      // JSON 4?�드 ???�환 근거
+  prodKpiTarget  String?      // JSON 4?�드 ???�의???�인 ???�정
   retireFlag     Boolean      @default(false)
   lastUsedAt     DateTime?
-  productionAt   DateTime?    // 협의회 승인 → 상용 전환 일시
+  productionAt   DateTime?    // ?�의???�인 ???�용 ?�환 ?�시
 
   scores        AgentScore[]
   projects      AgentProjectLink[]
@@ -409,7 +409,7 @@ model AgentRegistry {
   project       Project?            @relation(fields: [projectId], references: [id])
 }
 
-// ─── 프로젝트-에이전트 M:N 관리 ─────────────────────────────
+// ?�?�?� ?�로?�트-?�이?�트 M:N 관�??�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
 model AXProject {
   id          String   @id @default(cuid())
@@ -441,34 +441,34 @@ model AgentScore {
   id         String        @id @default(cuid())
   agentId    String
   agent      AgentRegistry @relation(fields: [agentId], references: [id])
-  // 기존 Gate 평가 점수 필드 (ETF 도메인)
+  // 기존 Gate ?��? ?�수 ?�드 (ETF ?�메??
   ticker     String?
   score      Float?
   rationale  String?
   dataType   String        @default("mock")
   recordedAt DateTime      @default(now())
-  // v3 추가 필드: KPI 월별 실적 (phase=DEVELOPMENT → 파일럿 / phase=PRODUCTION → 상용)
+  // v3 추�? ?�드: KPI ?�별 ?�적 (phase=DEVELOPMENT ???�일??/ phase=PRODUCTION ???�용)
   phase      String?       // AgentPhase: DEVELOPMENT|PRODUCTION|CLOSED
   month      String?       // "2026-07"
-  kpiActual  String?       // JSON 4필드
-  achieveRate Int?          // 달성률 %
+  kpiActual  String?       // JSON 4?�드
+  achieveRate Int?          // ?�성�?%
 
   @@unique([agentId, phase, month])
 }
 
-// ── AI 스킬 카탈로그 (AX_전사AI운영체계_제안 §1) ────────────────────────────
+// ?�?� AI ?�킬 카탈로그 (AX_?�사AI?�영체계_?�안 §1) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 model Skill {
   id            String    @id @default(cuid())
   skillId       String    @unique   // e.g. "skill-etf-nav-check"
   name          String
   version       String    @default("1.0.0")
-  category      String    // 업무자동화 | ETF운용 | 리서치 | 문서작성 | 데이터분석 | 기타
+  category      String    // ?�무?�동??| ETF?�용 | 리서�?| 문서?�성 | ?�이?�분??| 기�?
   author        String
   approvedBy    String    @default("")
   approvedAt    DateTime?
   status        String    @default("draft")   // active | draft | deprecated
   targetUsers   String    @default("[]")      // JSON array of roles
-  securityLevel String    @default("G1")      // G1(일반) | G2(내부) | G3(기밀)
+  securityLevel String    @default("G1")      // G1(?�반) | G2(?��?) | G3(기�?)
   purpose       String    @default("")
   instructions  String    @default("")
   promptText    String    @default("")
@@ -493,16 +493,16 @@ model SkillRating {
   @@unique([skillId, employeeEmail])
 }
 
-// ─── v3: SQLite는 enum 미지원 → String 필드 + 코드 레벨 제약 ──────────
-// DataClassification: G1(공개) | G2(내부) | G3(기밀)
-// DataRequestType:    ACCESS(기존 자산 이용) | NEW(신규 수집 요청)
+// ?�?�?� v3: SQLite??enum 미�?????String ?�드 + 코드 ?�벨 ?�약 ?�?�?�?�?�?�?�?�?�?�
+// DataClassification: G1(공개) | G2(?��?) | G3(기�?)
+// DataRequestType:    ACCESS(기존 ?�산 ?�용) | NEW(?�규 ?�집 ?�청)
 // DataRequestStatus:  REQUESTED | REVIEWING | SEC_REVIEW | APPROVED | COLLECTING | REJECTED | PROVISIONED | EXPIRED | REVOKED
 // AgentPhase:         DEVELOPMENT | PRODUCTION | CLOSED
 // DevStage:           SUBMITTED | EVALUATED | GATE1 | GATE2 | GATE3 | PILOT_PROVEN | COUNCIL_PENDING | COND_APPROVED | DEV_REJECTED
 // ProdStatus:         ACTIVE | SUSPENDED | DEPRECATED | RETIRED
 // CouncilDecision:    APPROVED | CONDITIONAL | REMANDED | REJECTED | DEFERRED
 
-// ─── v3: 협의회 모델 ─────────────────────────────────────────────────
+// ?�?�?� v3: ?�의??모델 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
 model CouncilMeeting {
   id        String              @id @default(cuid())
@@ -519,14 +519,14 @@ model CouncilAgendaItem {
   agentId      String
   agent        AgentRegistry  @relation(fields: [agentId], references: [id])
   itemType     String         // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE
-  packageMeta  String         // 심의 패키지 스냅샷 (JSON)
+  packageMeta  String         // ?�의 ?�키지 ?�냅??(JSON)
   decision     String?        // CouncilDecision: APPROVED|CONDITIONAL|REMANDED|REJECTED|DEFERRED
   decisionNote String?
   conditions   String?        // JSON: [{condition, done, checkedBy}]
   decidedAt    DateTime?
 }
 
-// ─── v3: 데이터 플랫폼 모델 ──────────────────────────────────────────
+// ?�?�?� v3: ?�이???�랫??모델 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 
 model DataAsset {
   id             String    @id @default(cuid())
@@ -571,37 +571,37 @@ model DataProvision {
   requestId     String      @unique
   request       DataRequest @relation(fields: [requestId], references: [id])
   deliveryMode  String      // API | FILE | DB
-  connectionRef String      // 시크릿 저장소 키
+  connectionRef String      // ?�크�??�?�소 ??
   providedAt    DateTime    @default(now())
   expiresAt     DateTime
   revokedAt     DateTime?
   revokeReason  String?
 }
 
-// ── 이의제기 (P1-3: 신청자 재심 요청 절차) ─────────────────────────────────
+// ?�?� ?�의?�기 (P1-3: ?�청???�심 ?�청 ?�차) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 model ProjectAppeal {
   id              String    @id @default(cuid())
   projectId       String
   project         Project   @relation(fields: [projectId], references: [id])
-  requesterEmail  String                         // 신청자 이메일
-  reason          String                         // 이의 사유
-  evidenceNote    String    @default("")         // 근거 자료·보충 설명
+  requesterEmail  String                         // ?�청???�메??
+  reason          String                         // ?�의 ?�유
+  evidenceNote    String    @default("")         // 근거 ?�료·보충 ?�명
   status          String    @default("PENDING")  // PENDING | UNDER_REVIEW | ACCEPTED | REJECTED
-  reviewedBy      String?                        // AX팀 검토자 이메일
-  reviewNote      String    @default("")         // AX팀 검토 의견
+  reviewedBy      String?                        // AX?� 검?�자 ?�메??
+  reviewNote      String    @default("")         // AX?� 검???�견
   resolvedAt      DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
 
-// ── 거버넌스 문서 메타데이터 (AX_전사AI운영체계_제안 §2) ─────────────────────
+// ?�?� 거버?�스 문서 메�??�이??(AX_?�사AI?�영체계_?�안 §2) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 // docId 체계: AX-{TYPE}-{YYYY}-{NNN}
-//   REG=규정 | OPS=운영방안 | GUI=지침 | GDL=가이드라인 | MAN=매뉴얼 | DEV=개발표준 | TEC=기술문서
+//   REG=규정 | OPS=?�영방안 | GUI=지�?| GDL=가?�드?�인 | MAN=매뉴??| DEV=개발?��? | TEC=기술문서
 model GovernanceDoc {
   id            String    @id @default(cuid())
   docId         String    @unique   // e.g. "AX-REG-2026-001"
-  fileName      String    @unique   // docs/ 하위 파일명 e.g. "AX-GUIDELINE-2026-001_AI거버넌스기본지침.md"
-  type          String    // 규정|운영방안|지침|가이드라인|매뉴얼|개발표준|기술문서
+  fileName      String    @unique   // docs/ ?�위 ?�일�?e.g. "AX-GUIDELINE-2026-001_AI거버?�스기본지�?md"
+  type          String    // 규정|?�영방안|지�?가?�드?�인|매뉴??개발?��?|기술문서
   level         String    @default("L2")  // L1|L2|L3|L4
   title         String
   version       String    @default("v1.0")
@@ -611,12 +611,12 @@ model GovernanceDoc {
   securityLevel String    @default("G2")  // G1|G2|G3
   status        String    @default("active")  // active|draft|deprecated
   description   String    @default("")
-  relatedDocs   String    @default("[]")  // JSON: 관련 문서 docId 배열
+  relatedDocs   String    @default("[]")  // JSON: 관??문서 docId 배열
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
 
-// v3.1 — 인앱 알림 (Telegram 대체 1단계)
+// v3.1 ???�앱 ?�림 (Telegram ?��?1?�계)
 model Notification {
   id             String    @id @default(cuid())
   recipientEmail String
@@ -629,7 +629,7 @@ model Notification {
   @@index([recipientEmail, readAt])
 }
 
-// ─── PI 효과 실현 추적 (v3.2) ─────────────────────────────────────────────
+// ?�?�?� PI ?�과 ?�현 추적 (v3.2) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
 model BenefitRecord {
   id            String   @id @default(cuid())
   projectId     String
@@ -644,3 +644,5 @@ model BenefitRecord {
 
   @@unique([projectId, period])
 }
+
+

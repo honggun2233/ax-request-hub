@@ -77,7 +77,7 @@ const NAV: NavGroup[] = [
       { href: "/admin", label: "AX팀 콘솔", icon: LayoutDashboard },
       { href: "/admin/benefits", label: "PI 효과 실현", icon: TrendingUp },
       { href: "/dashboard", label: "과제 대시보드", icon: BarChart3 },
-      { href: "/dashboard?tab=appeals", label: "이의제기 처리", icon: Scale },
+      { href: "/admin/appeals", label: "이의제기 처리", icon: Scale },
     ],
   },
   {

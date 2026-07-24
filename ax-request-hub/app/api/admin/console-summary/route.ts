@@ -41,29 +41,29 @@ export async function GET() {
     }),
   ]);
 
-  const councilConditions = conditionalItems.filter((i) => {
-    try { return (JSON.parse(i.conditions!) as { done: boolean }[]).some((c) => !c.done); }
+  const councilConditions = conditionalItems.filter((i: { conditions: string | null }) => {
+    try { return (JSON.parse(i.conditions!) as { done: boolean }[]).some((c: { done: boolean }) => !c.done); }
     catch { return false; }
   }).length;
 
-  const stageCount = (s: string) => stageRows.find((r) => r.devStage === s)?._count ?? 0;
+  const stageCount = (s: string) => stageRows.find((r: { devStage: string | null; _count: number }) => r.devStage === s)?._count ?? 0;
 
   let benefitRealizedPct: number | null = null;
   try {
     const anyPrisma = prisma as any;
     if (anyPrisma.benefitRecord) {
-      const recs = await anyPrisma.benefitRecord.findMany({ select: { realizedValue: true, projectId: true } });
+      const recs: { realizedValue: number; projectId: string }[] = await anyPrisma.benefitRecord.findMany({ select: { realizedValue: true, projectId: true } });
       const projs = await prisma.project.findMany({
-        where: { id: { in: recs.map((r: any) => r.projectId) } },
-        select: { id: true, expectedBenefitValue: true } as any,
-      });
-      const expected = projs.reduce((s: number, p: any) => s + (p.expectedBenefitValue ?? 0), 0);
-      const realized = recs.reduce((s: number, r: any) => s + r.realizedValue, 0);
+        where: { id: { in: recs.map((r) => r.projectId) } },
+        select: { id: true } as any,
+      }) as { id: string; expectedBenefitValue?: number | null }[];
+      const expected = projs.reduce((s: number, p: { expectedBenefitValue?: number | null }) => s + (p.expectedBenefitValue ?? 0), 0);
+      const realized = recs.reduce((s: number, r: { realizedValue: number }) => s + r.realizedValue, 0);
       benefitRealizedPct = expected > 0 ? Math.round((realized / expected) * 100) : null;
     }
   } catch { /* BenefitRecord 미도입 — 정상 */ }
 
-  const exceptions = expiringProvisions.map((p) => {
+  const exceptions = expiringProvisions.map((p: typeof expiringProvisions[number]) => {
     const d = Math.max(0, Math.ceil((p.expiresAt.getTime() - now.getTime()) / 86400000));
     return {
       text: `데이터 제공 만료 임박 — '${p.request.asset?.name ?? "자산"}' ${d}일 남음`,
@@ -84,13 +84,13 @@ export async function GET() {
     cards: {
       governance: { draftDocs, g3ThisMonth },
       pi: {
-        activeDepartments: new Set(activeProjects.map((p) => p.department)).size,
+        activeDepartments: new Set(activeProjects.map((p: { department: string }) => p.department)).size,
         activeProjects: activeProjects.length,
         benefitRealizedPct,
       },
       adoption: {
         activeToolAccounts,
-        totalQuota: quotas.reduce((s, q) => s + q.totalQuota, 0),
+        totalQuota: quotas.reduce((s: number, q: { totalQuota: number }) => s + q.totalQuota, 0),
         l2Plus,
       },
       pilot: {

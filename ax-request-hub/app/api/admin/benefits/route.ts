@@ -12,15 +12,16 @@ export async function GET() {
     where: { phase: "PRODUCTION", projectId: { not: null } },
     select: { projectId: true, prodStatus: true },
   });
-  const projectIds = [...new Set(prodAgents.map((a) => a.projectId!))];
+  const rawIds = prodAgents.map((a: { projectId: string | null; prodStatus: string | null }) => a.projectId).filter((id: string | null): id is string => id !== null);
+  const projectIds: string[] = Array.from(new Set(rawIds));
   const projects = await prisma.project.findMany({
     where: { id: { in: projectIds } },
     include: { benefitRecords: { orderBy: { period: "asc" } } },
   });
 
   return NextResponse.json(
-    projects.map((p) => {
-      const realizedTotal = p.benefitRecords.reduce((s, r) => s + r.realizedValue, 0);
+    projects.map((p: typeof projects[number]) => {
+      const realizedTotal = p.benefitRecords.reduce((s: number, r: { realizedValue: number }) => s + r.realizedValue, 0);
       const expected = (p as any).expectedBenefitValue as number | null;
       return {
         id: p.id,
@@ -29,7 +30,7 @@ export async function GET() {
         expectedValue: expected,
         unit: (p as any).expectedBenefitUnit ?? p.benefitRecords[0]?.unit ?? null,
         unitLabel: UNIT_LABEL[(p as any).expectedBenefitUnit ?? ""] ?? null,
-        records: p.benefitRecords.map((r) => ({ period: r.period, value: r.realizedValue, note: r.note })),
+        records: p.benefitRecords.map((r: { period: string; realizedValue: number; note: string }) => ({ period: r.period, value: r.realizedValue, note: r.note })),
         realizedTotal,
         realizedPct: expected ? Math.round((realizedTotal / expected) * 100) : null,
       };

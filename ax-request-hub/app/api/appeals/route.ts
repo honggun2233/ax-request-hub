@@ -11,9 +11,9 @@ export async function GET() {
     orderBy: { createdAt: "asc" },
   });
   const projects = await prisma.project.findMany({
-    where: { id: { in: appeals.map((a) => a.projectId) } },
+    where: { id: { in: appeals.map((a: { projectId: string }) => a.projectId) } },
     select: { id: true, title: true },
   });
-  const titleMap = Object.fromEntries(projects.map((p) => [p.id, p.title]));
-  return NextResponse.json(appeals.map((a) => ({ ...a, projectTitle: titleMap[a.projectId] })));
+  const titleMap = Object.fromEntries(projects.map((p: { id: string; title: string }) => [p.id, p.title]));
+  return NextResponse.json(appeals.map((a: typeof appeals[number]) => ({ ...a, projectTitle: titleMap[a.projectId] })));
 }

@@ -145,7 +145,8 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
             <div>
               <p className="text-2xl mb-2">✓</p>
               <p className="font-semibold text-gray-900">신청이 접수되었습니다</p>
-              <p className="text-sm text-gray-500 mt-1">잠시 후 창이 닫힙니다</p>
+              <p className="text-sm text-gray-500 mt-1">데이터플랫폼팀이 검토 후 처리합니다.</p>
+              <a href="/me/data" className="inline-block mt-3 text-sm text-blue-600 hover:underline">내 신청 내역 보기 →</a>
             </div>
           </div>
         ) : (
