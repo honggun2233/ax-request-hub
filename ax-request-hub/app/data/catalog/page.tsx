@@ -90,22 +90,34 @@ function AssetCard({ asset, onRequest }: { asset: DataAsset; onRequest: (asset: 
 }
 
 // ── Request Modal ──────────────────────────────────────────────
+interface ProjectOption { id: string; title: string }
+
 function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => void }) {
   const { asset, type } = modal
   const [projectId, setProjectId] = useState('')
+  const [projects, setProjects] = useState<ProjectOption[]>([])
   const [purpose, setPurpose] = useState('')
   const [classification, setClassification] = useState(asset.classification)
   const [periodMonths, setPeriodMonths] = useState(3)
   const [requestedSpec, setRequestedSpec] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then(r => r.ok ? r.json() : [])
+      .then((d: any[]) => Array.isArray(d) ? setProjects(d.map(p => ({ id: p.id, title: p.title }))) : setProjects([]))
+      .catch(() => {})
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!purpose.trim()) return
     setSubmitting(true)
+    setErrorMsg('')
     try {
-      await fetch('/api/data/requests', {
+      const res = await fetch('/api/data/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -118,9 +130,14 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
           requestedSpec: type === 'NEW' ? requestedSpec : undefined,
         }),
       })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.error ?? `서버 오류 (${res.status})`)
+      }
       setSuccess(true)
       setTimeout(() => onClose(), 1500)
-    } catch {
+    } catch (err: any) {
+      setErrorMsg(err.message ?? '신청 중 오류가 발생했습니다')
       setSubmitting(false)
     }
   }
@@ -157,16 +174,19 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
               <p className="text-sm font-semibold text-gray-900">{type === 'ACCESS' ? '이용신청 (ACCESS)' : '신규요청 (NEW)'}</p>
             </div>
 
-            {/* Project ID */}
+            {/* Project selector */}
             <div>
-              <label className="text-xs font-medium text-gray-700 block mb-1">연계 과제 ID</label>
-              <input
-                type="text"
+              <label className="text-xs font-medium text-gray-700 block mb-1">연계 과제 (선택)</label>
+              <select
                 value={projectId}
                 onChange={e => setProjectId(e.target.value)}
-                placeholder="proj_xxx"
-                className="w-full text-sm border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:border-blue-300"
-              />
+                className="w-full text-sm border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:border-blue-300 bg-white"
+              >
+                <option value="">선택 안함</option>
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.title}</option>
+                ))}
+              </select>
             </div>
 
             {/* Purpose */}
@@ -223,6 +243,11 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
               </div>
             )}
 
+            {errorMsg && (
+              <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+                {errorMsg}
+              </div>
+            )}
             <button
               type="submit"
               disabled={submitting || !purpose.trim()}

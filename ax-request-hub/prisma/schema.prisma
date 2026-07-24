@@ -25,7 +25,7 @@ model Project {
   autoApproved         Boolean     @default(false)
   approvedBy           String?
   decisionNote         String?
-  // Gate 2: ê¸°ìˆ  ?œì? ì²´í¬ë¦¬ìŠ¤??(ai-agent-standards ê¸°ì?)
+  // Gate 2: ê¸°ìˆ  ?ï¿½ï¿½? ì²´í¬ë¦¬ìŠ¤??(ai-agent-standards ê¸°ï¿½?)
   techHasApiSpec            Boolean @default(false)
   techHasDataClassification Boolean @default(false)
   techHasAuditLogging       Boolean @default(false)
@@ -35,8 +35,8 @@ model Project {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
-  // PI ?¨ê³¼ ?¤í˜„ ì¶”ì  (v3.2)
-  expectedBenefitValue Float?   // ?•ëŸ‰ ?ˆìƒ ?¨ê³¼ (?°ê°„ ?˜ì‚°)
+  // PI ?ï¿½ê³¼ ?ï¿½í˜„ ì¶”ì  (v3.2)
+  expectedBenefitValue Float?   // ?ï¿½ëŸ‰ ?ï¿½ìƒ ?ï¿½ê³¼ (?ï¿½ê°„ ?ï¿½ì‚°)
   expectedBenefitUnit  String?  // "HOURS_YEAR" | "KRW_10K_YEAR"
 
   scoreCard      ScoreCard?
@@ -71,15 +71,15 @@ model ChatSession {
   completedAt DateTime?
 }
 
-// ?€?€?€ AI Hub ? ê·œ ëª¨ë¸ ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½?ï¿½ AI Hub ?ï¿½ê·œ ëª¨ë¸ ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 
-// Employee.role ?ˆìš©ê°?(P3-3a: EXECUTIVE, v3: DATA_PLATFORM ì¶”ê?)
-// EMPLOYEE      ???¼ë°˜ ì§ì› (ê¸°ë³¸ê°?
-// DEPT_HEAD     ??ë¶€?œì¥: ë¶€??AI ?„êµ¬ ë°°ë¶„ ê¶Œí•œ
-// AX_TEAM       ??AX?€(ADMIN): ?„ì²´ ê´€ë¦?ê¶Œí•œ
-// C_LEVEL       ??C?ˆë²¨ ê²½ì˜ì§? ?„ì²´ ì¡°íšŒ + ?¹ì¸ ê¶Œí•œ
-// EXECUTIVE     ???„ì›: /executive ?€?œë³´???„ìš© ?‘ê·¼ (C_LEVEL ?˜ìœ„ ì§‘í•©)
-// DATA_PLATFORM ???°ì´?°í”Œ?«í¼?€: ?°ì´???ì‚° ê´€ë¦?ë°??°ì´???”ì²­ ?¬ì‚¬ ê¶Œí•œ
+// Employee.role ?ï¿½ìš©ï¿½?(P3-3a: EXECUTIVE, v3: DATA_PLATFORM ì¶”ï¿½?)
+// EMPLOYEE      ???ï¿½ë°˜ ì§ì› (ê¸°ë³¸ï¿½?
+// DEPT_HEAD     ??ë¶€?ï¿½ì¥: ë¶€??AI ?ï¿½êµ¬ ë°°ë¶„ ê¶Œí•œ
+// AX_TEAM       ??AX?ï¿½(ADMIN): ?ï¿½ì²´ ê´€ï¿½?ê¶Œí•œ
+// C_LEVEL       ??C?ï¿½ë²¨ ê²½ì˜ï¿½? ?ï¿½ì²´ ì¡°íšŒ + ?ï¿½ì¸ ê¶Œí•œ
+// EXECUTIVE     ???ï¿½ì›: /executive ?ï¿½?ï¿½ë³´???ï¿½ìš© ?ï¿½ê·¼ (C_LEVEL ?ï¿½ìœ„ ì§‘í•©)
+// DATA_PLATFORM ???ï¿½ì´?ï¿½í”Œ?ï¿½í¼?ï¿½: ?ï¿½ì´???ï¿½ì‚° ê´€ï¿½?ï¿½??ï¿½ì´???ï¿½ì²­ ?ï¿½ì‚¬ ê¶Œí•œ
 
 model Employee {
   id             String   @id @default(cuid())
@@ -113,7 +113,7 @@ model DepartmentQuota {
   toolType    String        // "GPT_CHAT" | "GPT_EXCEL" | "GEMINI"
   totalQuota  Int           @default(0)
   aiDensity   String        @default("STANDARD") // "HIGH" | "MEDIUM" | "STANDARD"
-  managedBy   String        // ë¶€?œì¥ ?´ë©”??
+  managedBy   String        // ë¶€?ï¿½ì¥ ?ï¿½ë©”??
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -132,7 +132,7 @@ model ToolAccount {
   toolTier         String          // "CHAT" | "EXCEL" | "ENTERPRISE"
   status           String          @default("PENDING") // "PENDING" | "APPROVED" | "ACTIVE" | "SUSPENDED" | "RETURNED"
   requestReason    String          @default("")
-  assignedByEmail  String?         // ë°°ì •??ë¶€?œì¥ ?´ë©”??
+  assignedByEmail  String?         // ë°°ì •??ë¶€?ï¿½ì¥ ?ï¿½ë©”??
   approvedBy       String?
   approvedAt       DateTime?
   activatedAt      DateTime?
@@ -244,7 +244,7 @@ model UsageAlert {
   createdAt    DateTime @default(now())
 }
 
-// ?€?€?€ Module 8: ?ê¸° ?ì´?„íŠ¸ ê±°ë²„?ŒìŠ¤ ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½?ï¿½ Module 8: ?ï¿½ê¸° ?ï¿½ì´?ï¿½íŠ¸ ê±°ë²„?ï¿½ìŠ¤ ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 
 // Agent.status: ACTIVE | DEPRECATED | RETIRED
 // Agent.deprecationReason: DUPLICATE | PERFORMANCE | POLICY_CHANGE | SCOPE_CHANGE | OTHER
@@ -266,14 +266,14 @@ model Agent {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  // KPI ?•ì˜ (? ê·œ)
+  // KPI ?ï¿½ì˜ (?ï¿½ê·œ)
   kpiName          String?
   kpiTarget        Float?
   kpiType          String?
   kpiMeasureMethod String?
   kpiMeasureCycle  String?   @default("MONTHLY")
 
-  // ?±ê³¼ ì¶”ì  (? ê·œ)
+  // ?ï¿½ê³¼ ì¶”ì  (?ï¿½ê·œ)
   lastUsedAt       DateTime?
   kpiMissCount     Int       @default(0)
   kpiLastScore     Float?
@@ -324,7 +324,7 @@ model AgentKnowledgeExtract {
   extractedAt    DateTime @default(now())
 }
 
-// ?€?€?€ AI Hub ë¦¬í„°?¬ì‹œ + ê±°ë²„?ŒìŠ¤ ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½?ï¿½ AI Hub ë¦¬í„°?ï¿½ì‹œ + ê±°ë²„?ï¿½ìŠ¤ ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 
 model LiteracyCourse {
   id          String   @id @default(cuid())
@@ -390,18 +390,18 @@ model AgentRegistry {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  // v3 ì¶”ê? ?„ë“œ: ?´ì¤‘ ?¼ì´?„ì‚¬?´í´ ë°??°ì´???Œë«???°ë™
-  name           String?      // Agent.name ë§¤ì¹­??(?´ê? ???„ìˆ˜)
-  projectId      String?      // ?°ê³„ Project (?´ê? ???„ìˆ˜)
+  // v3 ì¶”ï¿½? ?ï¿½ë“œ: ?ï¿½ì¤‘ ?ï¿½ì´?ï¿½ì‚¬?ï¿½í´ ï¿½??ï¿½ì´???ï¿½ë«???ï¿½ë™
+  name           String?      // Agent.name ë§¤ì¹­??(?ï¿½ï¿½? ???ï¿½ìˆ˜)
+  projectId      String?      // ?ï¿½ê³„ Project (?ï¿½ï¿½? ???ï¿½ìˆ˜)
   phase          String       @default("DEVELOPMENT") // AgentPhase: DEVELOPMENT|PRODUCTION|CLOSED
-  devStage       String?      // DevStage ??phase=DEVELOPMENT ?„ìš©
-  prodStatus     String?      // ProdStatus ??phase=PRODUCTION ?„ìš©
+  devStage       String?      // DevStage ??phase=DEVELOPMENT ?ï¿½ìš©
+  prodStatus     String?      // ProdStatus ??phase=PRODUCTION ?ï¿½ìš©
   trustScore     Int?         // (operatorTrustScore ë³„ì¹­)
-  pilotKpiTarget String?      // JSON 4?„ë“œ ???„í™˜ ê·¼ê±°
-  prodKpiTarget  String?      // JSON 4?„ë“œ ???‘ì˜???¹ì¸ ???•ì •
+  pilotKpiTarget String?      // JSON 4?ï¿½ë“œ ???ï¿½í™˜ ê·¼ê±°
+  prodKpiTarget  String?      // JSON 4?ï¿½ë“œ ???ï¿½ì˜???ï¿½ì¸ ???ï¿½ì •
   retireFlag     Boolean      @default(false)
   lastUsedAt     DateTime?
-  productionAt   DateTime?    // ?‘ì˜???¹ì¸ ???ìš© ?„í™˜ ?¼ì‹œ
+  productionAt   DateTime?    // ?ï¿½ì˜???ï¿½ì¸ ???ï¿½ìš© ?ï¿½í™˜ ?ï¿½ì‹œ
 
   scores        AgentScore[]
   projects      AgentProjectLink[]
@@ -409,7 +409,7 @@ model AgentRegistry {
   project       Project?            @relation(fields: [projectId], references: [id])
 }
 
-// ?€?€?€ ?„ë¡œ?íŠ¸-?ì´?„íŠ¸ M:N ê´€ë¦??€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½?ï¿½ ?ï¿½ë¡œ?ï¿½íŠ¸-?ï¿½ì´?ï¿½íŠ¸ M:N ê´€ï¿½??ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 
 model AXProject {
   id          String   @id @default(cuid())
@@ -441,34 +441,34 @@ model AgentScore {
   id         String        @id @default(cuid())
   agentId    String
   agent      AgentRegistry @relation(fields: [agentId], references: [id])
-  // ê¸°ì¡´ Gate ?‰ê? ?ìˆ˜ ?„ë“œ (ETF ?„ë©”??
+  // ê¸°ì¡´ Gate ?ï¿½ï¿½? ?ï¿½ìˆ˜ ?ï¿½ë“œ (ETF ?ï¿½ë©”??
   ticker     String?
   score      Float?
   rationale  String?
   dataType   String        @default("mock")
   recordedAt DateTime      @default(now())
-  // v3 ì¶”ê? ?„ë“œ: KPI ?”ë³„ ?¤ì  (phase=DEVELOPMENT ???Œì¼??/ phase=PRODUCTION ???ìš©)
+  // v3 ì¶”ï¿½? ?ï¿½ë“œ: KPI ?ï¿½ë³„ ?ï¿½ì  (phase=DEVELOPMENT ???ï¿½ì¼??/ phase=PRODUCTION ???ï¿½ìš©)
   phase      String?       // AgentPhase: DEVELOPMENT|PRODUCTION|CLOSED
   month      String?       // "2026-07"
-  kpiActual  String?       // JSON 4?„ë“œ
-  achieveRate Int?          // ?¬ì„±ë¥?%
+  kpiActual  String?       // JSON 4?ï¿½ë“œ
+  achieveRate Int?          // ?ï¿½ì„±ï¿½?%
 
   @@unique([agentId, phase, month])
 }
 
-// ?€?€ AI ?¤í‚¬ ì¹´íƒˆë¡œê·¸ (AX_?„ì‚¬AI?´ì˜ì²´ê³„_?œì•ˆ Â§1) ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½ AI ?ï¿½í‚¬ ì¹´íƒˆë¡œê·¸ (AX_?ï¿½ì‚¬AI?ï¿½ì˜ì²´ê³„_?ï¿½ì•ˆ Â§1) ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 model Skill {
   id            String    @id @default(cuid())
   skillId       String    @unique   // e.g. "skill-etf-nav-check"
   name          String
   version       String    @default("1.0.0")
-  category      String    // ?…ë¬´?ë™??| ETF?´ìš© | ë¦¬ì„œì¹?| ë¬¸ì„œ?‘ì„± | ?°ì´?°ë¶„??| ê¸°í?
+  category      String    // ?ï¿½ë¬´?ï¿½ë™??| ETF?ï¿½ìš© | ë¦¬ì„œï¿½?| ë¬¸ì„œ?ï¿½ì„± | ?ï¿½ì´?ï¿½ë¶„??| ê¸°ï¿½?
   author        String
   approvedBy    String    @default("")
   approvedAt    DateTime?
   status        String    @default("draft")   // active | draft | deprecated
   targetUsers   String    @default("[]")      // JSON array of roles
-  securityLevel String    @default("G1")      // G1(?¼ë°˜) | G2(?´ë?) | G3(ê¸°ë?)
+  securityLevel String    @default("G1")      // G1(?ï¿½ë°˜) | G2(?ï¿½ï¿½?) | G3(ê¸°ï¿½?)
   purpose       String    @default("")
   instructions  String    @default("")
   promptText    String    @default("")
@@ -493,16 +493,16 @@ model SkillRating {
   @@unique([skillId, employeeEmail])
 }
 
-// ?€?€?€ v3: SQLite??enum ë¯¸ì?????String ?„ë“œ + ì½”ë“œ ?ˆë²¨ ?œì•½ ?€?€?€?€?€?€?€?€?€?€
-// DataClassification: G1(ê³µê°œ) | G2(?´ë?) | G3(ê¸°ë?)
-// DataRequestType:    ACCESS(ê¸°ì¡´ ?ì‚° ?´ìš©) | NEW(? ê·œ ?˜ì§‘ ?”ì²­)
+// ?ï¿½?ï¿½?ï¿½ v3: SQLite??enum ë¯¸ï¿½?????String ?ï¿½ë“œ + ì½”ë“œ ?ï¿½ë²¨ ?ï¿½ì•½ ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
+// DataClassification: G1(ê³µê°œ) | G2(?ï¿½ï¿½?) | G3(ê¸°ï¿½?)
+// DataRequestType:    ACCESS(ê¸°ì¡´ ?ï¿½ì‚° ?ï¿½ìš©) | NEW(?ï¿½ê·œ ?ï¿½ì§‘ ?ï¿½ì²­)
 // DataRequestStatus:  REQUESTED | REVIEWING | SEC_REVIEW | APPROVED | COLLECTING | REJECTED | PROVISIONED | EXPIRED | REVOKED
 // AgentPhase:         DEVELOPMENT | PRODUCTION | CLOSED
 // DevStage:           SUBMITTED | EVALUATED | GATE1 | GATE2 | GATE3 | PILOT_PROVEN | COUNCIL_PENDING | COND_APPROVED | DEV_REJECTED
 // ProdStatus:         ACTIVE | SUSPENDED | DEPRECATED | RETIRED
 // CouncilDecision:    APPROVED | CONDITIONAL | REMANDED | REJECTED | DEFERRED
 
-// ?€?€?€ v3: ?‘ì˜??ëª¨ë¸ ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½?ï¿½ v3: ?ï¿½ì˜??ëª¨ë¸ ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 
 model CouncilMeeting {
   id        String              @id @default(cuid())
@@ -519,14 +519,14 @@ model CouncilAgendaItem {
   agentId      String
   agent        AgentRegistry  @relation(fields: [agentId], references: [id])
   itemType     String         // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE
-  packageMeta  String         // ?¬ì˜ ?¨í‚¤ì§€ ?¤ëƒ…??(JSON)
+  packageMeta  String         // ?ï¿½ì˜ ?ï¿½í‚¤ì§€ ?ï¿½ëƒ…??(JSON)
   decision     String?        // CouncilDecision: APPROVED|CONDITIONAL|REMANDED|REJECTED|DEFERRED
   decisionNote String?
   conditions   String?        // JSON: [{condition, done, checkedBy}]
   decidedAt    DateTime?
 }
 
-// ?€?€?€ v3: ?°ì´???Œë«??ëª¨ë¸ ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½?ï¿½ v3: ?ï¿½ì´???ï¿½ë«??ëª¨ë¸ ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 
 model DataAsset {
   id             String    @id @default(cuid())
@@ -547,8 +547,8 @@ model DataRequest {
   id             String    @id @default(cuid())
   type           String    // DataRequestType: ACCESS|NEW
   status         String    @default("REQUESTED") // DataRequestStatus
-  projectId      String
-  project        Project   @relation(fields: [projectId], references: [id])
+  projectId      String?
+  project        Project?  @relation(fields: [projectId], references: [id])
   agentId        String?
   assetId        String?
   asset          DataAsset? @relation(fields: [assetId], references: [id])
@@ -571,37 +571,37 @@ model DataProvision {
   requestId     String      @unique
   request       DataRequest @relation(fields: [requestId], references: [id])
   deliveryMode  String      // API | FILE | DB
-  connectionRef String      // ?œí¬ë¦??€?¥ì†Œ ??
+  connectionRef String      // ?ï¿½í¬ï¿½??ï¿½?ï¿½ì†Œ ??
   providedAt    DateTime    @default(now())
   expiresAt     DateTime
   revokedAt     DateTime?
   revokeReason  String?
 }
 
-// ?€?€ ?´ì˜?œê¸° (P1-3: ? ì²­???¬ì‹¬ ?”ì²­ ?ˆì°¨) ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½ ?ï¿½ì˜?ï¿½ê¸° (P1-3: ?ï¿½ì²­???ï¿½ì‹¬ ?ï¿½ì²­ ?ï¿½ì°¨) ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 model ProjectAppeal {
   id              String    @id @default(cuid())
   projectId       String
   project         Project   @relation(fields: [projectId], references: [id])
-  requesterEmail  String                         // ? ì²­???´ë©”??
-  reason          String                         // ?´ì˜ ?¬ìœ 
-  evidenceNote    String    @default("")         // ê·¼ê±° ?ë£ŒÂ·ë³´ì¶© ?¤ëª…
+  requesterEmail  String                         // ?ï¿½ì²­???ï¿½ë©”??
+  reason          String                         // ?ï¿½ì˜ ?ï¿½ìœ 
+  evidenceNote    String    @default("")         // ê·¼ê±° ?ï¿½ë£ŒÂ·ë³´ì¶© ?ï¿½ëª…
   status          String    @default("PENDING")  // PENDING | UNDER_REVIEW | ACCEPTED | REJECTED
-  reviewedBy      String?                        // AX?€ ê²€? ì ?´ë©”??
-  reviewNote      String    @default("")         // AX?€ ê²€???˜ê²¬
+  reviewedBy      String?                        // AX?ï¿½ ê²€?ï¿½ì ?ï¿½ë©”??
+  reviewNote      String    @default("")         // AX?ï¿½ ê²€???ï¿½ê²¬
   resolvedAt      DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
 
-// ?€?€ ê±°ë²„?ŒìŠ¤ ë¬¸ì„œ ë©”í??°ì´??(AX_?„ì‚¬AI?´ì˜ì²´ê³„_?œì•ˆ Â§2) ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½ ê±°ë²„?ï¿½ìŠ¤ ë¬¸ì„œ ë©”ï¿½??ï¿½ì´??(AX_?ï¿½ì‚¬AI?ï¿½ì˜ì²´ê³„_?ï¿½ì•ˆ Â§2) ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 // docId ì²´ê³„: AX-{TYPE}-{YYYY}-{NNN}
-//   REG=ê·œì • | OPS=?´ì˜ë°©ì•ˆ | GUI=ì§€ì¹?| GDL=ê°€?´ë“œ?¼ì¸ | MAN=ë§¤ë‰´??| DEV=ê°œë°œ?œì? | TEC=ê¸°ìˆ ë¬¸ì„œ
+//   REG=ê·œì • | OPS=?ï¿½ì˜ë°©ì•ˆ | GUI=ì§€ï¿½?| GDL=ê°€?ï¿½ë“œ?ï¿½ì¸ | MAN=ë§¤ë‰´??| DEV=ê°œë°œ?ï¿½ï¿½? | TEC=ê¸°ìˆ ë¬¸ì„œ
 model GovernanceDoc {
   id            String    @id @default(cuid())
   docId         String    @unique   // e.g. "AX-REG-2026-001"
-  fileName      String    @unique   // docs/ ?˜ìœ„ ?Œì¼ëª?e.g. "AX-GUIDELINE-2026-001_AIê±°ë²„?ŒìŠ¤ê¸°ë³¸ì§€ì¹?md"
-  type          String    // ê·œì •|?´ì˜ë°©ì•ˆ|ì§€ì¹?ê°€?´ë“œ?¼ì¸|ë§¤ë‰´??ê°œë°œ?œì?|ê¸°ìˆ ë¬¸ì„œ
+  fileName      String    @unique   // docs/ ?ï¿½ìœ„ ?ï¿½ì¼ï¿½?e.g. "AX-GUIDELINE-2026-001_AIê±°ë²„?ï¿½ìŠ¤ê¸°ë³¸ì§€ï¿½?md"
+  type          String    // ê·œì •|?ï¿½ì˜ë°©ì•ˆ|ì§€ï¿½?ê°€?ï¿½ë“œ?ï¿½ì¸|ë§¤ë‰´??ê°œë°œ?ï¿½ï¿½?|ê¸°ìˆ ë¬¸ì„œ
   level         String    @default("L2")  // L1|L2|L3|L4
   title         String
   version       String    @default("v1.0")
@@ -616,7 +616,7 @@ model GovernanceDoc {
   updatedAt     DateTime  @updatedAt
 }
 
-// v3.1 ???¸ì•± ?Œë¦¼ (Telegram ?€ì²?1?¨ê³„)
+// v3.1 ???ï¿½ì•± ?ï¿½ë¦¼ (Telegram ?ï¿½ï¿½?1?ï¿½ê³„)
 model Notification {
   id             String    @id @default(cuid())
   recipientEmail String
@@ -629,7 +629,7 @@ model Notification {
   @@index([recipientEmail, readAt])
 }
 
-// ?€?€?€ PI ?¨ê³¼ ?¤í˜„ ì¶”ì  (v3.2) ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
+// ?ï¿½?ï¿½?ï¿½ PI ?ï¿½ê³¼ ?ï¿½í˜„ ì¶”ì  (v3.2) ?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½?ï¿½
 model BenefitRecord {
   id            String   @id @default(cuid())
   projectId     String

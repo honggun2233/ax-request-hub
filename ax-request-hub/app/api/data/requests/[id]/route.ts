@@ -49,7 +49,7 @@ export async function PATCH(
     const role = (session.user as any)?.role
     const userId = (session.user as any)?.id
 
-    if (role !== 'DATA_PLATFORM') {
+    if (role !== 'DATA_PLATFORM' && role !== 'AX_TEAM') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

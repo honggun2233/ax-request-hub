@@ -90,10 +90,7 @@ export default function MyDataPage() {
       try {
         const res = await fetch('/api/data/requests')
         const json = await res.json()
-        const all: DataRequest[] = Array.isArray(json) ? json : []
-
-        // Filter to current user's own requests only
-        const mine = all.filter((r) => r.requesterId === userId)
+        const mine: DataRequest[] = Array.isArray(json) ? json : []
 
         // For PROVISIONED requests, fetch individual detail to get provision data
         const withProvisions = await Promise.all(

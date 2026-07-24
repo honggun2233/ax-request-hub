@@ -52,40 +52,40 @@
 
 ```mermaid
 flowchart TD
-    subgraph 신청·평가
-        A[직원 /submit 신청] --> G3CHK{기밀등급 G3?}
-        G3CHK -->|G3| ESC[AX팀 수동 검토\nClaude API 생략]
-        G3CHK -->|G1/G2| SCORE[Claude API\n6차원 자동 스코어링]
-        SCORE --> JUDGE{70점 이상?}
-        JUDGE -->|Yes| AUTO[자동 파일럿 승인]
+    subgraph S1["신청·평가"]
+        A["직원 /submit 신청"] --> G3CHK{"기밀등급 G3?"}
+        G3CHK -->|G3| ESC["AX팀 수동 검토<br/>Claude API 생략"]
+        G3CHK -->|"G1/G2"| SCORE["Claude API<br/>6차원 자동 스코어링"]
+        SCORE --> JUDGE{"70점 이상?"}
+        JUDGE -->|Yes| AUTO["자동 파일럿 승인"]
         JUDGE -->|No| ESC
-        ESC --> MANUAL[AX팀 검토\n승인/반려]
-        AUTO --> PILOT[파일럿 착수\ndevStage=GATE1]
+        ESC --> MANUAL["AX팀 검토<br/>승인/반려"]
+        AUTO --> PILOT["파일럿 착수<br/>devStage=GATE1"]
         MANUAL --> PILOT
     end
 
-    subgraph 데이터 연계
-        PILOT --> DATANEEDED{데이터 필요?}
-        DATANEEDED -->|Yes| CAT[/data/catalog\n카탈로그 탐색]
-        CAT --> REQ[DataRequest 신청\nACCESS or NEW]
-        REQ --> DP[데이터플랫폼팀 검토\n/dp/requests]
-        DP -->|G3 기밀| SEC[정보보호 협의]
+    subgraph S2["데이터 연계"]
+        PILOT --> DATANEEDED{"데이터 필요?"}
+        DATANEEDED -->|Yes| CAT["/data/catalog 탐색"]
+        CAT --> REQ["DataRequest 신청<br/>ACCESS or NEW"]
+        REQ --> DP["데이터플랫폼팀 검토<br/>/dp/requests"]
+        DP -->|"G3 기밀"| SEC["정보보호 협의"]
         SEC --> DP
-        DP -->|승인| PROV[DataProvision 제공\n이용기간 설정]
-        PROV --> DEV[개발 진행 GATE2→3]
+        DP -->|승인| PROV["DataProvision 제공<br/>이용기간 설정"]
+        PROV --> DEV["개발 진행 GATE2→3"]
         DATANEEDED -->|No| DEV
     end
 
-    subgraph 에이전트 라이프사이클
-        DEV --> PKPI[파일럿 KPI 실증\n최소 1개월]
-        PKPI --> COUNCIL[협의회 상정\n5종 안건]
-        COUNCIL --> CD{의결 결과}
-        CD -->|승인| PROD[상용 전환\nphase=PRODUCTION]
+    subgraph S3["에이전트 라이프사이클"]
+        DEV --> PKPI["파일럿 KPI 실증<br/>최소 1개월"]
+        PKPI --> COUNCIL["협의회 상정<br/>5종 안건"]
+        COUNCIL --> CD{"의결 결과"}
+        CD -->|승인| PROD["상용 전환<br/>phase=PRODUCTION"]
         CD -->|반려| DEV
-        CD -->|최종 반려| CLOSED[개발 종료]
-        PROD --> OPS[상용 운영\n월별 KPI 추적]
-        OPS --> RETIRE{폐기 조건?}
-        RETIRE -->|Yes| RET[DEPRECATED→RETIRED\n데이터 회수]
+        CD -->|"최종 반려"| CLOSED["개발 종료"]
+        PROD --> OPS["상용 운영<br/>월별 KPI 추적"]
+        OPS --> RETIRE{"폐기 조건?"}
+        RETIRE -->|Yes| RET["DEPRECATED→RETIRED<br/>데이터 회수"]
         RETIRE -->|No| OPS
     end
 ```

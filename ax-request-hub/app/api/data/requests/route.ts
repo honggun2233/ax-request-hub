@@ -52,18 +52,41 @@ export async function POST(req: NextRequest) {
       forProduction,
     } = body
 
+    // Validate required fields
+    if (!type || !purpose?.trim() || !classification || !periodMonths) {
+      return NextResponse.json({ error: '필수 항목이 누락되었습니다' }, { status: 400 })
+    }
+
+    // Validate projectId FK if provided
+    const resolvedProjectId: string | null = projectId?.trim() || null
+    if (resolvedProjectId) {
+      const exists = await prisma.project.findUnique({ where: { id: resolvedProjectId }, select: { id: true } })
+      if (!exists) {
+        return NextResponse.json({ error: `과제 ID "${resolvedProjectId}"를 찾을 수 없습니다` }, { status: 400 })
+      }
+    }
+
+    // Validate assetId FK if provided
+    const resolvedAssetId: string | null = assetId?.trim() || null
+    if (resolvedAssetId) {
+      const exists = await prisma.dataAsset.findUnique({ where: { id: resolvedAssetId }, select: { id: true } })
+      if (!exists) {
+        return NextResponse.json({ error: `데이터 자산 ID "${resolvedAssetId}"를 찾을 수 없습니다` }, { status: 400 })
+      }
+    }
+
     const dataRequest = await prisma.dataRequest.create({
       data: {
         type,
-        projectId,
         requesterId: userId,
         purpose,
         classification,
-        periodMonths,
-        ...(assetId !== undefined ? { assetId } : {}),
-        ...(agentId !== undefined ? { agentId } : {}),
+        periodMonths: Number(periodMonths),
+        ...(resolvedProjectId ? { projectId: resolvedProjectId } : {}),
+        ...(resolvedAssetId ? { assetId: resolvedAssetId } : {}),
+        ...(agentId ? { agentId } : {}),
         ...(requestedSpec !== undefined ? { requestedSpec } : {}),
-        ...(forProduction !== undefined ? { forProduction } : {}),
+        ...(forProduction !== undefined ? { forProduction: Boolean(forProduction) } : {}),
       },
     })
 

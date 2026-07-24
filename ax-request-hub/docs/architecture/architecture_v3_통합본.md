@@ -28,40 +28,40 @@
 
 ```mermaid
 flowchart TD
-    A[직원 과제 신청\n/submit + Gate 2 자가점검] --> G2{Gate 2\n기술 표준 4항목}
-    G2 -->|전부 충족| C[Claude API\n6차원 자동 스코어링]
-    G2 -->|미충족| G2F[Gate 2 보류\nAX팀 컨설팅]
+    A["직원 과제 신청<br/>/submit + Gate 2 자가점검"] --> G2{"Gate 2<br/>기술 표준 4항목"}
+    G2 -->|전부 충족| C["Claude API<br/>6차원 자동 스코어링"]
+    G2 -->|미충족| G2F["Gate 2 보류<br/>AX팀 컨설팅"]
     C --> D{총점 기준}
-    D -->|70점+ AND G1/G2| E[자동 승인]
-    D -->|70점 미만 OR G3| F[AX팀 검토 에스컬레이션]
-    F --> E2[AX팀 승인/반려]
-    E --> P[파일럿 착수\ndevStage=GATE1]
+    D -->|"70점+ AND G1/G2"| E[자동 승인]
+    D -->|"70점 미만 OR G3"| F[AX팀 검토 에스컬레이션]
+    F --> E2["AX팀 승인/반려"]
+    E --> P["파일럿 착수<br/>devStage=GATE1"]
     E2 --> P
 
-    P --> DN{데이터\n필요 여부}
-    DN -->|불필요| DEV[개발 진행\nGate 2 → 3]
-    DN -->|필요| CAT[데이터 카탈로그 검색\n/data/catalog]
+    P --> DN{"데이터<br/>필요 여부"}
+    DN -->|불필요| DEV["개발 진행<br/>Gate 2 → 3"]
+    DN -->|필요| CAT["데이터 카탈로그 검색<br/>/data/catalog"]
     CAT -->|있음| REQ_A[이용 신청 ACCESS]
     CAT -->|없음| REQ_N[신규 수집 요청 NEW]
-    REQ_A --> DP[데이터플랫폼팀 검토\n/dp/requests]
+    REQ_A --> DP["데이터플랫폼팀 검토<br/>/dp/requests"]
     REQ_N --> DP
     DP -->|G3| SEC[정보보호 협의]
     SEC --> DP
-    DP -->|승인·제공| PROV[DataProvision\n이용기간 설정]
+    DP -->|승인·제공| PROV["DataProvision<br/>이용기간 설정"]
     DP -->|반려| DN
     PROV --> DEV
 
-    DEV --> PK[파일럿 KPI 실증\n최소 1개월]
-    PK --> CO[협의회 상정\n요건 5종 자동 검증]
+    DEV --> PK["파일럿 KPI 실증<br/>최소 1개월"]
+    PK --> CO["협의회 상정<br/>요건 5종 자동 검증"]
     CO --> CD{협의회 의결}
-    CD -->|승인·조건이행| PROD[상용 전환\nphase=PRODUCTION, ACTIVE]
+    CD -->|"승인·조건이행"| PROD["상용 전환<br/>phase=PRODUCTION, ACTIVE"]
     CD -->|반려| DEV
-    CD -->|최종 반려| CL[개발 종료\n지식 추출 후 정리]
+    CD -->|"최종 반려"| CL["개발 종료<br/>지식 추출 후 정리"]
 
-    PROD --> OPS[상용 운영\n월별 상용 KPI]
+    PROD --> OPS["상용 운영<br/>월별 상용 KPI"]
     OPS --> RQ{폐기 트리거}
-    RQ -->|KPI 3개월 60% 미달 등| RC[RETIRE_CANDIDATE\n협의회 보고]
-    RC --> DEP[DEPRECATED\n30일 예고] --> RET[RETIRED\n데이터 제공 전건 회수]
+    RQ -->|"KPI 3개월 60% 미달 등"| RC["RETIRE_CANDIDATE<br/>협의회 보고"]
+    RC --> DEP["DEPRECATED<br/>30일 예고"] --> RET["RETIRED<br/>데이터 제공 전건 회수"]
     RQ -->|정상| OPS
 ```
 
@@ -71,11 +71,11 @@ flowchart TD
 
 ```mermaid
 graph TD
-    Browser["브라우저\nhttp://localhost:3005"] --> Next["Next.js 14\nApp Router\n(SSR + API Routes)"]
-    Next --> Prisma["Prisma ORM\n(SQLite)"]
-    Next --> Claude["Claude API\nanthropic SDK\n(평가·채팅·추출)"]
-    Next --> Auth["NextAuth.js\n세션 관리"]
-    Prisma --> DB["ax_hub.db\nSQLite 25+ 모델"]
+    Browser["브라우저<br/>http://localhost:3005"] --> Next["Next.js 14<br/>App Router<br/>(SSR + API Routes)"]
+    Next --> Prisma["Prisma ORM<br/>(SQLite)"]
+    Next --> Claude["Claude API<br/>anthropic SDK<br/>(평가·채팅·추출)"]
+    Next --> Auth["NextAuth.js<br/>세션 관리"]
+    Prisma --> DB["ax_hub.db<br/>SQLite 25+ 모델"]
 
     subgraph Pages ["앱 라우트 (/app)"]
         P1["/ 홈 대시보드"]
@@ -277,10 +277,10 @@ stateDiagram-v2
 
 ```mermaid
 graph LR
-    R[/registry] --> DV[개발중 탭\ndevStage 파이프라인 바\nSUBMITTED~COUNCIL_PENDING]
-    R --> PV2[상용 탭\nprodStatus·상용 KPI\nRETIRE_CANDIDATE 플래그]
-    R --> PJ[프로젝트 뷰\nAXProject별 연결 에이전트]
-    DV --> SO[슬라이드오버\n신뢰점수·Gate 진행도\n프로젝트 M:N 연결]
+    R["/registry"] --> DV["개발중 탭<br/>devStage 파이프라인 바<br/>SUBMITTED~COUNCIL_PENDING"]
+    R --> PV2["상용 탭<br/>prodStatus·상용 KPI<br/>RETIRE_CANDIDATE 플래그"]
+    R --> PJ["프로젝트 뷰<br/>AXProject별 연결 에이전트"]
+    DV --> SO["슬라이드오버<br/>신뢰점수·Gate 진행도<br/>프로젝트 M:N 연결"]
 ```
 
 - AXProject 5개: ETF SAM LAB / DMS / IT예산 / 효율화 / AX Hub — AgentProjectLink M:N 유지 (role: PRIMARY / SUPPORTING / EXPERIMENTAL)
@@ -294,22 +294,22 @@ graph LR
 
 ```mermaid
 flowchart LR
-    subgraph 신청자[개발자 · 과제 담당자]
-        S1[카탈로그 검색] --> S2[이용/신규 신청\n용도·기간·등급]
-        S3[내 신청 현황 /me/data]
+    subgraph SG1["개발자 · 과제 담당자"]
+        S1[카탈로그 검색] --> S2["이용/신규 신청<br/>용도·기간·등급"]
+        S3["내 신청 현황 /me/data"]
     end
-    subgraph DP[데이터플랫폼팀 DATA_PLATFORM]
-        D1[요청 큐 /dp/requests] --> D2[검토: 보유·품질·등급]
-        D3[신규 수집·적재] --> D4[카탈로그 등록 /dp/catalog]
-        D5[제공 실행 — 연결정보 발급]
+    subgraph DP["데이터플랫폼팀 DATA_PLATFORM"]
+        D1["요청 큐 /dp/requests"] --> D2["검토: 보유·품질·등급"]
+        D3["신규 수집·적재"] --> D4["카탈로그 등록 /dp/catalog"]
+        D5["제공 실행 — 연결정보 발급"]
     end
-    subgraph GOV[거버넌스]
-        SEC[G3 → 정보보호 협의]
-        AL[AuditLog — 신청·승인·제공·회수 전건]
+    subgraph GOV["거버넌스"]
+        SEC["G3 → 정보보호 협의"]
+        AL["AuditLog — 신청·승인·제공·회수 전건"]
     end
     S2 --> D1
-    D2 -->|ACCESS 승인| D5
-    D2 -->|NEW 승인| D3
+    D2 -->|"ACCESS 승인"| D5
+    D2 -->|"NEW 승인"| D3
     D4 --> D5
     D2 -->|G3| SEC --> D2
     D5 --> S3
@@ -373,9 +373,9 @@ GPT 150개 + Gemini 50개 계정 배분·모니터링. 운영 기준: AX-MANUAL-
 
 ```mermaid
 graph TD
-    AT[/admin/tools\nAX팀 계정 풀 관리] --> QS[/admin/tools/quota-setup\n부서별 쿼터]
-    QS --> DT[/dept/tools\n부서장 위임 배정]
-    DT --> MT[/me/tools\n개인 도구 현황]
+    AT["/admin/tools<br/>AX팀 계정 풀 관리"] --> QS["/admin/tools/quota-setup<br/>부서별 쿼터"]
+    QS --> DT["/dept/tools<br/>부서장 위임 배정"]
+    DT --> MT["/me/tools<br/>개인 도구 현황"]
 ```
 
 ## 13. C레벨 경영진 대시보드 (/executive)
