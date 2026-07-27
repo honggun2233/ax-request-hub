@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { NLQueryPanel } from '@/components/NLQueryPanel'
 
 export default function GovernancePage() {
   const [data, setData] = useState<any>({ logs: [], stats: [] })
@@ -15,6 +16,9 @@ export default function GovernancePage() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold">감사 로그</h1>
+      <div className="bg-white rounded-lg border p-5">
+        <NLQueryPanel />
+      </div>
       <div className="grid grid-cols-3 gap-4">
         {(data.stats || []).slice(0, 3).map((s: any) => (
           <div key={s.entityType} className="bg-white rounded-lg border p-4">

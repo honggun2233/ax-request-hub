@@ -1,0 +1,100 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { anthropic, MODEL } from '@/src/lib/claude'
+import { db } from '@/src/lib/db'
+
+const SCHEMA = `
+AX Hub 데이터베이스 주요 테이블 (Prisma/SQLite):
+
+1. Project — AI 과제
+   id, title(과제명), dept(부서), status(SUBMITTED/IN_REVIEW/APPROVED/REJECTED/IN_PROGRESS/COUNCIL_PENDING/ACTIVE/DEPRECATED/RETIRED),
+   dataClassification(G1/G2/G3), totalScore(AI 평가점수), submittedAt, updatedAt
+
+2. Agent — AI 에이전트 (레지스트리)
+   id, name(에이전트명), projectId, lifecycleStage(GATE1/GATE2/GATE3/ACTIVE/DEPRECATED/RETIRED),
+   operatorTrustScore(신뢰점수 0-100), sam30dAccuracy(30일 정확도), createdAt
+
+3. Employee — 직원
+   id, name, dept(부서), role(EMPLOYEE/DEPT_HEAD/EXECUTIVE/DATA_PLATFORM/AX_TEAM),
+   aiLevel(L0/L1/L2/L3/L4)
+
+4. DataRequest — 데이터 신청
+   id, employeeId, projectId, datasetName(데이터셋명), purpose(목적),
+   status(PENDING/APPROVED/REJECTED/PROVISIONED), requestedAt
+
+5. LevelApplication — AI 레벨 신청
+   id, employeeId, targetLevel(L1~L4), status(PENDING/APPROVED/REJECTED), createdAt
+
+6. AuditLog — 감사 로그
+   id, action(액션), entityType(대상유형), entityId, performedBy(수행자), createdAt
+
+7. LiteracyCourse — 리터러시 과정
+   id, title(과정명), level(L1~L4), passScore(합격기준점수)
+
+8. ToolAccount — AI 도구 계정
+   id, toolName(GPT/Gemini 등), assignedTo(직원명), dept, status(ACTIVE/INACTIVE)
+
+SQLite 날짜 함수 사용 (date(), datetime(), strftime()).
+SELECT만 허용. LIMIT 100 권장. 결과 컬럼에는 한국어 alias 사용 권장.
+`
+
+function isSafeSelect(sql: string): boolean {
+  const upper = sql.trim().toUpperCase()
+  if (!upper.startsWith('SELECT')) return false
+  const forbidden = ['INSERT', 'UPDATE', 'DELETE', 'DROP', 'CREATE', 'ALTER', 'PRAGMA', 'ATTACH', 'DETACH']
+  return !forbidden.some(kw => new RegExp(`\\b${kw}\\b`).test(upper))
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const role = (session.user as any)?.role
+  if (!['AX_TEAM', 'C_LEVEL', 'EXECUTIVE'].includes(role)) {
+    return NextResponse.json({ error: '어드민 권한이 필요합니다.' }, { status: 403 })
+  }
+
+  const { question } = await req.json()
+  if (!question?.trim()) return NextResponse.json({ error: '질문을 입력해주세요.' }, { status: 400 })
+
+  // 1. Claude → SQL 생성
+  let sql = ''
+  let explanation = ''
+  try {
+    const msg = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 1024,
+      system: '당신은 SQLite 전문가입니다. 자연어 질문을 SQL로 변환해 JSON으로만 출력하세요. 반드시 SELECT만 사용하세요.',
+      messages: [{
+        role: 'user',
+        content: `${SCHEMA}\n\n질문: ${question}\n\n출력 JSON:\n{"sql": "SELECT ...", "explanation": "한국어 1~2문장 설명"}`,
+      }],
+    })
+    const raw = msg.content[0].type === 'text' ? msg.content[0].text : ''
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0])
+      sql = parsed.sql ?? ''
+      explanation = parsed.explanation ?? ''
+    }
+  } catch (err: any) {
+    return NextResponse.json({ error: `SQL 생성 실패: ${err?.message}` }, { status: 500 })
+  }
+
+  if (!sql) return NextResponse.json({ error: 'SQL이 생성되지 않았습니다.' }, { status: 400 })
+  if (!isSafeSelect(sql)) {
+    return NextResponse.json({ error: 'SELECT만 허용됩니다.', sql }, { status: 400 })
+  }
+
+  // 2. Prisma $queryRawUnsafe 실행
+  try {
+    const rows = await db.$queryRawUnsafe(sql)
+    const serialized = JSON.parse(JSON.stringify(rows, (_k, v) =>
+      typeof v === 'bigint' ? Number(v) : v
+    ))
+    return NextResponse.json({ sql, explanation, rows: serialized, error: null })
+  } catch (err: any) {
+    return NextResponse.json({ sql, explanation, rows: [], error: `SQL 실행 오류: ${err?.message}` })
+  }
+}
