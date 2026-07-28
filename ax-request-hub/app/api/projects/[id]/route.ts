@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { db } from '@/src/lib/db'
 
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -9,6 +11,10 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getServerSession(authOptions)
+  if (!session || !['AX_TEAM', 'C_LEVEL'].includes((session.user as any)?.role)) {
+    return NextResponse.json({ error: '권한 없음' }, { status: 403 })
+  }
   const { id } = await params
   const body = await req.json()
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

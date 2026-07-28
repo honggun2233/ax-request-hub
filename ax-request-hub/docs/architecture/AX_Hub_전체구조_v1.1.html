@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>삼성자산운용 AX Request Hub — 전체 시스템 구조서 v1.1</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Apple SD Gothic Neo','Noto Sans KR',sans-serif;font-size:14px;color:#1a1a1a;background:#f8f9fb;display:flex}
+  /* 사이드바 */
+  #sidebar{width:240px;min-height:100vh;background:#fff;border-right:1px solid #e5e7eb;position:fixed;top:0;left:0;overflow-y:auto;padding:0 0 40px}
+  #sidebar .logo{padding:20px 16px 12px;border-bottom:1px solid #e5e7eb}
+  #sidebar .logo h2{font-size:13px;font-weight:700;color:#1428A0}
+  #sidebar .logo p{font-size:11px;color:#6b7280;margin-top:2px}
+  #sidebar nav{padding:12px 8px}
+  #sidebar nav a{display:block;padding:6px 10px;font-size:12px;color:#374151;text-decoration:none;border-radius:6px;margin-bottom:1px;transition:background .15s,color .15s;line-height:1.4}
+  #sidebar nav a:hover{background:#f3f4f6;color:#1428A0}
+  #sidebar nav a.active{background:#e8edf9;color:#1428A0;font-weight:600}
+  #sidebar nav .section{font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;padding:10px 10px 4px;margin-top:4px}
+  /* 본문 */
+  #content{margin-left:240px;max-width:900px;padding:40px 48px;min-height:100vh}
+  /* 헤더 */
+  .doc-header{background:linear-gradient(135deg,#1428A0 0%,#2563eb 100%);color:#fff;padding:32px 36px;border-radius:12px;margin-bottom:36px}
+  .doc-header h1{font-size:22px;font-weight:700;margin-bottom:8px}
+  .doc-header .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .doc-header .meta span{background:rgba(255,255,255,.15);padding:3px 10px;border-radius:20px;font-size:11px}
+  /* 제목 */
+  h2{font-size:18px;font-weight:700;color:#111827;margin:40px 0 16px;padding-bottom:8px;border-bottom:2px solid #1428A0}
+  h3{font-size:14px;font-weight:600;color:#374151;margin:24px 0 10px}
+  h4{font-size:13px;font-weight:600;color:#4b5563;margin:16px 0 8px}
+  /* 텍스트 */
+  p{line-height:1.7;color:#374151;margin-bottom:10px}
+  /* 테이블 */
+  .table-wrap{overflow-x:auto;margin:12px 0 20px;border-radius:8px;border:1px solid #e5e7eb}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead tr{background:#f9fafb}
+  thead th{padding:8px 12px;text-align:left;font-weight:600;color:#374151;border-bottom:2px solid #e5e7eb;white-space:nowrap}
+  tbody tr{border-bottom:1px solid #f3f4f6}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:#fafafa}
+  tbody td{padding:8px 12px;color:#4b5563;vertical-align:top}
+  /* 코드블록 */
+  pre{background:#1e293b;color:#e2e8f0;padding:16px 20px;border-radius:8px;overflow-x:auto;font-size:12px;line-height:1.6;margin:12px 0 20px}
+  code{font-family:'Fira Code','Consolas','Monaco',monospace}
+  /* 배지 */
+  .badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+  .badge-blue{background:#dbeafe;color:#1d4ed8}
+  .badge-green{background:#dcfce7;color:#166534}
+  .badge-orange{background:#ffedd5;color:#9a3412}
+  .badge-red{background:#fee2e2;color:#991b1b}
+  .badge-gray{background:#f3f4f6;color:#4b5563}
+  /* 섹션 */
+  section{margin-bottom:8px}
+  hr{border:none;border-top:1px solid #e5e7eb;margin:32px 0}
+  /* 리스트 */
+  ul,ol{padding-left:20px;margin:8px 0 12px;color:#374151;line-height:1.7}
+  li{margin-bottom:3px}
+  /* 강조 */
+  strong{color:#111827}
+  /* 원칙 블록 */
+  .principle-box{background:#f0f4ff;border-left:4px solid #1428A0;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0}
+  /* 흐름 다이어그램 대체 */
+  .flow-box{background:#1e293b;color:#94a3b8;padding:16px 20px;border-radius:8px;font-size:12px;line-height:1.8;font-family:monospace;white-space:pre-wrap;margin:12px 0 20px}
+  @media print{
+    #sidebar{display:none}
+    #content{margin-left:0;padding:20px}
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="logo">
+    <h2>삼성AM AI Hub</h2>
+    <p>AX-ARCH-2026-001 v1.1</p>
+  </div>
+  <nav>
+    <div class="section">목차</div>
+    <a href="#s1">1. 시스템 목표</a>
+    <a href="#s2">2. 전체 플로우</a>
+    <a href="#s3">3. 기술 스택</a>
+    <a href="#s4">4. 앱 라우트</a>
+    <a href="#s5">5. API 라우트</a>
+    <a href="#s6">6. 역할 & 권한</a>
+    <a href="#s7">7. DB 모델 (32종)</a>
+    <div class="section">서브시스템</div>
+    <a href="#s8-1">8-1. 과제 신청·평가</a>
+    <a href="#s8-2">8-2. 에이전트 라이프사이클</a>
+    <a href="#s8-3">8-3. 데이터 프로비저닝</a>
+    <a href="#s8-4">8-4. AI 도구·토큰</a>
+    <a href="#s8-5">8-5. 스킬 라이브러리</a>
+    <a href="#s8-6">8-6. 리터러시 레벨</a>
+    <a href="#s8-7">8-7. 협의회 심의</a>
+    <a href="#s8-8">8-8. 감사 로그</a>
+    <div class="section">부록</div>
+    <a href="#s9">9. 설계 원칙·미결</a>
+    <a href="#s10">10. 문서 이력</a>
+  </nav>
+</div>
+
+<div id="content">
+  <div class="doc-header">
+    <h1>삼성자산운용 AX Request Hub<br>전체 시스템 구조서</h1>
+    <div class="meta">
+      <span>AX-ARCH-2026-001</span>
+      <span>v1.1</span>
+      <span>2026-07-23</span>
+      <span>honggun2233/ax-request-hub (PRIVATE)</span>
+      <span>http://localhost:3005</span>
+    </div>
+  </div>
+
+  <section id="s1">
+    <h2>1. 시스템 목표</h2>
+    <p>삼성자산운용 전사 AI 도입을 <strong>신청 → 평가 → 데이터 연계 → 개발/파일럿 → 협의회 상용 전환 → 운영/폐기</strong> 전 과정을 하나의 시스템으로 추적·거버넌스한다.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>해결하려는 문제</th><th>AX Hub의 답</th></tr></thead>
+        <tbody>
+          <tr><td>AI 도입 과제가 파악 안 됨</td><td>정형 신청 폼 + 자동 스코어카드로 전수 등록</td></tr>
+          <tr><td>승인 근거가 남지 않음</td><td>AuditLog + ScoreCard + CouncilAgendaItem으로 모든 의사결정 추적</td></tr>
+          <tr><td>데이터 사용 통제 불가</td><td>DataRequest → DataProvision 흐름으로 데이터 이력 관리</td></tr>
+          <tr><td>에이전트 상태를 아무도 모름</td><td>AgentRegistry 단일 모델 + 이중 라이프사이클</td></tr>
+          <tr><td>AI 도구 계정 난립</td><td>ToolAccount + DepartmentQuota + DistributionPolicy로 통제</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+  <section id="s2">
+    <h2>2. 전체 플로우 다이어그램</h2>
+    <div class="flow-box">신청·평가
+  직원 /chat → /submit 신청
+    → G3 판정: G3이면 Claude API 생략, AX팀 수동 검토
+    → 6차원 Claude 자동 스코어링 (100점)
+    → 70점+ AND G1/G2: 자동 파일럿 승인 → AgentRegistry 생성(devStage=GATE1)
+    → 나머지: AX팀 에스컬레이션 → 수동 승인/반려
+
+데이터 연계
+  PILOT 착수 → 데이터 필요 여부 확인
+    → /data/catalog 탐색 → DataRequest 신청 (ACCESS or NEW)
+    → 데이터플랫폼팀 검토(/dp/requests)
+       └─ G3 기밀: 정보보호 협의 추가
+    → 승인: DataProvision 생성 (이용기간 설정)
+    → GATE2 → GATE3 → 파일럿 운영
+
+에이전트 라이프사이클
+  파일럿 KPI 실증(최소 1개월)
+    → 협의회 상정 (안건 5종)
+    → 의결:
+       ├─ 승인: phase=PRODUCTION / prodStatus=ACTIVE
+       ├─ 조건부: 조건이행 후 재상정
+       └─ 반려/기각: 개발 복귀 or 종료
+  상용 운영(월별 KPI 추적)
+    → 폐기 조건 충족: DEPRECATED(30일 예고) → RETIRED
+    → DataProvision 전건 자동 회수</div>
+  </section>
+
+  <hr>
+  <section id="s3">
+    <h2>3. 기술 스택</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>레이어</th><th>기술</th></tr></thead>
+        <tbody>
+          <tr><td>프레임워크</td><td>Next.js 16 (App Router, Turbopack)</td></tr>
+          <tr><td>언어</td><td>TypeScript</td></tr>
+          <tr><td>스타일</td><td>Tailwind CSS + shadcn/ui</td></tr>
+          <tr><td>인증</td><td>NextAuth.js (credentials)</td></tr>
+          <tr><td>ORM</td><td>Prisma 6</td></tr>
+          <tr><td>DB</td><td>SQLite (<code>prisma/dev.db</code>) → PostgreSQL 전환 예정</td></tr>
+          <tr><td>AI</td><td>Anthropic Claude API (claude-sonnet-4-5)</td></tr>
+          <tr><td>미들웨어</td><td><code>proxy.ts</code> (nextauth withAuth 기반 라우트 보호)</td></tr>
+          <tr><td>로컬 포트</td><td>3005</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+  <section id="s4">
+    <h2>4. 앱 라우트 전체 목록</h2>
+    <h3>공개·전 직원</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>라우트</th><th>설명</th><th>역할</th></tr></thead>
+        <tbody>
+          <tr><td><code>/</code></td><td>홈 — 시스템 소개</td><td>누구나</td></tr>
+          <tr><td><code>/login</code></td><td>로그인</td><td>미인증</td></tr>
+          <tr><td><code>/chat</code></td><td>AI 상담 챗 → 과제 신청 (과제 구체화)</td><td>로그인 전체</td></tr>
+          <tr><td><code>/skills</code></td><td>AI 스킬 라이브러리 열람</td><td>로그인 전체</td></tr>
+          <tr><td><code>/docs</code></td><td>거버넌스 문서 뷰어</td><td>로그인 전체</td></tr>
+          <tr><td><code>/data/catalog</code></td><td>데이터 자산 카탈로그 탐색 + 이용 신청</td><td>로그인 전체</td></tr>
+          <tr><td><code>/status/[id]</code></td><td>내 과제 상태 상세 조회</td><td>로그인 전체</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>/me — 내 정보</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>라우트</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td><code>/me</code></td><td>내 프로필 + AI 리터러시 레벨</td></tr>
+          <tr><td><code>/me/projects</code></td><td>내 과제 현황</td></tr>
+          <tr><td><code>/me/tools</code></td><td>내 AI 도구 계정 목록</td></tr>
+          <tr><td><code>/me/usage</code></td><td>내 토큰 사용량 현황</td></tr>
+          <tr><td><code>/me/level</code></td><td>AI 리터러시 레벨 신청</td></tr>
+          <tr><td><code>/me/literacy</code></td><td>리터러시 교육 이수 현황</td></tr>
+          <tr><td><code>/me/data</code></td><td>내 데이터 신청 + 제공 현황</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>/dept — 부서장</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>라우트</th><th>설명</th><th>역할</th></tr></thead>
+        <tbody>
+          <tr><td><code>/dept/tools</code></td><td>부서 AI 도구 배정·관리</td><td><span class="badge badge-orange">DEPT_HEAD</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>/dp — 데이터플랫폼팀</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>라우트</th><th>설명</th><th>역할</th></tr></thead>
+        <tbody>
+          <tr><td><code>/dp/requests</code></td><td>데이터 신청 검토·승인·제공 처리</td><td><span class="badge badge-blue">DATA_PLATFORM</span></td></tr>
+          <tr><td><code>/dp/catalog</code></td><td>데이터 자산 카탈로그 관리</td><td><span class="badge badge-blue">DATA_PLATFORM</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>/executive — C레벨</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>라우트</th><th>설명</th><th>역할</th></tr></thead>
+        <tbody>
+          <tr><td><code>/executive</code></td><td>전사 AI 현황 경영진 대시보드</td><td><span class="badge badge-green">EXECUTIVE</span>, <span class="badge badge-red">AX_TEAM</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>/admin — AX팀 관리자</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>라우트</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td><code>/dashboard</code></td><td>전체 과제 KPI + 칸반 보드</td></tr>
+          <tr><td><code>/governance</code></td><td>감사 로그 전체 이력</td></tr>
+          <tr><td><code>/registry</code></td><td>에이전트 레지스트리 (개발/상용 이중 라이프사이클)</td></tr>
+          <tr><td><code>/council</code></td><td>협의회 회의 목록 + 안건 편성</td></tr>
+          <tr><td><code>/admin/employees</code></td><td>직원 계정 + 역할 관리</td></tr>
+          <tr><td><code>/admin/tokens</code></td><td>토큰 정책 + 배분 현황</td></tr>
+          <tr><td><code>/admin/tools</code></td><td>AI 도구 계정 전체 관리</td></tr>
+          <tr><td><code>/admin/tools/quota-setup</code></td><td>부서별 쿼터 설정</td></tr>
+          <tr><td><code>/admin/skills</code></td><td>스킬 등록·검수·폐기</td></tr>
+          <tr><td><code>/admin/docs</code></td><td>거버넌스 문서 등록·관리</td></tr>
+          <tr><td><code>/admin/literacy</code></td><td>AI 리터러시 레벨 심사</td></tr>
+          <tr><td><code>/admin/retired</code></td><td>폐기 에이전트 아카이브</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+  <section id="s5">
+    <h2>5. API 라우트 전체 목록</h2>
+    <h3>과제 (Projects)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>메서드</th><th>경로</th><th>권한</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/projects</code></td><td>로그인</td><td>과제 목록 (역할별 필터)</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/projects</code></td><td>로그인</td><td>과제 신청</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/projects/[id]</code></td><td>로그인</td><td>단건 조회</td></tr>
+          <tr><td><span class="badge badge-orange">PATCH</span></td><td><code>/api/projects/[id]</code></td><td>ADMIN</td><td>상태 변경</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/projects/[id]/appeal</code></td><td>본인/ADMIN</td><td>이의제기 신청</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/projects/[id]/appeal</code></td><td>ADMIN</td><td>이의제기 목록</td></tr>
+          <tr><td><span class="badge badge-orange">PATCH</span></td><td><code>/api/projects/[id]/appeal</code></td><td>ADMIN</td><td>이의제기 처리</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>데이터 (Data)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>메서드</th><th>경로</th><th>권한</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/data/assets</code></td><td>로그인</td><td>데이터 자산 목록 (검색·필터)</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/data/assets</code></td><td>DATA_PLATFORM</td><td>자산 등록</td></tr>
+          <tr><td><span class="badge badge-orange">PATCH</span></td><td><code>/api/data/assets/[id]</code></td><td>DATA_PLATFORM</td><td>자산 수정</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/data/requests</code></td><td>로그인</td><td>데이터 신청 목록 (본인/전체)</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/data/requests</code></td><td>로그인</td><td>데이터 신청</td></tr>
+          <tr><td><span class="badge badge-orange">PATCH</span></td><td><code>/api/data/requests/[id]</code></td><td>DATA_PLATFORM</td><td>상태 변경 (승인/반려/제공)</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/data/provisions</code></td><td>DATA_PLATFORM</td><td>데이터 제공 처리</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>에이전트 레지스트리 / 기타</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>메서드</th><th>경로</th><th>권한</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/evaluate/[id]</code></td><td>ADMIN</td><td>과제 AI 재평가 (G3 에스컬레이션)</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span>/<span class="badge badge-green">POST</span></td><td><code>/api/registry</code></td><td>ADMIN</td><td>레지스트리 목록/등록</td></tr>
+          <tr><td><span class="badge badge-orange">PATCH</span></td><td><code>/api/registry/[id]</code></td><td>ADMIN</td><td>단계 전환 + 신뢰점수</td></tr>
+          <tr><td><span class="badge badge-green">POST</span></td><td><code>/api/dept</code></td><td>DEPT_HEAD</td><td>부서장 도구 배정</td></tr>
+          <tr><td><span class="badge badge-orange">PATCH</span></td><td><code>/api/admin/users/[id]/role</code></td><td>ADMIN</td><td>역할 변경 (DEPT_HEAD 지정)</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span></td><td><code>/api/executive</code></td><td>EXECUTIVE/ADMIN</td><td>경영진 대시보드 데이터</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span>/<span class="badge badge-green">POST</span></td><td><code>/api/skills</code></td><td>로그인/ADMIN</td><td>스킬 목록/등록</td></tr>
+          <tr><td><span class="badge badge-blue">GET</span>/<span class="badge badge-green">POST</span></td><td><code>/api/governance-docs</code></td><td>로그인/ADMIN</td><td>거버넌스 문서</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+  <section id="s6">
+    <h2>6. 사용자 역할 &amp; 접근 권한</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>역할</th><th>설명</th><th>주요 접근 범위</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-gray">EMPLOYEE</span></td><td>일반 직원</td><td>/chat, /me/*, /skills, /docs, /data/catalog, /me/data, /me/projects</td></tr>
+          <tr><td><span class="badge badge-orange">DEPT_HEAD</span></td><td>부서장</td><td>EMPLOYEE + /dept/tools (AI 도구 배정·위임)</td></tr>
+          <tr><td><span class="badge badge-blue">DATA_PLATFORM</span></td><td>데이터플랫폼팀</td><td>EMPLOYEE + /dp/requests, /dp/catalog</td></tr>
+          <tr><td><span class="badge badge-green">EXECUTIVE</span></td><td>C레벨 임원</td><td>EMPLOYEE + /executive (읽기 전용 경영진 대시보드)</td></tr>
+          <tr><td><span class="badge badge-red">AX_TEAM</span></td><td>AX팀</td><td>전체 (/admin/*, /dashboard, /governance, /registry, /council, /dp/*)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>테스트 계정</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>이메일</th><th>이름</th><th>역할</th></tr></thead>
+        <tbody>
+          <tr><td>admin@samsungam.com</td><td>AX팀 관리자</td><td><span class="badge badge-red">AX_TEAM</span></td></tr>
+          <tr><td>dept@samsungam.com</td><td>부서장 테스트</td><td><span class="badge badge-orange">DEPT_HEAD</span></td></tr>
+          <tr><td>exec@samsungam.com</td><td>임원 테스트</td><td><span class="badge badge-green">EXECUTIVE</span></td></tr>
+          <tr><td>dp@samsungam.com</td><td>데이터플랫폼 테스트</td><td><span class="badge badge-blue">DATA_PLATFORM</span></td></tr>
+          <tr><td>test@samsungam.com</td><td>테스트 직원</td><td><span class="badge badge-gray">EMPLOYEE</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="principle-box">
+      <strong>직무 분리 원칙</strong><br>
+      · 데이터 승인·제공 → DATA_PLATFORM 전용 (AX_TEAM은 읽기만)<br>
+      · 상용 전환 의결 → 협의회 의결 없이 불가 (AX_TEAM도 단독 전환 불가)<br>
+      · 감사 로그 → AuditLog 자동 기록 (수동 삭제 불가 설계)
+    </div>
+  </section>
+
+  <hr>
+  <section id="s7">
+    <h2>7. DB 모델 전체 목록 (32종)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>그룹</th><th>모델</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="3"><strong>과제 (3)</strong></td><td>Project</td><td>AI 도입 과제 (신청~승인~파일럿)</td></tr>
+          <tr><td>ScoreCard</td><td>6차원 자동 평가 결과</td></tr>
+          <tr><td>ProjectAppeal</td><td>이의제기 신청·처리 이력</td></tr>
+          <tr><td rowspan="2"><strong>직원 (2)</strong></td><td>Employee</td><td>임직원 계정 (role: EMPLOYEE/DEPT_HEAD/DATA_PLATFORM/EXECUTIVE/AX_TEAM)</td></tr>
+          <tr><td>ChatSession</td><td>AI 상담 챗 세션</td></tr>
+          <tr><td rowspan="7"><strong>AI 도구·토큰 (7)</strong></td><td>ToolAccount</td><td>AI 도구 계정 (GPT/Gemini 등)</td></tr>
+          <tr><td>DepartmentQuota</td><td>부서별 AI 도구 쿼터</td></tr>
+          <tr><td>ServiceAllocation</td><td>도구 계정 배정 이력</td></tr>
+          <tr><td>TokenPolicy</td><td>전사 토큰 정책 (월 한도·초과 처리)</td></tr>
+          <tr><td>DistributionPolicy</td><td>토큰 배분 정책</td></tr>
+          <tr><td>UsageRecord</td><td>토큰 사용 이력</td></tr>
+          <tr><td>UsageAlert</td><td>토큰 초과 알림</td></tr>
+          <tr><td rowspan="4"><strong>리터러시 (4)</strong></td><td>LevelApplication</td><td>AI 리터러시 레벨 신청 (L0~L4)</td></tr>
+          <tr><td>LevelHistory</td><td>레벨 이력</td></tr>
+          <tr><td>LiteracyCourse</td><td>리터러시 교육 과정</td></tr>
+          <tr><td>LiteracyEnrollment</td><td>교육 이수 현황</td></tr>
+          <tr><td rowspan="7"><strong>에이전트 (7)</strong></td><td>AgentRegistry</td><td>에이전트 단일 SSOT (phase + devStage/prodStatus)</td></tr>
+          <tr><td>AgentScore</td><td>에이전트 KPI 실적</td></tr>
+          <tr><td>AXProject</td><td>AX 프로젝트 (5종)</td></tr>
+          <tr><td>AgentProjectLink</td><td>에이전트-프로젝트 M:N 연결</td></tr>
+          <tr><td>CouncilMeeting</td><td>협의회 회의록</td></tr>
+          <tr><td>CouncilAgendaItem</td><td>협의회 안건 (PROD_APPROVAL 등 5종)</td></tr>
+          <tr><td>AgentArtifact</td><td>에이전트 산출물</td></tr>
+          <tr><td rowspan="3"><strong>스킬·문서 (3)</strong></td><td>Skill</td><td>AI 스킬 (프롬프트 라이브러리)</td></tr>
+          <tr><td>SkillRating</td><td>스킬 평가</td></tr>
+          <tr><td>GovernanceDoc</td><td>거버넌스 문서 등록·버전</td></tr>
+          <tr><td rowspan="3"><strong>데이터 (3)</strong></td><td>DataAsset</td><td>데이터 자산 카탈로그 (G1/G2/G3)</td></tr>
+          <tr><td>DataRequest</td><td>데이터 이용/신규 신청 (ACCESS/NEW)</td></tr>
+          <tr><td>DataProvision</td><td>데이터 제공 이력 (연결정보·이용기간·회수)</td></tr>
+          <tr><td><strong>감사 (1)</strong></td><td>AuditLog</td><td>모든 자동승인·에스컬레이션·상태변경 추적</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+  <section id="s8-1">
+    <h2>8. 핵심 서브시스템</h2>
+    <h3>8-1. 과제 신청 · 평가 · 승인</h3>
+    <div class="flow-box">직원 /chat → AI 상담 → /submit 신청서 확인
+  → G3 판정: G3이면 Claude API 생략, AX팀 수동 검토 (P1-1)
+  → 6차원 Claude 자동 스코어링 (100점)
+  → 70점+ AND G1/G2: 자동 파일럿 승인 → AgentRegistry 생성(devStage=GATE1)
+  → 나머지: AX팀 에스컬레이션 → 수동 승인/반려
+  → 이의제기: /api/projects/[id]/appeal (신청→처리, P1-3)</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>차원</th><th>배점</th></tr></thead>
+        <tbody>
+          <tr><td>비즈니스 임팩트</td><td>25점</td></tr>
+          <tr><td>ROI</td><td>25점</td></tr>
+          <tr><td>기밀등급 적합성</td><td>15점</td></tr>
+          <tr><td>기술 난이도</td><td>15점</td></tr>
+          <tr><td>AI 준비도</td><td>10점</td></tr>
+          <tr><td>전략 정합성</td><td>10점</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="s8-2">
+    <h3>8-2. 에이전트 이중 라이프사이클</h3>
+    <div class="flow-box">개발 트랙 (devStage):
+  SUBMITTED → EVALUATED → GATE1 → GATE2 → GATE3 → PILOT_PROVEN → COUNCIL_PENDING → COND_APPROVED
+
+  ※ GATE1→GATE2: DataRequest 전건 PROVISIONED 필수
+  ※ COUNCIL_PENDING: 협의회 안건 상정 대기
+
+전환점: 협의회 의결 (CouncilAgendaItem) — 이것 없이 상용 전환 불가
+
+상용 트랙 (prodStatus):
+  ACTIVE → SUSPENDED / DEPRECATED(30일 예고) → RETIRED
+  └─ RETIRED 시: DataProvision 전건 자동 회수 (미결 §7)</div>
+  </section>
+
+  <section id="s8-3">
+    <h3>8-3. 데이터 프로비저닝</h3>
+    <div class="flow-box">/data/catalog 탐색
+  → DataRequest 신청 (type: ACCESS=기존자산 이용 / NEW=신규수집)
+  → DATA_PLATFORM 검토(/dp/requests)
+     └─ G3 기밀: 정보보호 협의 추가
+  → 승인: DataProvision 생성
+     (deliveryMode: API/FILE/DB, connectionRef, expiresAt)
+  → 상용 전환 시: 파일럿 제공 만료 → forProduction=true 재신청 필수</div>
+  </section>
+
+  <section id="s8-4">
+    <h3>8-4. AI 도구 계정 · 토큰 관리</h3>
+    <ul>
+      <li>GPT 150석 + Gemini 50석 (총 200석) → DepartmentQuota로 부서별 배분</li>
+      <li>부서장이 <code>/dept/tools</code>에서 팀원 배정 (DEPT_HEAD 위임 방식)</li>
+      <li><code>/admin/tools/quota-setup</code>에서 AX팀이 전체 쿼터 조정</li>
+      <li>ToolAccount → UsageRecord → UsageAlert → 초과 시 자동 알림</li>
+    </ul>
+  </section>
+
+  <section id="s8-5">
+    <h3>8-5. AI 스킬 라이브러리</h3>
+    <ul>
+      <li>전사 공유 AI 프롬프트 라이브러리 (<code>/skills</code>)</li>
+      <li>등록 기준: AX팀 검수, 부적절 프롬프트 필터링</li>
+      <li>SkillRating으로 품질 평가 누적</li>
+      <li><code>/admin/skills</code>에서 관리·폐기</li>
+    </ul>
+  </section>
+
+  <section id="s8-6">
+    <h3>8-6. AI 리터러시 레벨</h3>
+    <ul>
+      <li>L0~L4 레벨 체계 (LevelApplication → AX팀 심사 → LevelHistory)</li>
+      <li>레벨별 AI 도구 접근 권한 연계 (상위 도구는 L3+ 요건)</li>
+      <li><code>/admin/literacy</code>에서 심사 관리</li>
+    </ul>
+  </section>
+
+  <section id="s8-7">
+    <h3>8-7. 협의회(AX위원회) 심의</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>안건 유형</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td>PROD_APPROVAL</td><td>파일럿→상용 전환 승인</td></tr>
+          <tr><td>RETIRE_APPROVAL</td><td>상용 에이전트 폐기 승인</td></tr>
+          <tr><td>MAJOR_CHANGE</td><td>상용 에이전트 주요 변경</td></tr>
+          <tr><td>PILOT_EXTENSION</td><td>파일럿 기간 연장</td></tr>
+          <tr><td>EMERGENCY</td><td>긴급 안건</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>상정 요건:</strong> Gate3 통과 + 파일럿 30일+ + 파일럿KPI 달성</p>
+    <p><strong>의결 유형:</strong> APPROVED / CONDITIONAL / REMANDED / REJECTED / DEFERRED</p>
+  </section>
+
+  <section id="s8-8">
+    <h3>8-8. 감사 로그 &amp; 거버넌스</h3>
+    <ul>
+      <li>AuditLog: 자동승인·에스컬레이션·협의회 의결·데이터 제공 등 모든 주요 이벤트 기록</li>
+      <li><code>/governance</code>에서 AX팀 전체 이력 조회</li>
+      <li>소급 승인(제0차 협의회): v3 이관 시 기존 상용 에이전트 7건 일괄 추인 안건 생성</li>
+    </ul>
+  </section>
+
+  <hr>
+  <section id="s9">
+    <h2>9. 설계 원칙 &amp; 미결 사항</h2>
+    <h3>설계 원칙</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>원칙</th><th>구현</th></tr></thead>
+        <tbody>
+          <tr><td>거버넌스 추적 가능성</td><td>AuditLog 전수 기록</td></tr>
+          <tr><td>자동화 + 인간 검토</td><td>6차원 자동 → 임계값 이상 자동승인, 나머지 에스컬레이션</td></tr>
+          <tr><td>상용 확정 = 협의회 의결</td><td>AgentRegistry prodStatus는 CouncilAgendaItem APPROVED 없이 불가</td></tr>
+          <tr><td>기밀등급 관통</td><td>G1/G2/G3 필수 부여, G3 이중 승인, 산출물 등급 상속</td></tr>
+          <tr><td>데이터 직무 분리</td><td>승인·제공 = DATA_PLATFORM, 감독 = ADMIN(읽기)</td></tr>
+          <tr><td>단일 진실 소스</td><td>Prisma + SQLite SSOT, 상태 중복 없음</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>미결 사항 (OPEN_ISSUES.md 참조)</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>항목</th><th>우선순위</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>SQLite → PostgreSQL 전환 (전사 배포 시 동시성·백업)</td><td><span class="badge badge-red">배포 전 필수</span></td></tr>
+          <tr><td>2</td><td>감사로그 보존기간·위변조 방지 (전자금융감독규정)</td><td><span class="badge badge-red">배포 전 필수</span></td></tr>
+          <tr><td>3</td><td>시크릿 관리 (NEXTAUTH_SECRET, ANTHROPIC_API_KEY)</td><td><span class="badge badge-red">배포 전 필수</span></td></tr>
+          <tr><td>4</td><td>G3 신청서 외부 API 전송 마스킹 or 선판정 구현</td><td><span class="badge badge-orange">P1</span></td></tr>
+          <tr><td>5</td><td>KPI 3개월 60% 미달 자동 판정 배치 스케줄러</td><td><span class="badge badge-blue">P2</span></td></tr>
+          <tr><td>6</td><td>레거시 Agent/AgentKpiRecord 모델 제거 (v3 이관 후)</td><td><span class="badge badge-blue">P2</span></td></tr>
+          <tr><td>7</td><td>폐기 에이전트 DataProvision 자동 회수 로직</td><td><span class="badge badge-blue">P2</span></td></tr>
+          <tr><td>8</td><td>/council 협의회 안건 관리 UI 미구현</td><td><span class="badge badge-blue">P2</span></td></tr>
+          <tr><td>9</td><td>Telegram 알림 → 사내 메일/메신저 교체</td><td><span class="badge badge-gray">P3</span></td></tr>
+          <tr><td>10</td><td>이의제기 SLA 정의 (현재 API만, SLA 미명세)</td><td><span class="badge badge-gray">P3</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr>
+  <section id="s10">
+    <h2>10. 문서 이력</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>버전</th><th>날짜</th><th>변경 내용</th></tr></thead>
+        <tbody>
+          <tr><td>v1.1</td><td>2026-07-23</td><td>사이드바 AppSidebar 교체(역할별 필터·아이콘), DEPT_HEAD/EXECUTIVE/DATA_PLATFORM 테스트 계정 추가, /docs 페이지 hydration 버그 수정, 역할 표 테스트 계정 섹션 추가</td></tr>
+          <tr><td>v1.0</td><td>2026-07-23</td><td>최초 작성 — 전체 구조 통합 (라우트 32개, 모델 32종, 역할 5종, 서브시스템 8개)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:#6b7280;font-size:12px;margin-top:24px">본 문서는 <code>docs/architecture_v3_통합본.md</code>(설계 상세)와 거버넌스 문서 체계(<code>AX_거버넌스_문서체계_v1.3.md</code>)를 보완하는 구조 요약서다. 코드 변경 시 동기화 필요.</p>
+  </section>
+</div>
+
+<script>
+  const links = document.querySelectorAll('#sidebar nav a');
+  const sections = document.querySelectorAll('[id]');
+  function highlight() {
+    let current = '';
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 80) current = s.id; });
+    links.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  }
+  window.addEventListener('scroll', highlight, {passive:true});
+  highlight();
+</script>
+</body>
+</html>

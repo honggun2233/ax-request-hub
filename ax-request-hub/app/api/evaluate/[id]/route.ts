@@ -1,21 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { EvaluationAgent } from '@/src/lib/agents/evaluation'
-import { determineApproval } from '@/src/lib/scoring'
+import { determineApproval, checkTechStandards } from '@/src/lib/scoring'
 import { db } from '@/src/lib/db'
-import { sendTelegramApprovalRequest, sendTelegramNotification } from '@/src/lib/notifications/telegram'
 import { sendApprovalEmail } from '@/src/lib/notifications/email'
 import { ExtractedProject } from '@/src/lib/agents/consultation'
 
+// P1-2: Telegram 알림 제거 — 외부 개인 메신저 사용 불가 (금융회사 망분리·기록보존 컴플라이언스)
+// 사내 채널 연동은 추후 결정 시 이 위치에 추가
+
 const evaluationAgent = new EvaluationAgent()
 
-export async function POST(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getServerSession(authOptions)
+  if (!session || !['AX_TEAM', 'C_LEVEL'].includes((session.user as any)?.role)) {
+    return NextResponse.json({ error: '권한 없음 — AX팀 또는 C레벨만 평가 실행 가능' }, { status: 403 })
+  }
   const { id } = await params
   const project = await db.project.findUnique({ where: { id } })
   if (!project) return NextResponse.json({ error: '과제를 찾을 수 없습니다.' }, { status: 404 })
 
-  // 이미 평가 완료된 경우 중복 알림 방지
   if (project.status !== 'submitted') {
     return NextResponse.json({ message: '이미 처리된 과제입니다.', status: project.status })
+  }
+
+  // P1-1 안A: G3 기밀 과제는 Claude API 평가 생략 → 즉시 AX팀 수동 검토 에스컬레이션
+  if (project.confidentialityLevel === 'G3') {
+    await db.project.update({
+      where: { id: project.id },
+      data: { status: 'evaluated', totalScore: null },
+    })
+    await sendApprovalEmail({
+      to: project.requesterEmail,
+      projectTitle: project.title,
+      totalScore: 0,
+      isAutoApproved: false,
+    })
+    return NextResponse.json({
+      skipped: true,
+      reason: 'G3 기밀 과제 — Claude API 평가 생략, AX팀 수동 검토 필요',
+      status: 'evaluated',
+    })
   }
 
   try {
@@ -34,36 +60,43 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     const scoreCard = await evaluationAgent.evaluate(extracted)
     const decision = determineApproval(extracted.confidentialityLevel, scoreCard.totalScore)
 
+    // Gate 2: 기술 표준 체크리스트 평가
+    const techResult = checkTechStandards({
+      hasApiSpec: project.techHasApiSpec,
+      hasDataClassification: project.techHasDataClassification,
+      hasAuditLogging: project.techHasAuditLogging,
+      hasTestCoverage: project.techHasTestCoverage,
+    })
+    await db.project.update({
+      where: { id: project.id },
+      data: {
+        techStandardsPassed: techResult.passed,
+        techStandardsFailedItems: JSON.stringify(techResult.failedItems),
+      },
+    })
+
     await db.scoreCard.upsert({
       where: { projectId: project.id },
       update: { ...scoreCard },
       create: { projectId: project.id, ...scoreCard },
     })
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'
     if (decision.autoApproved) {
       await db.project.update({
         where: { id: project.id },
         data: { status: 'pilot', autoApproved: true, totalScore: scoreCard.totalScore },
       })
       await sendApprovalEmail({ to: project.requesterEmail, projectTitle: project.title, totalScore: scoreCard.totalScore, isAutoApproved: true })
-      await sendTelegramNotification(`✅ 자동 승인: ${project.title} (${scoreCard.totalScore.toFixed(1)}점) — ${project.department}`)
     } else {
       await db.project.update({
         where: { id: project.id },
         data: { status: 'evaluated', totalScore: scoreCard.totalScore },
       })
-      await sendTelegramApprovalRequest({
-        projectId: project.id, title: project.title, department: project.department,
-        totalScore: scoreCard.totalScore, rationale: scoreCard.evaluationRationale,
-        approvalUrl: `${baseUrl}/dashboard?review=${project.id}`,
-      })
       await sendApprovalEmail({ to: project.requesterEmail, projectTitle: project.title, totalScore: scoreCard.totalScore, isAutoApproved: false })
     }
-    return NextResponse.json({ scoreCard, decision })
+    return NextResponse.json({ scoreCard, decision, techStandards: techResult })
   } catch (error) {
     await db.project.update({ where: { id: project.id }, data: { status: 'evaluated' } })
-    await sendTelegramNotification(`⚠️ 평가 오류 — ${project.title}: 수동 검토 필요`)
     console.error('Evaluation error:', error)
     return NextResponse.json({ error: '평가 오류, 수동 검토 대상으로 등록됨' }, { status: 500 })
   }

@@ -3,6 +3,26 @@ export interface ApprovalDecision {
   reason: string
 }
 
+// Gate 2: 기술 표준 준수 체크리스트 (ai-agent-standards 스킬 기준)
+export interface TechStandardsChecklist {
+  hasApiSpec: boolean           // API 스펙 문서(OpenAPI 등) 존재
+  hasDataClassification: boolean // 기밀등급 처리 방식 문서화
+  hasAuditLogging: boolean      // 로깅·감사추적 구현
+  hasTestCoverage: boolean      // 테스트 커버리지 기준 충족
+}
+
+export function checkTechStandards(checklist: TechStandardsChecklist): {
+  passed: boolean
+  failedItems: string[]
+} {
+  const failedItems: string[] = []
+  if (!checklist.hasApiSpec) failedItems.push('API 스펙 문서 미제출')
+  if (!checklist.hasDataClassification) failedItems.push('데이터 기밀등급 처리 방식 미문서화')
+  if (!checklist.hasAuditLogging) failedItems.push('로깅·감사추적 미구현')
+  if (!checklist.hasTestCoverage) failedItems.push('테스트 커버리지 기준 미충족')
+  return { passed: failedItems.length === 0, failedItems }
+}
+
 const AUTO_APPROVE_THRESHOLD = 70
 const BORDERLINE_THRESHOLD = 68
 

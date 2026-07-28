@@ -1,0 +1,4 @@
+-- P3-3a: EXECUTIVE 역할 추가 문서화
+-- Employee.role 허용값에 EXECUTIVE 추가
+-- (role은 String 타입이므로 DB 스키마 변경 없음; 코드 레벨에서 허용 역할 목록에 추가)
+-- EXECUTIVE: /executive 대시보드 전용 임원 접근 역할

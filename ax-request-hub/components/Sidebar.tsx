@@ -11,29 +11,50 @@ const LEVEL_BADGE: Record<string, string> = {
   L4: 'bg-purple-100 text-purple-700',
 }
 
+// 전 직원 공통 (상단)
 const NAV = [
   { href: '/', label: '홈' },
+  { section: 'AI 지식' },
+  { href: '/skills', label: '🔧 스킬 카탈로그' },
+  { href: '/docs', label: '📄 거버넌스 문서' },
   { section: '나의 AI' },
   { href: '/me', label: '나의 현황' },
   { href: '/me/level', label: '레벨 신청' },
   { href: '/me/services', label: '내 서비스' },
   { href: '/me/usage', label: '사용량' },
   { href: '/me/literacy', label: '리터러시' },
+  { section: '데이터' },
+  { href: '/data/catalog', label: '📊 데이터 카탈로그' },
+  { href: '/me/data', label: '내 데이터 신청' },
   { section: 'AI 과제' },
   { href: '/chat', label: '과제 신청' },
   { href: '/dashboard', label: '과제 현황' },
 ]
 
+// Admin 전용
 const ADMIN_NAV = [
-  { section: '관리' },
+  { section: '직원 · 계정 관리' },
   { href: '/admin/employees', label: '직원 관리' },
   { href: '/admin/distribution', label: '서비스 배분' },
+  { href: '/admin/tools/quota-setup', label: '부서별 계정 배분' },
   { href: '/admin/tokens', label: '토큰 관리' },
-  { href: '/admin/agents', label: '에이전트 관리' },
-  { href: '/admin/retired', label: '폐기 아카이브' },
   { href: '/admin/literacy', label: '리터러시 관리' },
-  { section: '거버넌스' },
+  { section: '에이전트 관리' },
+  { href: '/registry', label: '레지스트리 (라이프사이클)' },
+  { href: '/admin/agents', label: '폐기 아카이브' },
+  { section: '스킬 · 문서 관리' },
+  { href: '/admin/skills', label: '스킬 등록/관리' },
+  { href: '/admin/docs', label: '문서 메타데이터 관리' },
+  { section: '감사 · 거버넌스' },
   { href: '/governance', label: '감사 로그' },
+  { section: '경영진 뷰' },
+  { href: '/executive', label: '경영진 AI 현황' },
+]
+
+// 데이터 플랫폼 전용
+const DP_NAV = [
+  { section: '데이터 플랫폼' },
+  { href: '/dp/requests', label: '데이터 요청 검토' },
 ]
 
 type NavItem = { href: string; label: string } | { section: string }
@@ -43,12 +64,17 @@ export default function Sidebar() {
   const pathname = usePathname()
   const role = (session?.user as any)?.role
   const isAdmin = ['AX_TEAM', 'C_LEVEL'].includes(role)
+  const isDPAdmin = ['AX_TEAM', 'DATA_PLATFORM'].includes(role)
   const level = (session?.user as any)?.currentLevel ?? 'L0'
 
-  const allNav: NavItem[] = isAdmin ? [...NAV, ...ADMIN_NAV] : NAV
+  const allNav: NavItem[] = [
+    ...NAV,
+    ...(isAdmin ? ADMIN_NAV : []),
+    ...(isDPAdmin ? DP_NAV : []),
+  ]
 
   return (
-    <aside className="w-60 min-h-screen bg-white border-r flex flex-col fixed top-0 left-0 z-10">
+    <aside className="w-60 h-screen bg-white border-r flex flex-col fixed top-0 left-0 z-10 overflow-hidden">
       <div className="p-4 border-b">
         <h1 className="text-sm font-bold text-gray-900">삼성AM AI Hub</h1>
       </div>

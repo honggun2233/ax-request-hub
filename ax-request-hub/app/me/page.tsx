@@ -1,67 +1,179 @@
-'use client'
-import { useState, useEffect } from 'react'
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowRight, ChevronRight } from "lucide-react";
+import { StatusBadge } from "@/components/status-badge";
+import type { Tone } from "@/lib/lifecycle-labels";
 
-const LEVEL_BADGE: Record<string, string> = {
-  L0: 'bg-gray-100 text-gray-600', L1: 'bg-blue-100 text-blue-700',
-  L2: 'bg-green-100 text-green-700', L3: 'bg-orange-100 text-orange-700', L4: 'bg-purple-100 text-purple-700',
-}
+type Summary = {
+  profile: { name: string; department: string; jobTitle: string };
+  level: { current: string; pendingApplication: string | null };
+  todos: { text: string; link: string; tone: "warning" | "accent" }[];
+  projects: { activeCount: number; recent: { id: string; title: string; label: string; tone: Tone }[] };
+  data: { provisionedCount: number; expiringSoonCount: number; inReviewCount: number; inReviewLabel: string | null };
+  tools: { names: string[]; tokenUsed: number; monthlyLimit: number | null; usagePct: number | null };
+  literacy: { requiredDone: number; requiredTotal: number; nextCourse: string | null };
+};
 
 export default function MePage() {
-  const [data, setData] = useState<any>(null)
-  useEffect(() => { fetch('/api/me/summary').then(r => r.json()).then(setData).catch(() => {}) }, [])
-  if (!data || data.error) return <div className="text-gray-400">로딩 중...</div>
+  const [s, setS] = useState<Summary | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const { employee, services, tokenUsed, tokenLimit, recentApplications } = data
-  const pct = tokenLimit > 0 ? Math.min((tokenUsed / tokenLimit) * 100, 100) : 0
+  useEffect(() => {
+    fetch("/api/me/summary")
+      .then(async (r) => {
+        if (r.ok) return r.json();
+        const text = await r.text().catch(() => r.status.toString());
+        throw new Error(`${r.status}: ${text.slice(0, 200)}`);
+      })
+      .then(setS)
+      .catch((e) => setError(e.message ?? "알 수 없는 오류"));
+  }, []);
+
+  if (error) return (
+    <div className="p-6 space-y-2">
+      <p className="text-sm font-medium text-red-600">내 정보 API 오류 — 새로고침해 주세요.</p>
+      <pre className="text-xs text-muted-foreground bg-muted p-3 rounded overflow-auto">{error}</pre>
+    </div>
+  );
+  if (!s) return <p className="p-6 text-sm text-muted-foreground">불러오는 중…</p>;
+
+  const initials = s.profile.name.slice(-2);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-xl font-bold">나의 현황</h1>
-        <span className={`px-3 py-1 rounded-full font-bold ${LEVEL_BADGE[employee?.currentLevel ?? 'L0']}`}>{employee?.currentLevel ?? 'L0'}</span>
-      </div>
+    <div className="mx-auto max-w-3xl space-y-5 p-6">
 
-      <div className="bg-white rounded-lg border p-4">
-        <p className="text-sm font-medium text-gray-700 mb-2">이번달 토큰 사용량</p>
+      {/* ① 정체성 스트립 */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="flex-1 bg-gray-100 rounded-full h-3">
-            <div className={`h-3 rounded-full ${pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-orange-400' : 'bg-blue-500'}`} style={{ width: `${pct}%` }} />
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
+            {initials}
           </div>
-          <span className="text-sm text-gray-600">{tokenUsed.toLocaleString()} / {tokenLimit.toLocaleString()}</span>
+          <div>
+            <p className="font-semibold">
+              {s.profile.name}
+              <span className="ml-1.5 text-sm font-normal text-muted-foreground">
+                · {s.profile.department}{s.profile.jobTitle ? ` · ${s.profile.jobTitle}` : ""}
+              </span>
+            </p>
+            <Link href="/me/level" className="text-xs text-muted-foreground hover:text-foreground">
+              레벨 상세 보기 <ChevronRight className="inline h-3 w-3" />
+            </Link>
+          </div>
         </div>
-        {pct >= 80 && <p className="text-xs text-orange-600 mt-1">한도의 {pct.toFixed(0)}% 사용 중</p>}
+        <div className="flex items-center gap-2">
+          <span className="rounded-lg bg-primary/10 px-3 py-1 text-sm font-semibold text-primary">{s.level.current}</span>
+          {s.level.pendingApplication && (
+            <StatusBadge label={`${s.level.pendingApplication} 심사 진행 중`} tone="warning" />
+          )}
+        </div>
       </div>
 
-      <div>
-        <h2 className="text-sm font-semibold text-gray-700 mb-3">배분된 서비스 ({services?.length ?? 0}개)</h2>
-        <div className="grid grid-cols-3 gap-3">
-          {(services || []).map((s: any) => (
-            <div key={s.id} className="bg-white border rounded-lg p-3">
-              <p className="font-medium text-sm">{s.serviceName}</p>
-              <p className="text-xs text-gray-400 mt-1">배분일: {new Date(s.createdAt).toLocaleDateString('ko-KR')}</p>
-              <span className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 mt-2 inline-block">활성</span>
-            </div>
-          ))}
-          {(!services || services.length === 0) && <p className="text-gray-400 text-sm col-span-3">배분된 서비스 없음 — 레벨 신청 후 AX팀 문의</p>}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg border">
-        <div className="px-4 py-3 border-b"><h3 className="text-sm font-medium">레벨 신청 이력</h3></div>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50"><tr>{['신청레벨', '상태', '신청일', '처리일'].map(h => <th key={h} className="px-4 py-2 text-left text-xs text-gray-500">{h}</th>)}</tr></thead>
-          <tbody>
-            {(recentApplications || []).map((a: any) => (
-              <tr key={a.id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-2">{a.requestedLevel}</td>
-                <td className="px-4 py-2"><span className={`text-xs px-1.5 py-0.5 rounded ${a.status === 'PENDING' ? 'bg-orange-100 text-orange-700' : a.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{a.status}</span></td>
-                <td className="px-4 py-2 text-gray-400">{new Date(a.createdAt).toLocaleDateString('ko-KR')}</td>
-                <td className="px-4 py-2 text-gray-400">{a.updatedAt ? new Date(a.updatedAt).toLocaleDateString('ko-KR') : '-'}</td>
-              </tr>
+      {/* ② 다음 할 일 — 없으면 렌더링하지 않는다 */}
+      {s.todos.length > 0 && (
+        <Card>
+          <CardContent className="space-y-1.5 p-4">
+            <p className="text-xs font-semibold text-muted-foreground">다음 할 일 ({s.todos.length})</p>
+            {s.todos.map((t, i) => (
+              <Link key={i} href={t.link}
+                className={`flex items-center justify-between gap-2 rounded-md border-l-[3px] py-1.5 pl-3 pr-2 text-sm transition-colors hover:bg-accent/40 ${
+                  t.tone === "warning" ? "border-amber-400" : "border-primary"
+                }`}>
+                <span>{t.text}</span>
+                <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </Link>
             ))}
-          </tbody>
-        </table>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ③ 요약 카드 3장 — 숫자 먼저, 클릭 = 상세 */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Link href="/me/projects">
+          <Card className="h-full transition-colors hover:bg-accent/40">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">내 과제</p>
+              <p className="mt-1.5 text-2xl font-semibold">
+                {s.projects.activeCount}
+                <span className="ml-1 text-xs font-normal text-muted-foreground">건 진행 중</span>
+              </p>
+              <div className="mt-1.5 space-y-0.5">
+                {s.projects.recent.map((p) => (
+                  <p key={p.id} className="truncate text-xs">
+                    {p.title} — <span className={p.tone === "warning" ? "text-amber-600" : p.tone === "success" ? "text-green-600" : "text-primary"}>{p.label}</span>
+                  </p>
+                ))}
+                {s.projects.activeCount === 0 && <p className="text-xs text-muted-foreground">신청한 과제가 없습니다</p>}
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/me/data">
+          <Card className="h-full transition-colors hover:bg-accent/40">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">내 데이터</p>
+              <p className="mt-1.5 text-2xl font-semibold">
+                {s.data.provisionedCount}
+                <span className="ml-1 text-xs font-normal text-muted-foreground">건 제공 중</span>
+              </p>
+              <div className="mt-1.5 space-y-0.5 text-xs">
+                {s.data.expiringSoonCount > 0 && <p className="text-amber-600">{s.data.expiringSoonCount}건 만료 임박</p>}
+                {s.data.inReviewCount > 0 && (
+                  <p className="text-muted-foreground">{s.data.inReviewCount}건 {s.data.inReviewLabel ?? "검토 중"}</p>
+                )}
+                {s.data.provisionedCount + s.data.inReviewCount === 0 && (
+                  <p className="text-muted-foreground">데이터 신청 내역이 없습니다</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/me/tools">
+          <Card className="h-full transition-colors hover:bg-accent/40">
+            <CardContent className="p-4">
+              <p className="text-xs text-muted-foreground">AI 도구 · 이번 달 사용량</p>
+              <p className="mt-1.5 truncate text-sm font-medium">
+                {s.tools.names.length ? s.tools.names.join(" · ") : "배정된 도구 없음"}
+              </p>
+              {s.tools.usagePct !== null ? (
+                <>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={`h-full ${s.tools.usagePct >= 80 ? "bg-amber-500" : "bg-primary"}`}
+                      style={{ width: `${s.tools.usagePct}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    토큰 {s.tools.usagePct}% 사용{s.tools.usagePct >= 80 ? " — 한도 임박" : " (한도 내)"}
+                  </p>
+                </>
+              ) : (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  이번 달 {s.tools.tokenUsed.toLocaleString()} 토큰 사용
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </Link>
       </div>
+
+      {/* ④ 교육 — 한 줄 */}
+      <Link href="/me/literacy" className="block">
+        <Card className="transition-colors hover:bg-accent/40">
+          <CardContent className="flex flex-wrap items-center justify-between gap-2 p-4">
+            <p className="text-sm">
+              <span className="font-medium">교육</span> · 필수 과정 {s.literacy.requiredDone}/{s.literacy.requiredTotal} 이수
+              {s.literacy.nextCourse && <span className="text-muted-foreground"> — &apos;{s.literacy.nextCourse}&apos; 남음</span>}
+            </p>
+            <span className="flex items-center gap-1 text-xs text-primary">
+              {s.literacy.nextCourse ? "이어서 수강" : "수강 내역 보기"} <ArrowRight className="h-3 w-3" />
+            </span>
+          </CardContent>
+        </Card>
+      </Link>
     </div>
-  )
+  );
 }
