@@ -5,6 +5,54 @@
 
 ---
 
+## 2026-07-28 — 거버넌스 전면 개편 (REGULATION v2.0 / POLICY v5.0 / STANDARD v1.0 신설 / COMMITTEE v1.1)
+
+### 변경 개요
+
+거버넌스 개정 태스크포스(Fable 검토) 완료 → Full 문서 전면 교체. 핵심 변경: 수치 분리(STANDARD 신설), GUIDELINE 폐지·통합, 문서 간 중복 제거, 실무 유연성 강화.
+
+| 파일 | 이전 → 이후 | 방향 |
+|------|------------|------|
+| AX-REGULATION | v1.x → **v2.0** | GUIDELINE 흡수, 수치→STANDARD 위임 |
+| AX-POLICY | v4.x → **v5.0** | 463줄→~180줄, 수치 전면 삭제 |
+| AX-STANDARD | (신설) → **v1.0** | 수치 SSOT — AX팀장 전결 개정 |
+| AX-COMMITTEE | v1.0 → **v1.1** | 위임전결·서면결의 신설 |
+| AX-GUIDELINE | v1.x → **폐지** | REGULATION 제5조로 흡수 |
+
+### 주요 정책 변경
+
+| # | 변경 | 문서 | 조항 |
+|---|------|------|------|
+| 1 | 위임전결 신설 — 저위험 PROD_APPROVAL·RETIRE_APPROVAL → 실무협의체 전결 | COMMITTEE | 제5조 |
+| 2 | Gate 2 조건부 진행 — 저위험 에이전트 일부 기준 미달 시 사유서로 진행 허용 | POLICY | 제9조 |
+| 3 | PoC 비식별화 데이터 허용 — 실명 제거 + 암호화 + 격리 조건 | REGULATION | 제7조 |
+| 4 | 데이터 지연 조건부 진행 — AX팀장 승인 시 일부 데이터 미확보 상태로 Gate 통과 | POLICY | 제13조 |
+| 5 | 데이터 재신청 연장 — 저위험·동조건 재신청은 전면 재승인 → 연장 처리 | POLICY | 제14조 |
+| 6 | 서면결의 신설 — 대면 회의 없이 전자 의결 가능 | COMMITTEE | 제6조 |
+| 7 | 위험등급별 기술 기준 차등 — Gate 2 커버리지 고/중/저위험별 다름 | STANDARD | §4 |
+| 8 | 수치 SSOT 분리 — 점수·기한·기준금액은 STANDARD에만 존재, POLICY 참조 | STANDARD | §1-7 |
+| 9 | 비용 기준금액 "공고" — 징계 조항 삭제, 월 50만원→AX팀 공고 기준 | STANDARD | §6 |
+| 10 | GUIDELINE 폐지 — 5원칙 REGULATION으로 이동, 중복 제거 | REGULATION | 제5조 |
+
+### 파일 변경 내역
+
+- `full/AX-REGULATION-2026-001_AI운영규정.md` 교체 (→ v2.0)
+- `full/AX-POLICY-2026-001_AI거버넌스지침.md` 교체 (→ v5.0)
+- `full/AX-STANDARD-2026-001_운영기준.md` 신설 (→ v1.0)
+- `full/AX-COMMITTEE-2026-001_AI운영위원회규정.md` 교체 (→ v1.1)
+- `full/AX-GUIDELINE-2026-001_AI거버넌스기본지침.md` → `archive/deprecated/` 이동 (폐지)
+- `meta/VERSION-GUIDE.md` 갱신 — 대응표 업데이트
+- `meta/SLIM-DIFF.md` 갱신 — GUIDELINE 폐지·STANDARD 섹션 추가
+- `meta/AX_거버넌스_개정방향_요약.md` 추가 — 개정 배경 문서 보관
+
+### 후속 과제
+
+- [ ] SLIM 버전(`slim/AX-POLICY-SLIM.md` 등) v5.0/v2.0/v1.1 기준으로 갱신 필요
+- [ ] `slim/AX-GUIDELINE-SLIM.md` 폐지 처리 필요
+- [ ] AX Hub 레지스트리: STANDARD §5 상태코드 기준으로 validation 로직 동기화 필요
+
+---
+
 ## 2026-07-14 — ETF 앙상블 에이전트 Gate 라이프사이클 반영
 
 ### 변경 개요
