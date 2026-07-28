@@ -58,43 +58,77 @@ export async function POST(req: NextRequest) {
   const { question } = await req.json()
   if (!question?.trim()) return NextResponse.json({ error: '질문을 입력해주세요.' }, { status: 400 })
 
-  // 1. Claude → SQL 생성
+  // ReAct 루프: 최대 3회 시도 (SQL 생성 → 실행 → 실패 시 에러 피드백 → 재시도)
+  const MAX_ATTEMPTS = 3
+  const messages: { role: 'user' | 'assistant'; content: string }[] = [
+    {
+      role: 'user',
+      content: `${SCHEMA}\n\n질문: ${question}\n\n출력 JSON:\n{"sql": "SELECT ...", "explanation": "한국어 1~2문장 설명"}`,
+    },
+  ]
+
   let sql = ''
   let explanation = ''
-  try {
-    const msg = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 1024,
-      system: '당신은 SQLite 전문가입니다. 자연어 질문을 SQL로 변환해 JSON으로만 출력하세요. 반드시 SELECT만 사용하세요.',
-      messages: [{
-        role: 'user',
-        content: `${SCHEMA}\n\n질문: ${question}\n\n출력 JSON:\n{"sql": "SELECT ...", "explanation": "한국어 1~2문장 설명"}`,
-      }],
-    })
-    const raw = msg.content[0].type === 'text' ? msg.content[0].text : ''
-    const jsonMatch = raw.match(/\{[\s\S]*\}/)
-    if (jsonMatch) {
-      const parsed = JSON.parse(jsonMatch[0])
-      sql = parsed.sql ?? ''
-      explanation = parsed.explanation ?? ''
+  let attempts = 0
+
+  while (attempts < MAX_ATTEMPTS) {
+    attempts++
+
+    // Observe → Think (Claude가 SQL 생성)
+    let raw = ''
+    try {
+      const msg = await anthropic.messages.create({
+        model: MODEL,
+        max_tokens: 1024,
+        system: '당신은 SQLite 전문가입니다. 자연어 질문을 SQL로 변환해 JSON으로만 출력하세요. 반드시 SELECT만 사용하세요.',
+        messages,
+      })
+      raw = msg.content[0].type === 'text' ? msg.content[0].text : ''
+    } catch (err: any) {
+      return NextResponse.json({ error: `SQL 생성 실패: ${err?.message}` }, { status: 500 })
     }
-  } catch (err: any) {
-    return NextResponse.json({ error: `SQL 생성 실패: ${err?.message}` }, { status: 500 })
+
+    messages.push({ role: 'assistant', content: raw })
+
+    const jsonMatch = raw.match(/\{[\s\S]*?\}/)
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[0])
+        sql = parsed.sql ?? ''
+        explanation = parsed.explanation ?? ''
+      } catch {}
+    }
+
+    if (!sql) {
+      messages.push({ role: 'user', content: 'SQL이 생성되지 않았습니다. 다시 JSON 형식으로 출력하세요.' })
+      continue
+    }
+
+    if (!isSafeSelect(sql)) {
+      return NextResponse.json({ error: 'SELECT만 허용됩니다.', sql }, { status: 400 })
+    }
+
+    // Act (SQL 실행)
+    try {
+      const rows = await db.$queryRawUnsafe(sql)
+      const serialized = JSON.parse(JSON.stringify(rows, (_k, v) =>
+        typeof v === 'bigint' ? Number(v) : v
+      ))
+      return NextResponse.json({ sql, explanation, rows: serialized, error: null, attempts })
+    } catch (err: any) {
+      const errMsg = err?.message ?? 'SQL 오류'
+      if (attempts < MAX_ATTEMPTS) {
+        // 에러 피드백 → 다음 루프에서 Claude가 수정
+        messages.push({
+          role: 'user',
+          content: `SQL 실행 오류가 발생했습니다: ${errMsg}\n\n수정된 SQL을 JSON으로 다시 출력하세요.`,
+        })
+        sql = ''
+      } else {
+        return NextResponse.json({ sql, explanation, rows: [], error: `SQL 실행 오류(${attempts}회 시도): ${errMsg}`, attempts })
+      }
+    }
   }
 
-  if (!sql) return NextResponse.json({ error: 'SQL이 생성되지 않았습니다.' }, { status: 400 })
-  if (!isSafeSelect(sql)) {
-    return NextResponse.json({ error: 'SELECT만 허용됩니다.', sql }, { status: 400 })
-  }
-
-  // 2. Prisma $queryRawUnsafe 실행
-  try {
-    const rows = await db.$queryRawUnsafe(sql)
-    const serialized = JSON.parse(JSON.stringify(rows, (_k, v) =>
-      typeof v === 'bigint' ? Number(v) : v
-    ))
-    return NextResponse.json({ sql, explanation, rows: serialized, error: null })
-  } catch (err: any) {
-    return NextResponse.json({ sql, explanation, rows: [], error: `SQL 실행 오류: ${err?.message}` })
-  }
+  return NextResponse.json({ sql, explanation, rows: [], error: 'SQL 생성에 실패했습니다.', attempts })
 }
