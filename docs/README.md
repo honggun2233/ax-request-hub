@@ -10,10 +10,11 @@
 ```
 ax-request-hub/docs/
 ├── governance/
-│   ├── originals/   ← 원본 공식 문서 5종 (AX-POLICY·REGULATION·COMMITTEE·GUIDELINE·MANUAL)
-│   ├── slim/        ← SLIM 요약본 6종 (AI 적재용 경량 버전)
+│   ├── full/        ← Full 버전 5종 (규정 완결성·감사 대응 기준)
+│   ├── slim/        ← SLIM 버전 6종 (현업 실무 적용·의사결정 즉시 참조)
+│   │                  ※ Full의 요약이 아닌 독립 버전 — VERSION-GUIDE.md 참조
 │   ├── docx/        ← Word 파일 (대외 배포용)
-│   └── meta/        ← 문서체계도·CHANGELOG·SLIM-DIFF
+│   └── meta/        ← VERSION-GUIDE·CHANGELOG·SLIM-DIFF·문서체계도
 ├── operations/      ← 운영 기준 문서 (지침·운영방안·가이드라인)
 ├── reports/         ← 보고서·구조도
 ├── proposals/       ← 제안서
@@ -23,6 +24,7 @@ ax-request-hub/docs/
 
 ## 바로가기
 
+- [버전 운영 가이드](../ax-request-hub/docs/governance/meta/VERSION-GUIDE.md)
+- [Full vs SLIM 조항 비교](../ax-request-hub/docs/governance/meta/SLIM-DIFF.md)
 - [문서 체계도](../ax-request-hub/docs/governance/meta/AX_거버넌스_문서체계_v1.3.md)
 - [CHANGELOG](../ax-request-hub/docs/governance/meta/CHANGELOG.md)
-- [SLIM-DIFF](../ax-request-hub/docs/governance/meta/SLIM-DIFF.md)
