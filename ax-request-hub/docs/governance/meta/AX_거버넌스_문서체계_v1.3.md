@@ -31,6 +31,22 @@
 | AX-GUIDELINE-2026-001 | `AX-GUIDELINE-2026-001_AI거버넌스기본지침.md` | v1.0 | 2026-07-02 | AI 활용 기본 방침(5원칙), 지침 개정 절차 |
 | AX-MANUAL-2026-001 | `AX-MANUAL-2026-001_사용가이드라인.md` | v1.0 | 2026-07-02 | AX Request Hub 신청·평가·승인 실무 가이드, FAQ |
 | AX-MANUAL-2026-002 | `AX_AI도구계정_관리운영가이드.md` | v1.0 | 2026-07-21 | GPT 150 + Gemini 50 계정 신청·배분·회수·모니터링 운영 절차 |
+| AX-COMMITTEE-2026-001 | `AX-COMMITTEE-2026-001_AI운영위원회규정.md` | v1.0 | 2026-07-27 | AX위원회(구성·심의안건5종·상정요건·의결유형5종) + 실무협의체(구성·역할) — AX-POLICY 제9장 분리 독립 |
+
+### SLIM 압축본 (충돌 감지용 — 원본 불변)
+
+> 데이터 플랫폼팀 데이터 거버넌스 문서와 상호 비교·충돌 감지용. 원본 문서는 건드리지 않는다.
+
+| 파일명 | 원본 | 목적 |
+|--------|------|------|
+| `AX-COMMITTEE-SLIM.md` | AX-COMMITTEE-2026-001 v1.0 | 제3조(안건5종)·제4조(상정요건)·제5조(의결유형)·제7조(협의체역할) 유지. 제2조 생략. |
+| `AX-REGULATION-SLIM.md` | AX-REGULATION-2026-001 v1.1 | 5장 9조 전체 유지. 장·조 번호 원본 그대로. |
+| `AX-POLICY-SLIM.md` | AX-POLICY-2026-001 v4.1 | 12장 중 핵심 조항 선별. 생략 조항 *(생략)* 표시. 제1장부터 순서 유지. |
+| `AX-GUIDELINE-SLIM.md` | AX-GUIDELINE-2026-001 v1.0 | 총칙 생략. 제4조(5원칙)·제5조(개정) 유지. |
+| `AX-MANUAL-SLIM.md` | AX-MANUAL-2026-001 v1.1 | 4단계(AI챗 활용) 생략. 1·2·3·5·6단계 + FAQ 4개 유지. |
+| `AX-PROPOSAL-SLIM.md` | AX_전사AI운영체계_제안_2026-07 | 3대 과제 실행 구조·결정 사항 중심. 배경·상세 일정 생략. |
+
+---
 
 ### 보완 문서 (Markdown SSOT)
 
@@ -185,3 +201,4 @@ graph TD
 | v1.3 | 2026-07-23 | architecture.md **v3 통합**(데이터 프로비저닝·이중 라이프사이클·협의회 승인) 반영, 검토보고 문서 등재, 시스템 연결 구조도 v3 개편(고립 노드 해소, /data·/dp·/council 추가), 참조 현황에 반영 필요 항목 4건 등재, 과제 적용 문서 흐름에 데이터 확보·상용 전환·상용 운영 단계 신설 |
 | v1.4 | 2026-07-23 | 참조 현황 ⬜ 4건 → ✅ 완료 처리: REGULATION 제1조·제5조, POLICY 제9~10장, POLICY 제19~27조, MANUAL 데이터 신청 가이드 — 각 규정 문서 v1.1/v4.1/v1.1로 개정 |
 | v1.5 | 2026-07-24 | 시스템 연결 구조도 v3.1 업데이트 — 실제 구현된 라우트 전체 반영: /me/data·/me/level·/me/literacy·/me/services·/me/projects(직원), /admin/agents·/admin/appeals·/admin/employees·/admin/distribution·/admin/literacy·/admin/tokens·/admin/retired(AX팀) 추가. 에이전트 이의신청·레벨 승인·서비스 배분 흐름 연결선 추가. architecture_v3_통합본 Pages·역할표 동기화 |
+| v1.6 | 2026-07-27 | SLIM 압축본 4종 추가 — 데이터 플랫폼팀 거버넌스 문서와 상호 충돌 감지용. AX-REGULATION-SLIM·AX-POLICY-SLIM·AX-GUIDELINE-SLIM·AX-MANUAL-SLIM |
