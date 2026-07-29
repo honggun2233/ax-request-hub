@@ -37,9 +37,9 @@ function toYearMonth(date: Date): string {
 
 function toDayBounds(date: Date): { startTime: number; endTime: number } {
   const start = new Date(date)
-  start.setHours(0, 0, 0, 0)
+  start.setUTCHours(0, 0, 0, 0)
   const end = new Date(date)
-  end.setHours(23, 59, 59, 999)
+  end.setUTCHours(23, 59, 59, 999)
   return {
     startTime: Math.floor(start.getTime() / 1000),
     endTime: Math.floor(end.getTime() / 1000),
@@ -118,7 +118,7 @@ async function collectOpenAIUsage(
       },
     },
     update: {
-      tokenUsed: totalTokens,
+      tokenUsed: { increment: totalTokens },
       // costKrw는 원화 환산 미구현 — 기존 값 유지하기 위해 update에서 생략
     },
     create: {
