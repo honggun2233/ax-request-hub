@@ -42,47 +42,51 @@ function executeAsync<T>(conn: snowflake.Connection, sqlText: string): Promise<T
   })
 }
 
-export async function syncSnowflakeCatalog(): Promise<{ upserted: number }> {
+export async function syncSnowflakeCatalog(): Promise<{ upserted: number; syncedAt: string }> {
   const conn = getSnowflakeConnection()
-  await connectAsync(conn)
+  try {
+    await connectAsync(conn)
 
-  const tables = await executeAsync<SnowflakeTable>(
-    conn,
-    `SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE, COMMENT
-     FROM INFORMATION_SCHEMA.TABLES
-     WHERE TABLE_TYPE IN ('BASE TABLE', 'VIEW')`,
-  )
+    const tables = await executeAsync<SnowflakeTable>(
+      conn,
+      `SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE, COMMENT
+       FROM INFORMATION_SCHEMA.TABLES
+       WHERE TABLE_TYPE IN ('BASE TABLE', 'VIEW')`,
+    )
 
-  const now = new Date()
-  let upserted = 0
+    const now = new Date()
+    let upserted = 0
 
-  for (const table of tables) {
-    const externalId = `${table.TABLE_CATALOG}.${table.TABLE_SCHEMA}.${table.TABLE_NAME}`
-    await prisma.dataAsset.upsert({
-      where: { externalId },
-      create: {
-        name: table.TABLE_NAME,
-        description: table.COMMENT ?? table.TABLE_NAME,
-        ownerDept: 'DATA_PLATFORM',
-        classification: 'G2',
-        deliveryModes: 'DB',
-        sourceSystem: 'SNOWFLAKE',
-        externalId,
-        snowflakeDb: table.TABLE_CATALOG,
-        snowflakeSchema: table.TABLE_SCHEMA,
-        syncedAt: now,
-      },
-      update: {
-        name: table.TABLE_NAME,
-        description: table.COMMENT ?? table.TABLE_NAME,
-        sourceSystem: 'SNOWFLAKE',
-        snowflakeDb: table.TABLE_CATALOG,
-        snowflakeSchema: table.TABLE_SCHEMA,
-        syncedAt: now,
-      },
-    })
-    upserted++
+    for (const table of tables) {
+      const externalId = `${table.TABLE_CATALOG}.${table.TABLE_SCHEMA}.${table.TABLE_NAME}`
+      await prisma.dataAsset.upsert({
+        where: { externalId },
+        create: {
+          name: table.TABLE_NAME,
+          description: table.COMMENT ?? table.TABLE_NAME,
+          ownerDept: 'DATA_PLATFORM',
+          classification: 'G2',
+          deliveryModes: 'DB',
+          sourceSystem: 'SNOWFLAKE',
+          externalId,
+          snowflakeDb: table.TABLE_CATALOG,
+          snowflakeSchema: table.TABLE_SCHEMA,
+          syncedAt: now,
+        },
+        update: {
+          name: table.TABLE_NAME,
+          description: table.COMMENT ?? table.TABLE_NAME,
+          sourceSystem: 'SNOWFLAKE',
+          snowflakeDb: table.TABLE_CATALOG,
+          snowflakeSchema: table.TABLE_SCHEMA,
+          syncedAt: now,
+        },
+      })
+      upserted++
+    }
+
+    return { upserted, syncedAt: now.toISOString() }
+  } finally {
+    conn.destroy(() => {}) // 콜백 필수, 에러 무시
   }
-
-  return { upserted }
 }

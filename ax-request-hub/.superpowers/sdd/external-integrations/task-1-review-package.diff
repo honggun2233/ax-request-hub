@@ -1,0 +1,567 @@
+diff --git a/ax-request-hub/.env.example b/ax-request-hub/.env.example
+new file mode 100644
+index 0000000..8c4fded
+--- /dev/null
++++ b/ax-request-hub/.env.example
+@@ -0,0 +1,21 @@
++# ============================================================
++# AX Hub 환경변수 예시 — 실제 값은 절대 git에 커밋하지 않는다
++# ============================================================
++
++# --- Database ---
++DATABASE_URL=file:./dev.db
++
++# --- NextAuth ---
++NEXTAUTH_SECRET=change-me-in-production
++NEXTAUTH_URL=http://localhost:3000
++
++# --- Claude API ---
++ANTHROPIC_API_KEY=sk-ant-...
++
++# --- Snowflake 데이터 카탈로그 (WS-A) ---
++SNOWFLAKE_ACCOUNT=your-account.ap-northeast-1
++SNOWFLAKE_USER=ax_readonly
++SNOWFLAKE_PASSWORD=your-snowflake-password
++SNOWFLAKE_WAREHOUSE=COMPUTE_WH
++SNOWFLAKE_DATABASE=PROD_DB
++SNOWFLAKE_ROLE=READONLY
+diff --git a/ax-request-hub/.gitignore b/ax-request-hub/.gitignore
+index 0ac75d5..d252f69 100644
+--- a/ax-request-hub/.gitignore
++++ b/ax-request-hub/.gitignore
+@@ -25,20 +25,21 @@
+ *.pem
+ 
+ # debug
+ npm-debug.log*
+ yarn-debug.log*
+ yarn-error.log*
+ .pnpm-debug.log*
+ 
+ # env files (can opt-in for committing if needed)
+ .env*
++!.env.example
+ 
+ # vercel
+ .vercel
+ 
+ # typescript
+ *.tsbuildinfo
+ next-env.d.ts
+ 
+ # prisma sqlite db (로컬 전용)
+ prisma/dev.db
+diff --git a/ax-request-hub/app/api/admin/catalog/sync/route.ts b/ax-request-hub/app/api/admin/catalog/sync/route.ts
+new file mode 100644
+index 0000000..1c6d809
+--- /dev/null
++++ b/ax-request-hub/app/api/admin/catalog/sync/route.ts
+@@ -0,0 +1,11 @@
++// POST /api/admin/catalog/sync
++// AX_TEAM 또는 DATA_PLATFORM 역할 필요
++import { requireRole } from '@/lib/authz'
++import { syncSnowflakeCatalog } from '@/lib/snowflake'
++
++export async function POST(_request: Request) {
++  const { error } = await requireRole('AX_TEAM', 'DATA_PLATFORM')
++  if (error) return error
++  const result = await syncSnowflakeCatalog()
++  return Response.json({ ok: true, ...result })
++}
+diff --git a/ax-request-hub/lib/snowflake.ts b/ax-request-hub/lib/snowflake.ts
+new file mode 100644
+index 0000000..14003bd
+--- /dev/null
++++ b/ax-request-hub/lib/snowflake.ts
+@@ -0,0 +1,88 @@
++// Snowflake INFORMATION_SCHEMA 조회 → DataAsset upsert
++import snowflake from 'snowflake-sdk'
++import { prisma } from '@/lib/prisma'
++
++interface SnowflakeTable {
++  TABLE_CATALOG: string
++  TABLE_SCHEMA: string
++  TABLE_NAME: string
++  TABLE_TYPE: string
++  COMMENT: string | null
++}
++
++export function getSnowflakeConnection(): snowflake.Connection {
++  return snowflake.createConnection({
++    account: process.env.SNOWFLAKE_ACCOUNT!,
++    username: process.env.SNOWFLAKE_USER!,
++    password: process.env.SNOWFLAKE_PASSWORD!,
++    warehouse: process.env.SNOWFLAKE_WAREHOUSE,
++    database: process.env.SNOWFLAKE_DATABASE,
++    role: process.env.SNOWFLAKE_ROLE ?? 'READONLY',
++  })
++}
++
++function connectAsync(conn: snowflake.Connection): Promise<snowflake.Connection> {
++  return new Promise((resolve, reject) => {
++    conn.connect((err, c) => {
++      if (err) reject(err)
++      else resolve(c)
++    })
++  })
++}
++
++function executeAsync<T>(conn: snowflake.Connection, sqlText: string): Promise<T[]> {
++  return new Promise((resolve, reject) => {
++    conn.execute({
++      sqlText,
++      complete: (err, _stmt, rows) => {
++        if (err) reject(err)
++        else resolve((rows ?? []) as T[])
++      },
++    })
++  })
++}
++
++export async function syncSnowflakeCatalog(): Promise<{ upserted: number }> {
++  const conn = getSnowflakeConnection()
++  await connectAsync(conn)
++
++  const tables = await executeAsync<SnowflakeTable>(
++    conn,
++    `SELECT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE, COMMENT
++     FROM INFORMATION_SCHEMA.TABLES
++     WHERE TABLE_TYPE IN ('BASE TABLE', 'VIEW')`,
++  )
++
++  const now = new Date()
++  let upserted = 0
++
++  for (const table of tables) {
++    const externalId = `${table.TABLE_CATALOG}.${table.TABLE_SCHEMA}.${table.TABLE_NAME}`
++    await prisma.dataAsset.upsert({
++      where: { externalId },
++      create: {
++        name: table.TABLE_NAME,
++        description: table.COMMENT ?? table.TABLE_NAME,
++        ownerDept: 'DATA_PLATFORM',
++        classification: 'G2',
++        deliveryModes: 'DB',
++        sourceSystem: 'SNOWFLAKE',
++        externalId,
++        snowflakeDb: table.TABLE_CATALOG,
++        snowflakeSchema: table.TABLE_SCHEMA,
++        syncedAt: now,
++      },
++      update: {
++        name: table.TABLE_NAME,
++        description: table.COMMENT ?? table.TABLE_NAME,
++        sourceSystem: 'SNOWFLAKE',
++        snowflakeDb: table.TABLE_CATALOG,
++        snowflakeSchema: table.TABLE_SCHEMA,
++        syncedAt: now,
++      },
++    })
++    upserted++
++  }
++
++  return { upserted }
++}
+diff --git a/ax-request-hub/prisma/schema.prisma b/ax-request-hub/prisma/schema.prisma
+index 8d967a8..3429f46 100644
+--- a/ax-request-hub/prisma/schema.prisma
++++ b/ax-request-hub/prisma/schema.prisma
+@@ -534,20 +534,27 @@ model DataAsset {
+   description    String
+   ownerDept      String
+   classification String    // DataClassification: G1|G2|G3
+   schemaMeta     String?
+   deliveryModes  String    // "API,FILE,DB"
+   updateCycle    String?
+   isActive       Boolean   @default(true)
+   createdAt      DateTime  @default(now())
+   updatedAt      DateTime  @updatedAt
+   requests       DataRequest[]
++
++  // 외부 데이터 소스 연동 (WS-A)
++  sourceSystem    String    @default("INTERNAL")  // INTERNAL | SNOWFLAKE | AWS_GLUE
++  externalId      String?   @unique                  // Snowflake: DB.SCHEMA.TABLE
++  syncedAt        DateTime?
++  snowflakeDb     String?
++  snowflakeSchema String?
+ }
+ 
+ model DataRequest {
+   id             String    @id @default(cuid())
+   type           String    // DataRequestType: ACCESS|NEW
+   status         String    @default("REQUESTED") // DataRequestStatus
+   projectId      String?
+   project        Project?  @relation(fields: [projectId], references: [id])
+   agentId        String?
+   assetId        String?
+diff --git a/ax-request-hub/prisma/migrations/20260729041431_add_snowflake_fields/migration.sql b/ax-request-hub/prisma/migrations/20260729041431_add_snowflake_fields/migration.sql
+new file mode 100644
+index 0000000..b9c520f
+--- /dev/null
++++ b/ax-request-hub/prisma/migrations/20260729041431_add_snowflake_fields/migration.sql
+@@ -0,0 +1,357 @@
++-- CreateTable
++CREATE TABLE "DepartmentQuota" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "department" TEXT NOT NULL,
++    "toolType" TEXT NOT NULL,
++    "totalQuota" INTEGER NOT NULL DEFAULT 0,
++    "aiDensity" TEXT NOT NULL DEFAULT 'STANDARD',
++    "managedBy" TEXT NOT NULL,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL
++);
++
++-- CreateTable
++CREATE TABLE "ToolAccount" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "employeeId" TEXT NOT NULL,
++    "quotaId" TEXT,
++    "toolType" TEXT NOT NULL,
++    "toolTier" TEXT NOT NULL,
++    "status" TEXT NOT NULL DEFAULT 'PENDING',
++    "requestReason" TEXT NOT NULL DEFAULT '',
++    "assignedByEmail" TEXT,
++    "approvedBy" TEXT,
++    "approvedAt" DATETIME,
++    "activatedAt" DATETIME,
++    "lastUsedAt" DATETIME,
++    "returnedAt" DATETIME,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL,
++    CONSTRAINT "ToolAccount_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "Employee" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
++    CONSTRAINT "ToolAccount_quotaId_fkey" FOREIGN KEY ("quotaId") REFERENCES "DepartmentQuota" ("id") ON DELETE SET NULL ON UPDATE CASCADE
++);
++
++-- CreateTable
++CREATE TABLE "AXProject" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "key" TEXT NOT NULL,
++    "name" TEXT NOT NULL,
++    "domain" TEXT NOT NULL,
++    "description" TEXT NOT NULL DEFAULT '',
++    "owner" TEXT NOT NULL,
++    "status" TEXT NOT NULL DEFAULT 'ACTIVE',
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL
++);
++
++-- CreateTable
++CREATE TABLE "AgentProjectLink" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "agentId" TEXT NOT NULL,
++    "projectId" TEXT NOT NULL,
++    "role" TEXT NOT NULL DEFAULT 'PRIMARY',
++    "addedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    CONSTRAINT "AgentProjectLink_agentId_fkey" FOREIGN KEY ("agentId") REFERENCES "AgentRegistry" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
++    CONSTRAINT "AgentProjectLink_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "AXProject" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
++);
++
++-- CreateTable
++CREATE TABLE "Skill" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "skillId" TEXT NOT NULL,
++    "name" TEXT NOT NULL,
++    "version" TEXT NOT NULL DEFAULT '1.0.0',
++    "category" TEXT NOT NULL,
++    "author" TEXT NOT NULL,
++    "approvedBy" TEXT NOT NULL DEFAULT '',
++    "approvedAt" DATETIME,
++    "status" TEXT NOT NULL DEFAULT 'draft',
++    "targetUsers" TEXT NOT NULL DEFAULT '[]',
++    "securityLevel" TEXT NOT NULL DEFAULT 'G1',
++    "purpose" TEXT NOT NULL DEFAULT '',
++    "instructions" TEXT NOT NULL DEFAULT '',
++    "promptText" TEXT NOT NULL DEFAULT '',
++    "examples" TEXT NOT NULL DEFAULT '',
++    "cautions" TEXT NOT NULL DEFAULT '',
++    "usageCount" INTEGER NOT NULL DEFAULT 0,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL
++);
++
++-- CreateTable
++CREATE TABLE "SkillRating" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "skillId" TEXT NOT NULL,
++    "employeeEmail" TEXT NOT NULL,
++    "score" INTEGER NOT NULL,
++    "comment" TEXT NOT NULL DEFAULT '',
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    CONSTRAINT "SkillRating_skillId_fkey" FOREIGN KEY ("skillId") REFERENCES "Skill" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
++);
++
++-- CreateTable
++CREATE TABLE "ProjectAppeal" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "projectId" TEXT NOT NULL,
++    "requesterEmail" TEXT NOT NULL,
++    "reason" TEXT NOT NULL,
++    "evidenceNote" TEXT NOT NULL DEFAULT '',
++    "status" TEXT NOT NULL DEFAULT 'PENDING',
++    "reviewedBy" TEXT,
++    "reviewNote" TEXT NOT NULL DEFAULT '',
++    "resolvedAt" DATETIME,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL,
++    CONSTRAINT "ProjectAppeal_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
++);
++
++-- CreateTable
++CREATE TABLE "GovernanceDoc" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "docId" TEXT NOT NULL,
++    "fileName" TEXT NOT NULL,
++    "type" TEXT NOT NULL,
++    "level" TEXT NOT NULL DEFAULT 'L2',
++    "title" TEXT NOT NULL,
++    "version" TEXT NOT NULL DEFAULT 'v1.0',
++    "author" TEXT NOT NULL DEFAULT '',
++    "approvedBy" TEXT NOT NULL DEFAULT '',
++    "approvedAt" DATETIME,
++    "securityLevel" TEXT NOT NULL DEFAULT 'G2',
++    "status" TEXT NOT NULL DEFAULT 'active',
++    "description" TEXT NOT NULL DEFAULT '',
++    "relatedDocs" TEXT NOT NULL DEFAULT '[]',
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL
++);
++
++-- CreateTable
++CREATE TABLE "Notification" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "recipientEmail" TEXT NOT NULL,
++    "title" TEXT NOT NULL,
++    "body" TEXT NOT NULL,
++    "link" TEXT,
++    "readAt" DATETIME,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
++);
++
++-- CreateTable
++CREATE TABLE "BenefitRecord" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "projectId" TEXT NOT NULL,
++    "agentId" TEXT,
++    "period" TEXT NOT NULL,
++    "realizedValue" REAL NOT NULL,
++    "unit" TEXT NOT NULL,
++    "note" TEXT NOT NULL DEFAULT '',
++    "recordedBy" TEXT NOT NULL,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    CONSTRAINT "BenefitRecord_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
++);
++
++-- RedefineTables
++PRAGMA defer_foreign_keys=ON;
++PRAGMA foreign_keys=OFF;
++CREATE TABLE "new_AgentRegistry" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "agentName" TEXT NOT NULL,
++    "agentKey" TEXT NOT NULL,
++    "version" TEXT NOT NULL DEFAULT '1.0.0',
++    "purpose" TEXT NOT NULL,
++    "dataSource" TEXT NOT NULL,
++    "owner" TEXT NOT NULL DEFAULT 'CTO',
++    "status" TEXT NOT NULL DEFAULT 'active',
++    "realDataConnected" BOOLEAN NOT NULL DEFAULT false,
++    "fallbackRate" REAL NOT NULL DEFAULT 1.0,
++    "gate1Passed" BOOLEAN NOT NULL DEFAULT false,
++    "gate2Passed" BOOLEAN NOT NULL DEFAULT false,
++    "gate3Passed" BOOLEAN NOT NULL DEFAULT false,
++    "lifecycleStage" TEXT NOT NULL DEFAULT 'GATE1',
++    "gate1PassedAt" DATETIME,
++    "gate2PassedAt" DATETIME,
++    "gate3PassedAt" DATETIME,
++    "operatorTrustScore" INTEGER,
++    "operatorComment" TEXT,
++    "sam30dAccuracy" REAL,
++    "degradedSince" DATETIME,
++    "retiredAt" DATETIME,
++    "retireReason" TEXT,
++    "lastEvaluatedAt" DATETIME,
++    "nextReviewAt" DATETIME,
++    "notes" TEXT,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL,
++    "name" TEXT,
++    "projectId" TEXT,
++    "phase" TEXT NOT NULL DEFAULT 'DEVELOPMENT',
++    "devStage" TEXT,
++    "prodStatus" TEXT,
++    "trustScore" INTEGER,
++    "pilotKpiTarget" TEXT,
++    "prodKpiTarget" TEXT,
++    "retireFlag" BOOLEAN NOT NULL DEFAULT false,
++    "lastUsedAt" DATETIME,
++    "productionAt" DATETIME,
++    CONSTRAINT "AgentRegistry_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE SET NULL ON UPDATE CASCADE
++);
++INSERT INTO "new_AgentRegistry" ("agentKey", "agentName", "createdAt", "dataSource", "degradedSince", "devStage", "fallbackRate", "gate1Passed", "gate1PassedAt", "gate2Passed", "gate2PassedAt", "gate3Passed", "gate3PassedAt", "id", "lastEvaluatedAt", "lastUsedAt", "lifecycleStage", "name", "nextReviewAt", "notes", "operatorComment", "operatorTrustScore", "owner", "phase", "pilotKpiTarget", "prodKpiTarget", "prodStatus", "productionAt", "projectId", "purpose", "realDataConnected", "retireFlag", "retireReason", "retiredAt", "sam30dAccuracy", "status", "trustScore", "updatedAt", "version") SELECT "agentKey", "agentName", "createdAt", "dataSource", "degradedSince", "devStage", "fallbackRate", "gate1Passed", "gate1PassedAt", "gate2Passed", "gate2PassedAt", "gate3Passed", "gate3PassedAt", "id", "lastEvaluatedAt", "lastUsedAt", "lifecycleStage", "name", "nextReviewAt", "notes", "operatorComment", "operatorTrustScore", "owner", "phase", "pilotKpiTarget", "prodKpiTarget", "prodStatus", "productionAt", "projectId", "purpose", "realDataConnected", "retireFlag", "retireReason", "retiredAt", "sam30dAccuracy", "status", "trustScore", "updatedAt", "version" FROM "AgentRegistry";
++DROP TABLE "AgentRegistry";
++ALTER TABLE "new_AgentRegistry" RENAME TO "AgentRegistry";
++CREATE UNIQUE INDEX "AgentRegistry_agentName_key" ON "AgentRegistry"("agentName");
++CREATE UNIQUE INDEX "AgentRegistry_agentKey_key" ON "AgentRegistry"("agentKey");
++CREATE TABLE "new_AgentScore" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "agentId" TEXT NOT NULL,
++    "ticker" TEXT,
++    "score" REAL,
++    "rationale" TEXT,
++    "dataType" TEXT NOT NULL DEFAULT 'mock',
++    "recordedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "phase" TEXT,
++    "month" TEXT,
++    "kpiActual" TEXT,
++    "achieveRate" INTEGER,
++    CONSTRAINT "AgentScore_agentId_fkey" FOREIGN KEY ("agentId") REFERENCES "AgentRegistry" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
++);
++INSERT INTO "new_AgentScore" ("achieveRate", "agentId", "dataType", "id", "kpiActual", "month", "phase", "rationale", "recordedAt", "score", "ticker") SELECT "achieveRate", "agentId", "dataType", "id", "kpiActual", "month", "phase", "rationale", "recordedAt", "score", "ticker" FROM "AgentScore";
++DROP TABLE "AgentScore";
++ALTER TABLE "new_AgentScore" RENAME TO "AgentScore";
++CREATE UNIQUE INDEX "AgentScore_agentId_phase_month_key" ON "AgentScore"("agentId", "phase", "month");
++CREATE TABLE "new_CouncilAgendaItem" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "meetingId" TEXT NOT NULL,
++    "agentId" TEXT NOT NULL,
++    "itemType" TEXT NOT NULL,
++    "packageMeta" TEXT NOT NULL,
++    "decision" TEXT,
++    "decisionNote" TEXT,
++    "conditions" TEXT,
++    "decidedAt" DATETIME,
++    CONSTRAINT "CouncilAgendaItem_meetingId_fkey" FOREIGN KEY ("meetingId") REFERENCES "CouncilMeeting" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
++    CONSTRAINT "CouncilAgendaItem_agentId_fkey" FOREIGN KEY ("agentId") REFERENCES "AgentRegistry" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
++);
++INSERT INTO "new_CouncilAgendaItem" ("agentId", "conditions", "decidedAt", "decision", "decisionNote", "id", "itemType", "meetingId", "packageMeta") SELECT "agentId", "conditions", "decidedAt", "decision", "decisionNote", "id", "itemType", "meetingId", "packageMeta" FROM "CouncilAgendaItem";
++DROP TABLE "CouncilAgendaItem";
++ALTER TABLE "new_CouncilAgendaItem" RENAME TO "CouncilAgendaItem";
++CREATE TABLE "new_DataAsset" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "name" TEXT NOT NULL,
++    "description" TEXT NOT NULL,
++    "ownerDept" TEXT NOT NULL,
++    "classification" TEXT NOT NULL,
++    "schemaMeta" TEXT,
++    "deliveryModes" TEXT NOT NULL,
++    "updateCycle" TEXT,
++    "isActive" BOOLEAN NOT NULL DEFAULT true,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL,
++    "sourceSystem" TEXT NOT NULL DEFAULT 'INTERNAL',
++    "externalId" TEXT,
++    "syncedAt" DATETIME,
++    "snowflakeDb" TEXT,
++    "snowflakeSchema" TEXT
++);
++INSERT INTO "new_DataAsset" ("classification", "createdAt", "deliveryModes", "description", "id", "isActive", "name", "ownerDept", "schemaMeta", "updateCycle", "updatedAt") SELECT "classification", "createdAt", "deliveryModes", "description", "id", "isActive", "name", "ownerDept", "schemaMeta", "updateCycle", "updatedAt" FROM "DataAsset";
++DROP TABLE "DataAsset";
++ALTER TABLE "new_DataAsset" RENAME TO "DataAsset";
++CREATE TABLE "new_DataProvision" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "requestId" TEXT NOT NULL,
++    "deliveryMode" TEXT NOT NULL,
++    "connectionRef" TEXT NOT NULL,
++    "providedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "expiresAt" DATETIME NOT NULL,
++    "revokedAt" DATETIME,
++    "revokeReason" TEXT,
++    CONSTRAINT "DataProvision_requestId_fkey" FOREIGN KEY ("requestId") REFERENCES "DataRequest" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
++);
++INSERT INTO "new_DataProvision" ("connectionRef", "deliveryMode", "expiresAt", "id", "providedAt", "requestId", "revokeReason", "revokedAt") SELECT "connectionRef", "deliveryMode", "expiresAt", "id", "providedAt", "requestId", "revokeReason", "revokedAt" FROM "DataProvision";
++DROP TABLE "DataProvision";
++ALTER TABLE "new_DataProvision" RENAME TO "DataProvision";
++CREATE UNIQUE INDEX "DataProvision_requestId_key" ON "DataProvision"("requestId");
++CREATE TABLE "new_DataRequest" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "type" TEXT NOT NULL,
++    "status" TEXT NOT NULL DEFAULT 'REQUESTED',
++    "projectId" TEXT,
++    "agentId" TEXT,
++    "assetId" TEXT,
++    "requesterId" TEXT NOT NULL,
++    "purpose" TEXT NOT NULL,
++    "requestedSpec" TEXT,
++    "classification" TEXT NOT NULL,
++    "periodMonths" INTEGER NOT NULL,
++    "forProduction" BOOLEAN NOT NULL DEFAULT false,
++    "rejectReason" TEXT,
++    "reviewerId" TEXT,
++    "prevRequestId" TEXT,
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL,
++    CONSTRAINT "DataRequest_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
++    CONSTRAINT "DataRequest_assetId_fkey" FOREIGN KEY ("assetId") REFERENCES "DataAsset" ("id") ON DELETE SET NULL ON UPDATE CASCADE
++);
++INSERT INTO "new_DataRequest" ("agentId", "assetId", "classification", "createdAt", "forProduction", "id", "periodMonths", "prevRequestId", "projectId", "purpose", "rejectReason", "requestedSpec", "requesterId", "reviewerId", "status", "type", "updatedAt") SELECT "agentId", "assetId", "classification", "createdAt", "forProduction", "id", "periodMonths", "prevRequestId", "projectId", "purpose", "rejectReason", "requestedSpec", "requesterId", "reviewerId", "status", "type", "updatedAt" FROM "DataRequest";
++DROP TABLE "DataRequest";
++ALTER TABLE "new_DataRequest" RENAME TO "DataRequest";
++CREATE TABLE "new_Project" (
++    "id" TEXT NOT NULL PRIMARY KEY,
++    "title" TEXT NOT NULL,
++    "department" TEXT NOT NULL,
++    "requesterName" TEXT NOT NULL,
++    "requesterEmail" TEXT NOT NULL,
++    "source" TEXT NOT NULL DEFAULT 'user_request',
++    "status" TEXT NOT NULL DEFAULT 'submitted',
++    "description" TEXT NOT NULL,
++    "asIs" TEXT NOT NULL,
++    "expectedBenefit" TEXT NOT NULL,
++    "confidentialityLevel" TEXT NOT NULL DEFAULT 'G2',
++    "championName" TEXT,
++    "estimatedUsers" INTEGER NOT NULL DEFAULT 0,
++    "totalScore" REAL,
++    "autoApproved" BOOLEAN NOT NULL DEFAULT false,
++    "approvedBy" TEXT,
++    "decisionNote" TEXT,
++    "techHasApiSpec" BOOLEAN NOT NULL DEFAULT false,
++    "techHasDataClassification" BOOLEAN NOT NULL DEFAULT false,
++    "techHasAuditLogging" BOOLEAN NOT NULL DEFAULT false,
++    "techHasTestCoverage" BOOLEAN NOT NULL DEFAULT false,
++    "techStandardsPassed" BOOLEAN NOT NULL DEFAULT false,
++    "techStandardsFailedItems" TEXT NOT NULL DEFAULT '[]',
++    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "updatedAt" DATETIME NOT NULL,
++    "expectedBenefitValue" REAL,
++    "expectedBenefitUnit" TEXT
++);
++INSERT INTO "new_Project" ("approvedBy", "asIs", "autoApproved", "championName", "confidentialityLevel", "createdAt", "decisionNote", "department", "description", "estimatedUsers", "expectedBenefit", "id", "requesterEmail", "requesterName", "source", "status", "title", "totalScore", "updatedAt") SELECT "approvedBy", "asIs", "autoApproved", "championName", "confidentialityLevel", "createdAt", "decisionNote", "department", "description", "estimatedUsers", "expectedBenefit", "id", "requesterEmail", "requesterName", "source", "status", "title", "totalScore", "updatedAt" FROM "Project";
++DROP TABLE "Project";
++ALTER TABLE "new_Project" RENAME TO "Project";
++PRAGMA foreign_keys=ON;
++PRAGMA defer_foreign_keys=OFF;
++
++-- CreateIndex
++CREATE UNIQUE INDEX "DepartmentQuota_department_toolType_key" ON "DepartmentQuota"("department", "toolType");
++
++-- CreateIndex
++CREATE UNIQUE INDEX "AXProject_key_key" ON "AXProject"("key");
++
++-- CreateIndex
++CREATE UNIQUE INDEX "AgentProjectLink_agentId_projectId_key" ON "AgentProjectLink"("agentId", "projectId");
++
++-- CreateIndex
++CREATE UNIQUE INDEX "Skill_skillId_key" ON "Skill"("skillId");
++
++-- CreateIndex
++CREATE UNIQUE INDEX "SkillRating_skillId_employeeEmail_key" ON "SkillRating"("skillId", "employeeEmail");
++
++-- CreateIndex
++CREATE UNIQUE INDEX "GovernanceDoc_docId_key" ON "GovernanceDoc"("docId");
++
++-- CreateIndex
++CREATE UNIQUE INDEX "GovernanceDoc_fileName_key" ON "GovernanceDoc"("fileName");
++
++-- CreateIndex
++CREATE INDEX "Notification_recipientEmail_readAt_idx" ON "Notification"("recipientEmail", "readAt");
++
++-- CreateIndex
++CREATE UNIQUE INDEX "BenefitRecord_projectId_period_key" ON "BenefitRecord"("projectId", "period");
+diff --git a/ax-request-hub/prisma/migrations/20260729041432_add_snowflake_externalid_unique/migration.sql b/ax-request-hub/prisma/migrations/20260729041432_add_snowflake_externalid_unique/migration.sql
+new file mode 100644
+index 0000000..56e6fc4
+--- /dev/null
++++ b/ax-request-hub/prisma/migrations/20260729041432_add_snowflake_externalid_unique/migration.sql
+@@ -0,0 +1,2 @@
++-- CreateIndex
++CREATE UNIQUE INDEX "DataAsset_externalId_key" ON "DataAsset"("externalId");
