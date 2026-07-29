@@ -47,6 +47,8 @@ const ADMIN_NAV = [
   { href: '/admin/docs', label: '문서 메타데이터 관리' },
   { section: '감사 · 거버넌스' },
   { href: '/governance', label: '감사 로그' },
+  { section: '지식 그래프' },
+  { href: '/graph', label: '🕸️ 지식 그래프' },
   { section: '경영진 뷰' },
   { href: '/executive', label: '경영진 AI 현황' },
 ]

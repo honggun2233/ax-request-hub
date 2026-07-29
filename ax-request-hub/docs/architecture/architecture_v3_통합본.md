@@ -788,25 +788,210 @@ ANTHROPIC_API_KEY="..."
 
 | 항목 | 상태 |
 |------|------|
-| 토큰 배분 → 실제 Claude API 연동 | 미구현 |
 | 리터러시 레벨 자동 평가 | 수동 심사, 자동화 미구현 |
-| 온프레미스 배포 (사내 서버) | 로컬만 운영 중 |
 | 모바일 반응형 | 미최적화 |
-| AI 도구 계정 → 실제 GPT/Gemini 연동 | UI만 구현 |
 | **[P1] G3 신청서의 Claude API 전송** | 기밀 선판정 또는 마스킹 방식 확정 필요 (검토보고 P1-1) |
-| **[P1] 알림 채널** | Telegram → 사내 채널 전환 필요 (검토보고 P1-2) |
 | **[P1] 이의제기(재심) 절차·API** | 규정 조항 + API 신설 필요 (검토보고 P1-3) |
 | `/api/governance-docs` POST 권한 | ALL → ADMIN 확인·수정 필요 |
-| SQLite → PostgreSQL 전환 | 전사 배포 시 필수 (동시성·백업) |
 | 감사로그 보존기간·위변조 방지 | 전자금융감독규정 관점 명세 필요 |
-| 시크릿 관리 체계 | 사내 배포 시 방식 확정 (connectionRef 저장소 포함) |
-| 데이터플랫폼팀 기존 카탈로그 존재 여부 | 존재 시 DataAsset 미러/연동 방식 전환 (이중 SSOT 방지) |
 | 정보보호 협의(SEC_REVIEW) 주체·방식 | 시스템 내 처리 vs 오프라인 기록 |
 | 제공 방식별 기술 표준 | API 인증·파일 전달 경로·DB 읽기전용 계정 정책 |
 | 협의회 명칭·구성·개최 주기 | AX-POLICY 제9~10장 실제 조문 대조 ('AX위원회' 가정) |
 | 위원용 읽기 전용 역할(COUNCIL) / EXECUTIVE 역할 | v3은 간사 대리 입력 가정, 역할 신설 검토 |
 | 파일럿 KPI 실증 최소 기간 | 1개월 가정 — 협의회 기준 확정 필요 |
 | 기존 시드 devStage 매핑 검수 | GATE1 대기 7 / GATE2 통과 11 / GATE3 통과 1 |
+| **[보류] 내부 기간계 연동** | SSO/AD·예산시스템 연동 — 2차 개발에서 착수 |
+| **[보류] HR 시스템 연동** | 직원 데이터 자동 동기화 — 제외 결정 (2026-07-29) |
+
+### 2026-07-29 확정된 결정사항
+
+| 항목 | 결정 |
+|------|------|
+| 알림 채널 | ~~Telegram~~ → **Samsung Knox 연동** (사내 채널) |
+| GPT/Gemini 토큰 수집 | OpenAI Usage API + Google Cloud Billing API 배치 수집 구현 — §23 |
+| 데이터 카탈로그 | Snowflake 메타데이터 미러 방식 구현 — §23 |
+| DB | SQLite → **PostgreSQL** 전환 — §23 |
+| 배포 | 온프레미스 서버 배포 — §23 |
+| HR 시스템 연동 | 제외 (Employee 테이블 수동 관리 유지) |
+
+---
+
+## 23. 외부 연동 설계 (2026-07-29 확정)
+
+### 23-1. Snowflake 데이터 카탈로그 연동
+
+**방식**: Read-through 미러 (Snowflake가 SSOT, AX Hub는 동기화 캐시)
+
+```
+Snowflake Information Schema
+  └── INFORMATION_SCHEMA.TABLES / COLUMNS / ROW_ACCESS_POLICIES
+        ↓ (일 1회 배치 또는 수동 새로고침)
+DataAsset 테이블 (sourceSystem=SNOWFLAKE, externalId=<DB.SCHEMA.TABLE>)
+        ↓
+/data/catalog 검색 UI
+```
+
+**추가 DB 필드 (DataAsset)**:
+```prisma
+model DataAsset {
+  // 기존 필드 유지 +
+  sourceSystem   String  @default("INTERNAL")  // INTERNAL | SNOWFLAKE | AWS_GLUE
+  externalId     String?                        // Snowflake: DB.SCHEMA.TABLE
+  syncedAt       DateTime?                      // 마지막 동기화 시각
+  snowflakeDb    String?
+  snowflakeSchema String?
+}
+```
+
+**연동 API**:
+- `POST /api/admin/catalog/sync` — Snowflake 메타데이터 수동 동기화 트리거
+- 배치: 일 1회 자동 실행 (Next.js Route + cron 또는 별도 스크립트)
+
+**환경변수 추가**:
+```env
+SNOWFLAKE_ACCOUNT=<account>
+SNOWFLAKE_USER=<user>
+SNOWFLAKE_PASSWORD=<password>
+SNOWFLAKE_WAREHOUSE=<warehouse>
+SNOWFLAKE_DATABASE=<database>
+SNOWFLAKE_ROLE=READONLY
+```
+
+**보안**: Snowflake 계정은 `READONLY` 역할 전용. 데이터 원문 접근 불가, 메타데이터만 읽음.
+
+---
+
+### 23-2. LLM 3종 토큰 사용량 자동 수집
+
+**아키텍처**: 각 LLM 운영사 Usage API → 일 1회 배치 → UsageRecord upsert
+
+#### Claude (Anthropic)
+- API: `GET https://api.anthropic.com/v1/usage` (월별 집계)
+- 현재 `/api/chat` 호출 시 `inputTokens + outputTokens` → UsageRecord 실시간 누적 ✅
+- 추가: Anthropic 청구 API 연동으로 일별 정확도 보완
+
+#### ChatGPT (OpenAI)
+- API: `GET https://api.openai.com/v1/organization/usage/completions?start_time=<unix>&end_time=<unix>`
+- 응답: `{ data: [{ usage: { input_tokens, output_tokens }, cost }] }`
+- 배치: 매일 00:10 KST, 전일 데이터 수집 → UsageRecord upsert (`service=ChatGPT`)
+
+#### Gemini (Google)
+- API: Google Cloud Billing API `projects/{project}/billingAccounts/{account}/reports`
+- 또는 Vertex AI: `aiplatform.googleapis.com/v1/projects/{project}/locations/*/models:usage`
+- 배치: 매일 00:20 KST → UsageRecord upsert (`service=Gemini`)
+
+**배치 구현 방식**:
+```
+scripts/collect-llm-usage.ts (Next.js standalone 실행 or cron)
+  ├── collectOpenAIUsage(date) → upsert UsageRecord[]
+  ├── collectGeminiUsage(date) → upsert UsageRecord[]
+  └── collectAnthropicUsage(date) → 보완 업데이트
+```
+
+**추가 환경변수**:
+```env
+OPENAI_API_KEY=<org-level key>
+OPENAI_ORG_ID=<org_id>
+GOOGLE_CLOUD_PROJECT=<project_id>
+GOOGLE_APPLICATION_CREDENTIALS=<service_account_json_path>
+```
+
+---
+
+### 23-3. Samsung Knox 알림 연동
+
+**역할**: 기존 Telegram Bot 알림을 Knox 사내 채널로 전환
+
+**Knox 연동 방식**:
+- Knox Manage API 또는 Knox Email Gateway (사내 담당자 확인 필요)
+- 단기: Knox 이메일 발송 API (`POST /knox/api/v1/notify/send`)
+- 장기: Knox 메신저 채널 webhook
+
+**알림 대상 이벤트**:
+| 이벤트 | 수신자 |
+|--------|--------|
+| 과제 에스컬레이션 (70점 미만 or G3) | AX팀 |
+| Gate 단계 전환 | AX팀 + 과제 담당자 |
+| 데이터 요청 승인/반려 | 신청자 |
+| 토큰 경고 (80% / 100%) | AX팀 + 해당 직원 |
+| 협의회 상정 준비 완료 | AX팀 |
+| 에이전트 자동 SUSPENDED | AX팀 |
+
+**알림 추상화 레이어** (Telegram 제거 + Knox 교체):
+```typescript
+// lib/notify.ts
+export async function notify(event: NotifyEvent, recipients: string[]) {
+  // NOTIFY_CHANNEL=knox | email | console (dev)
+  if (process.env.NOTIFY_CHANNEL === 'knox') {
+    return sendKnoxNotification(event, recipients)
+  }
+  // fallback: console.log (개발환경)
+}
+```
+
+**추가 환경변수**:
+```env
+NOTIFY_CHANNEL=knox
+KNOX_API_ENDPOINT=<사내 Knox API URL>
+KNOX_API_KEY=<knox_api_key>
+KNOX_SENDER_ID=<ax_team_id>
+```
+
+---
+
+### 23-4. PostgreSQL 전환 + 온프레미스 배포
+
+#### DB 전환
+
+```
+현재: SQLite (prisma/dev.db)
+전환: PostgreSQL 16 (사내 서버 또는 AWS RDS)
+```
+
+**Prisma 변경사항**:
+```prisma
+// schema.prisma
+datasource db {
+  provider = "postgresql"  // sqlite → postgresql
+  url      = env("DATABASE_URL")
+}
+```
+
+**마이그레이션 절차**:
+1. `prisma migrate dev` → PostgreSQL용 SQL 생성
+2. 기존 SQLite 데이터 pg_dump 등가 스크립트로 이전
+3. `connectionRef` 시크릿: DB 암호화 컬럼 또는 사내 Vault
+
+**배포 환경**:
+```env
+DATABASE_URL=postgresql://<user>:<password>@<host>:5432/ax_hub
+NEXTAUTH_URL=https://<사내도메인>
+```
+
+#### 온프레미스 배포 구성
+
+```
+[사내 서버]
+  ├── Node.js 20 + PM2 (또는 systemd)
+  ├── Next.js standalone build (`output: 'standalone'`)
+  ├── PostgreSQL 16
+  ├── Nginx reverse proxy (HTTPS)
+  └── 환경변수: .env.production (서버 로컬, git 제외)
+```
+
+**배포 스크립트** (`scripts/deploy.sh`):
+```bash
+git pull origin main
+npm ci
+npx prisma migrate deploy
+npm run build
+pm2 restart ax-hub
+```
+
+**next.config.ts 추가**:
+```typescript
+output: 'standalone'
+```
 
 ---
 
