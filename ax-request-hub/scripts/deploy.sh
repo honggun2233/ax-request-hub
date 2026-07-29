@@ -1,6 +1,7 @@
 #!/bin/bash
 # AX Hub 온프레미스 배포 스크립트
 # 사전 요구사항: Node.js 20, PM2, PostgreSQL 16 (DATABASE_URL 설정 필요)
+# 초기 PG 배포: docs/deployment.md의 "PostgreSQL 초기 배포 시 주의사항" 참고
 set -e
 
 echo "=== AX Hub 배포 시작 ==="

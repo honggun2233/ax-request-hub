@@ -71,6 +71,26 @@ pm2 start ecosystem.config.js
 pm2 restart ecosystem.config.js --update-env
 ```
 
+## PostgreSQL 초기 배포 시 주의사항
+
+현재 마이그레이션 파일들은 SQLite 환경에서 생성되었습니다.
+PostgreSQL 신규 서버에 처음 배포할 때는 `prisma migrate deploy` 대신 아래 절차를 따르세요:
+
+### 초기 PostgreSQL 배포 절차
+```bash
+# 1. 현재 schema.prisma 기준으로 PG 데이터베이스 스키마 직접 생성
+npx prisma db push
+
+# 2. 기존 마이그레이션 이력을 "이미 적용됨"으로 baseline 처리
+npx prisma migrate resolve --applied 20260701033601_init
+npx prisma migrate resolve --applied 20260729041431_add_snowflake_fields
+npx prisma migrate resolve --applied 20260729041432_add_snowflake_externalid_unique
+
+# 이후 신규 마이그레이션은 prisma migrate deploy로 정상 적용
+```
+
+이후 업데이트 배포 시에는 `scripts/deploy.sh`의 `prisma migrate deploy`가 정상 동작합니다.
+
 ## 초기 배포
 ```bash
 git clone https://github.com/honggun2233/ax-request-hub.git

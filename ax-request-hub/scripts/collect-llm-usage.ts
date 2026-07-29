@@ -30,8 +30,8 @@ async function ensureSystemEmployee(): Promise<string> {
 // ─── 날짜 유틸 ────────────────────────────────────────────────────────────
 
 function toYearMonth(date: Date): string {
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const y = date.getUTCFullYear()
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0')
   return `${y}-${m}`
 }
 
@@ -159,7 +159,7 @@ async function collectGeminiUsage(
 
 async function main(): Promise<void> {
   const yesterday = new Date()
-  yesterday.setDate(yesterday.getDate() - 1)
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1)
 
   console.log(`[collect-llm-usage] 수집 대상일: ${yesterday.toISOString().slice(0, 10)}`)
 
