@@ -17,7 +17,11 @@ npx prisma migrate deploy
 # 4. 빌드
 npm run build
 
+# standalone 모드 정적 파일 복사 (next.config.ts output: 'standalone' 필수)
+cp -r .next/static .next/standalone/.next/static
+cp -r public .next/standalone/public
+
 # 5. PM2 재시작
-pm2 restart ax-hub || pm2 start npm --name ax-hub -- start
+pm2 restart ecosystem.config.js --update-env 2>/dev/null || pm2 start ecosystem.config.js
 
 echo "=== 배포 완료 ==="
