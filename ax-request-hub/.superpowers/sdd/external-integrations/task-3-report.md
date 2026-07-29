@@ -4,7 +4,7 @@
 DONE_WITH_CONCERNS
 
 ## 커밋 해시
-(커밋 후 기재)
+6e7199d
 
 ## tsc 결과
 에러 1건 — `app/api/admin/console-summary/route.ts(56,21): error TS2352` (pre-existing, Task 3 무관)
