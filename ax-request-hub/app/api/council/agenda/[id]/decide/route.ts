@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/authz";
-import { notify } from "@/lib/notify";
+import { notify, NotifyEvent } from "@/lib/notify";
 import { displayName } from "@/lib/council-eligibility";
 
 /**
@@ -85,7 +85,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         DEFERRED: ["심의 보류", `'${agentLabel}' 안건이 차기 협의회로 이월되었습니다.`],
       };
       const [title, body] = msg[decision];
-      await notify(project.requesterEmail, title, body, "/me/projects");
+      const event: NotifyEvent = { type: 'GATE_TRANSITION', title, body, link: '/me/projects' };
+      await notify(event, [project.requesterEmail]);
     }
   }
 
