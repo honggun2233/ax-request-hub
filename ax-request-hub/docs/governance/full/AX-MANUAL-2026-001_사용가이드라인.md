@@ -11,7 +11,7 @@
 | 적용범위 | 삼성자산운용 전 임직원 |
 | 담당부서 | AX/PI센터 AX팀 |
 
-> **관련 문서**: 「AI 운영 규정」(AX-REGULATION-2026-001) | 「AI 운영 지침」(AX-POLICY-2026-001) | 「AI 운영위원회 규정」(AX-COMMITTEE-2026-001) | 「AX 운영기준」(AX-STANDARD-2026-001)
+> **관련 문서**: 「AI 운영 규정」(AX-REGULATION-2026-001) | 「AI 운영 지침」(AX-POLICY-2026-001) | 「AI 운영위원회 규정」(AX-COMMITTEE-2026-001) | 「AI 운영기준」(AX-STANDARD-2026-001)
 
 ---
 

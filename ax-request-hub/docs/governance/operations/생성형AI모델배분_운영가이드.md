@@ -3,7 +3,7 @@
 > 문서번호: IT-AX-OPS-006 | 버전: v2.1 | 2026-07-08  
 > 소관: AX/PI센터 AX팀  
 > 적용: 전 임직원, AX팀  
-> 참조: 「AI 거버넌스 규정」(IT-AX-REG-001), 「AI 과제 심사·운영 지침」(IT-AX-OPS-002)
+> 참조: 「AI 운영 규정」(AX-REGULATION-2026-001), 「AI 과제 심사·운영 지침」(IT-AX-OPS-002)
 
 ---
 
@@ -15,7 +15,7 @@
 
 ## 제2조(적용 대상 서비스)
 
-회사가 공식 지원하는 생성형 AI 서비스는 다음 3개 공급사이다. 이외의 AI 서비스를 업무에 사용하려면 AX팀 승인을 받아야 한다.
+회사가 공식 지원하는 생성형 AI 서비스는 다음 3개 공급사이다. 이외의 AI 서비스를 업무에 사용하려면 사전 승인을 받아야 한다.
 
 | 공급사 | 서비스 | 주요 특성 |
 |--------|--------|---------|
@@ -79,7 +79,7 @@ CREW 레벨의 세부 운영 기준은 「AI 과제 심사·운영 지침」(IT-
 |---------|-----------|---------|------------|------------|
 | **Level 1 (Basic)** | 일반 임직원 ≈ 100명 | Gemini (Google Workspace AI), GPT for Excel (Microsoft Copilot 기초) | 2026년 8월 | G1만 허용 |
 | **Level 2 (Intensive)** | No/Low-Code Agent 개발 가능 현업 ≈ 100명 | GPT Chat (GPT Enterprise), Claude Cowork (claude.ai Enterprise) | 2026년 8월 | G1만 허용 (G2는 사내 인프라 요청 시) |
-| **Level 3 (Advanced)** | AX 크루 및 현업 코딩 가능자 ≈ 50명 | Codex (OpenAI), Claude Code (claude.ai), Antigravity (사내 AI 개발 환경) | 2026년 10월 | G1·G2 허용 (사내 승인 인프라 경유) |
+| **Level 3 (Advanced)** | AI CREW 참여자 및 현업 코딩 가능 임직원 ≈ 50명 | Codex (OpenAI), Claude Code (claude.ai), Antigravity (사내 AI 개발 환경) | 2026년 10월 | G1·G2 허용 (사내 승인 인프라 경유) |
 | **Level 4 (Expert)** | AX센터·디지털마케팅·자산운용 전문개발자 | AI 연구망(사내 격리 환경), AWS AI 샌드박스 (Bedrock, SageMaker) | 2026년 10월 | G1·G2·G3 허용 (G3는 온프레미스 전용) |
 
 > **배분 기준 확정 경위**: 2026-07-08 AX 거버넌스 체계 수립(案) 반영. 각 레벨별 배분 서비스·시기는 AX 협의체 심의를 거쳐 최종 고시한다. 변경 시 본 표를 갱신한다.
@@ -143,7 +143,7 @@ AI CREW는 임직원 레벨에 따른 기본 지원에 더해 다음 항목을 �
 | **G2 (내부제한)** | 사내 공유, 외부 전송 금지 | 사내 승인 인프라만 (AWS Bedrock VPC, Azure Private Endpoint 등) | 외부 Claude.ai·GPT·Gemini 직접 입력 |
 | **G3 (기밀)** | 고객정보, 미공개 투자정보, 법적 분쟁 관련 | 온프레미스 전용 (현재 구축 준비 중) | 모든 외부·클라우드 AI 서비스 |
 
-G3 데이터를 외부 AI 서비스에 전송하는 것은 「AI 거버넌스 규정」(IT-AX-REG-001 제8조)에 따라 절대 금지한다.
+G3 데이터를 외부 AI 서비스에 전송하는 것은 「AI 운영 규정」(AX-REGULATION-2026-001) 제10조에 따라 절대 금지한다.
 
 ---
 
