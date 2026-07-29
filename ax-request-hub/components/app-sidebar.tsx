@@ -5,7 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   Home, Plus, MessageCircle, ListChecks, Database, FileText, Star, Book,
   User, Wrench, Users, BarChart3, Scale, Cpu, Gavel, Archive, Coins,
-  GraduationCap, Shield, LogOut, LayoutDashboard, TrendingUp,
+  GraduationCap, Shield, LogOut, LayoutDashboard, TrendingUp, Network,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/authz";
@@ -85,6 +85,7 @@ const NAV: NavGroup[] = [
     roles: ["AX_TEAM"],
     items: [
       { href: "/registry", label: "레지스트리", icon: Cpu },
+      { href: "/graph", label: "지식 그래프", icon: Network },
       { href: "/council", label: "협의회 기록", icon: Gavel },
       { href: "/admin/retired", label: "폐기 아카이브", icon: Archive },
     ],
