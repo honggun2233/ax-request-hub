@@ -25,5 +25,5 @@ c2a04f7587f8d92124207339aa5f63d9f2b2fa6a
 ## Fix Round 1
 - conn.destroy() 추가: DONE — `syncSnowflakeCatalog()`에 try/finally 블록 추가, finally에서 `conn.destroy(() => {})` 호출. 반환 타입도 `{ upserted: number; syncedAt: string }`으로 일치시킴.
 - 마이그레이션 정리: SKIPPED — `20260729041431_add_snowflake_fields` 마이그레이션이 dev.db에 이미 적용됨 (task-1 구현 시 migrate deploy로 적용 완료). 이미 적용된 마이그레이션 SQL 변경 시 Prisma drift 오류 발생 위험. DataAsset 필드 추가는 마이그레이션 내 RedefineTable 패턴으로 정상 포함되어 있으며 기능적 문제 없음.
-- 커밋: (커밋 후 채울 것)
+- 커밋: 39fd2d7
 - tsc: 에러 1건 — `console-summary/route.ts:56` (pre-existing, 이번 작업과 무관), 신규 에러 없음
