@@ -55,8 +55,8 @@ export async function GET() {
       const recs: { realizedValue: number; projectId: string }[] = await anyPrisma.benefitRecord.findMany({ select: { realizedValue: true, projectId: true } });
       const projs = await prisma.project.findMany({
         where: { id: { in: recs.map((r) => r.projectId) } },
-        select: { id: true } as any,
-      }) as { id: string; expectedBenefitValue?: number | null }[];
+        select: { id: true, expectedBenefitValue: true } as any,
+      }) as unknown as { id: string; expectedBenefitValue?: number | null }[];
       const expected = projs.reduce((s: number, p: { expectedBenefitValue?: number | null }) => s + (p.expectedBenefitValue ?? 0), 0);
       const realized = recs.reduce((s: number, r: { realizedValue: number }) => s + r.realizedValue, 0);
       benefitRealizedPct = expected > 0 ? Math.round((realized / expected) * 100) : null;

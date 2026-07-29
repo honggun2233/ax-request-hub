@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -105,6 +105,7 @@ model Employee {
   inputUsageRecords    UsageRecord[]       @relation("InputterUsage")
   usageAlerts          UsageAlert[]
   toolAccounts         ToolAccount[]
+  agentLinks      EmployeeAgentLink[]
 }
 
 model DepartmentQuota {
@@ -407,6 +408,8 @@ model AgentRegistry {
   projects      AgentProjectLink[]
   councilItems  CouncilAgendaItem[]
   project       Project?            @relation(fields: [projectId], references: [id])
+  dataLinks       AgentDataLink[]
+  employeeLinks   EmployeeAgentLink[]
 }
 
 // ?�?�?� ?�로?�트-?�이?�트 M:N 관�??�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
@@ -541,6 +544,14 @@ model DataAsset {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   requests       DataRequest[]
+  agentLinks      AgentDataLink[]
+
+  // 외부 데이터 소스 연동 (WS-A)
+  sourceSystem    String    @default("INTERNAL")  // INTERNAL | SNOWFLAKE | AWS_GLUE
+  externalId      String?   @unique                  // Snowflake: DB.SCHEMA.TABLE
+  syncedAt        DateTime?
+  snowflakeDb     String?
+  snowflakeSchema String?
 }
 
 model DataRequest {
@@ -645,4 +656,32 @@ model BenefitRecord {
   @@unique([projectId, period])
 }
 
+// ════════ Knowledge Graph Phase ① ════════
+
+model AgentDataLink {
+  id          String    @id @default(cuid())
+  agentId     String
+  dataAssetId String
+  purpose     String?
+  accessLevel String    @default("READ")
+  createdAt   DateTime  @default(now())
+
+  agent     AgentRegistry @relation(fields: [agentId], references: [id])
+  dataAsset DataAsset     @relation(fields: [dataAssetId], references: [id])
+
+  @@unique([agentId, dataAssetId])
+}
+
+model EmployeeAgentLink {
+  id         String   @id @default(cuid())
+  employeeId String
+  agentId    String
+  role       String   @default("MANAGER")
+  since      DateTime @default(now())
+
+  employee Employee      @relation(fields: [employeeId], references: [id])
+  agent    AgentRegistry @relation(fields: [agentId], references: [id])
+
+  @@unique([employeeId, agentId])
+}
 
