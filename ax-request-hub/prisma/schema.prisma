@@ -545,6 +545,13 @@ model DataAsset {
   updatedAt      DateTime  @updatedAt
   requests       DataRequest[]
   agentLinks      AgentDataLink[]
+
+  // 외부 데이터 소스 연동 (WS-A)
+  sourceSystem    String    @default("INTERNAL")  // INTERNAL | SNOWFLAKE | AWS_GLUE
+  externalId      String?   @unique                  // Snowflake: DB.SCHEMA.TABLE
+  syncedAt        DateTime?
+  snowflakeDb     String?
+  snowflakeSchema String?
 }
 
 model DataRequest {
