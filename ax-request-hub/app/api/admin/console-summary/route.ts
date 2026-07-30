@@ -9,6 +9,7 @@ export async function GET() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const soon = new Date(now.getTime() + 14 * 24 * 3600 * 1000);
 
+  try {
   const [
     evaluationWaiting, conditionalItems, dataWaiting,
     appealsPending, levelPending, toolPending,
@@ -103,4 +104,7 @@ export async function GET() {
     },
     exceptions,
   });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Internal Server Error' }, { status: 500 })
+  }
 }

@@ -74,15 +74,17 @@ function AssetCard({ asset, onRequest }: { asset: DataAsset; onRequest: (asset: 
       <div className="flex gap-2 mt-auto pt-1">
         <button
           onClick={() => onRequest(asset, 'ACCESS')}
+          title="이 데이터 자산에 대한 접근 권한을 신청합니다"
           className="flex-1 py-1.5 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 transition-colors"
         >
-          이용신청
+          이용 신청
         </button>
         <button
           onClick={() => onRequest(asset, 'NEW')}
-          className="flex-1 py-1.5 border border-gray-300 text-gray-700 text-sm rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          title="현재 카탈로그에 없는 추가 데이터 수집을 요청합니다 (예: 더 넓은 범위, 다른 형태)"
+          className="flex-1 py-1.5 border border-gray-300 text-gray-600 text-sm rounded-lg font-medium hover:bg-gray-50 transition-colors"
         >
-          신규요청
+          추가 수집 요청
         </button>
       </div>
     </div>
@@ -168,10 +170,19 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-4">
-            {/* Type (read-only) */}
-            <div>
-              <label className="text-xs font-medium text-gray-500 block mb-1">요청 유형</label>
-              <p className="text-sm font-semibold text-gray-900">{type === 'ACCESS' ? '이용신청 (ACCESS)' : '신규요청 (NEW)'}</p>
+            {/* Type explanation */}
+            <div className={`rounded-lg px-3 py-2.5 text-xs ${type === 'ACCESS' ? 'bg-blue-50 text-blue-800' : 'bg-amber-50 text-amber-800'}`}>
+              {type === 'ACCESS' ? (
+                <>
+                  <p className="font-semibold mb-0.5">이용 신청 (ACCESS)</p>
+                  <p>이 데이터 자산에 대한 접근 권한을 요청합니다. 승인 시 제공 방식(API/FILE/DB)으로 데이터를 이용할 수 있습니다.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold mb-0.5">추가 수집 요청 (NEW)</p>
+                  <p>이 자산을 기반으로 현재 카탈로그에 없는 데이터 추가 수집을 요청합니다. 예: 더 넓은 기간 범위, 다른 필드, 실시간 형태 등.</p>
+                </>
+              )}
             </div>
 
             {/* Project selector */}
@@ -327,7 +338,11 @@ export default function DataCatalogPage() {
       {/* Page header */}
       <div>
         <h1 className="text-xl font-bold text-gray-900">데이터 카탈로그</h1>
-        <p className="text-sm text-gray-500 mt-0.5">데이터플랫폼 자산 목록 — 이용신청 또는 신규 수집 요청</p>
+        <p className="text-sm text-gray-500 mt-0.5">데이터플랫폼 자산 목록</p>
+        <div className="mt-2 flex flex-wrap gap-4 text-xs text-gray-500">
+          <span><span className="font-semibold text-blue-600">이용 신청</span> — 카탈로그에 등록된 데이터 자산의 접근 권한 요청</span>
+          <span><span className="font-semibold text-amber-600">추가 수집 요청</span> — 해당 자산 기반으로 현재 없는 데이터 신규 수집 요청 (범위 확대, 형태 변경 등)</span>
+        </div>
       </div>
 
       {/* Search bar */}

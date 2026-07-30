@@ -1,6 +1,9 @@
 // Snowflake INFORMATION_SCHEMA 조회 → DataAsset upsert
-import snowflake from 'snowflake-sdk'
+// snowflake-sdk는 선택적 의존성 — 런타임에 동적 로드
 import { prisma } from '@/lib/prisma'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SnowflakeSDK = any
 
 interface SnowflakeTable {
   TABLE_CATALOG: string
@@ -10,7 +13,14 @@ interface SnowflakeTable {
   COMMENT: string | null
 }
 
-export function getSnowflakeConnection(): snowflake.Connection {
+function getSDK(): SnowflakeSDK {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require('snowflake-sdk')
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getSnowflakeConnection(): any {
+  const snowflake = getSDK()
   return snowflake.createConnection({
     account: process.env.SNOWFLAKE_ACCOUNT!,
     username: process.env.SNOWFLAKE_USER!,
@@ -21,20 +31,24 @@ export function getSnowflakeConnection(): snowflake.Connection {
   })
 }
 
-function connectAsync(conn: snowflake.Connection): Promise<snowflake.Connection> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function connectAsync(conn: any): Promise<any> {
   return new Promise((resolve, reject) => {
-    conn.connect((err, c) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    conn.connect((err: any, c: any) => {
       if (err) reject(err)
       else resolve(c)
     })
   })
 }
 
-function executeAsync<T>(conn: snowflake.Connection, sqlText: string): Promise<T[]> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function executeAsync<T>(conn: any, sqlText: string): Promise<T[]> {
   return new Promise((resolve, reject) => {
     conn.execute({
       sqlText,
-      complete: (err, _stmt, rows) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      complete: (err: any, _stmt: any, rows: any) => {
         if (err) reject(err)
         else resolve((rows ?? []) as T[])
       },

@@ -32,7 +32,14 @@ export default function MyProjectsPage() {
           <h1 className="text-xl font-semibold">내 과제</h1>
           <p className="mt-1 text-sm text-muted-foreground">신청한 AI 과제의 진행 상황을 확인하세요.</p>
         </div>
-        <Button asChild><Link href="/submit"><Plus className="mr-1.5 h-4 w-4" />과제 신청</Link></Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href="/projects/new"><Plus className="mr-1.5 h-4 w-4" />직접 작성</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/chat"><Plus className="mr-1.5 h-4 w-4" />AI 상담</Link>
+          </Button>
+        </div>
       </div>
 
       {loading && <p className="py-10 text-center text-sm text-muted-foreground">불러오는 중…</p>}
@@ -40,7 +47,10 @@ export default function MyProjectsPage() {
       {!loading && projects.length === 0 && (
         <Card><CardContent className="flex flex-col items-center gap-3 py-14 text-center">
           <p className="text-sm text-muted-foreground">아직 신청한 과제가 없습니다.</p>
-          <Button asChild variant="outline"><Link href="/chat">AI 상담으로 아이디어 구체화하기</Link></Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline"><Link href="/projects/new">직접 양식으로 신청하기</Link></Button>
+            <Button asChild variant="outline"><Link href="/chat">AI 상담으로 구체화하기</Link></Button>
+          </div>
         </CardContent></Card>
       )}
 

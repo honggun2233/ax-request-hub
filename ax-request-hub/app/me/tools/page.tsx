@@ -2,6 +2,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { db } from '@/src/lib/db'
+import { ReturnButton } from './ReturnButton'
+import { ToolRequestForm } from './ToolRequestForm'
 
 const TOOL_LABEL: Record<string, string> = {
   GPT_CHAT: 'ChatGPT (Chat)',
@@ -24,83 +26,93 @@ export default async function MyToolsPage() {
   const employee = await db.employee.findUnique({
     where: { email: session.user.email },
     include: {
-      toolAccounts: {
-        orderBy: { createdAt: 'desc' },
-      },
+      toolAccounts: { orderBy: { createdAt: 'desc' } },
     },
   })
 
   if (!employee) redirect('/me')
 
-  const active = employee.toolAccounts.filter(a => a.status !== 'RETURNED')
+  const active  = employee.toolAccounts.filter(a => a.status !== 'RETURNED')
   const returned = employee.toolAccounts.filter(a => a.status === 'RETURNED')
+
+  // 이미 신청 중·활성 상태인 도구 타입 목록 (중복 신청 방지용)
+  const activeTypes = active
+    .filter(a => ['PENDING', 'APPROVED', 'ACTIVE'].includes(a.status))
+    .map(a => a.toolType)
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold mb-2">내 AI 도구 현황</h1>
-        <p className="text-sm text-gray-500 mb-8">
-          AI 도구 계정 신청은 부서장을 통해 진행됩니다.
-        </p>
+      <div className="max-w-3xl mx-auto space-y-8">
 
-        {active.length === 0 && (
-          <div className="bg-white rounded-xl p-8 text-center text-gray-400 shadow-sm">
-            현재 배정된 AI 도구 계정이 없습니다.<br />
-            <span className="text-sm">부서장에게 배정 요청하세요.</span>
-          </div>
-        )}
+        {/* 현재 사용 중인 도구 */}
+        <section>
+          <h1 className="text-2xl font-bold mb-1">내 AI 도구 현황</h1>
+          <p className="text-sm text-gray-500 mb-6">
+            신청 → AX팀 검토 → 부서장 최종 배정 순으로 진행됩니다.
+          </p>
 
-        <div className="space-y-4">
-          {active.map(account => {
-            const s = STATUS_LABEL[account.status] ?? { text: account.status, color: 'bg-gray-100 text-gray-600' }
-            return (
-              <div key={account.id} className="bg-white rounded-xl p-6 shadow-sm flex items-center justify-between">
-                <div>
-                  <div className="font-semibold">{TOOL_LABEL[account.toolType] ?? account.toolType}</div>
-                  <div className="text-sm text-gray-500 mt-1">{account.requestReason}</div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    배정일: {new Date(account.createdAt).toLocaleDateString('ko-KR')}
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.color}`}>{s.text}</span>
-                  {['PENDING', 'ACTIVE'].includes(account.status) && (
-                    <form action={`/api/tools/request`} method="POST">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await fetch('/api/tools/request', {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ id: account.id }),
-                          })
-                          window.location.reload()
-                        }}
-                        className="text-xs text-red-500 hover:underline"
-                      >
-                        반납
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {returned.length > 0 && (
-          <details className="mt-8">
-            <summary className="text-sm text-gray-400 cursor-pointer">반납 이력 ({returned.length}건)</summary>
-            <div className="mt-2 space-y-2">
-              {returned.map(account => (
-                <div key={account.id} className="bg-gray-50 rounded-lg p-4 text-sm text-gray-500 flex justify-between">
-                  <span>{TOOL_LABEL[account.toolType] ?? account.toolType}</span>
-                  <span>{account.returnedAt ? new Date(account.returnedAt).toLocaleDateString('ko-KR') : '-'}</span>
-                </div>
-              ))}
+          {active.length === 0 ? (
+            <div className="bg-white rounded-xl p-6 text-center text-gray-400 shadow-sm">
+              아직 배정된 AI 도구가 없습니다.
+              <br />
+              <span className="text-sm">아래에서 바로 신청하세요.</span>
             </div>
-          </details>
+          ) : (
+            <div className="space-y-3">
+              {active.map(account => {
+                const s = STATUS_LABEL[account.status] ?? { text: account.status, color: 'bg-gray-100 text-gray-600' }
+                return (
+                  <div key={account.id} className="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between">
+                    <div>
+                      <div className="font-semibold">{TOOL_LABEL[account.toolType] ?? account.toolType}</div>
+                      {account.requestReason && (
+                        <div className="text-sm text-gray-500 mt-1 line-clamp-1">{account.requestReason}</div>
+                      )}
+                      <div className="text-xs text-gray-400 mt-1">
+                        신청일: {new Date(account.createdAt).toLocaleDateString('ko-KR')}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.color}`}>{s.text}</span>
+                      {['PENDING', 'ACTIVE'].includes(account.status) && (
+                        <ReturnButton accountId={account.id} />
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* AI 도구 신청 */}
+        <section className="bg-white rounded-xl p-6 shadow-sm">
+          <h2 className="text-base font-semibold mb-1">AI 도구 신청</h2>
+          <p className="text-sm text-gray-500 mb-5">
+            신청 후 AX팀 검토 → 부서장 배정 완료 시 사용 가능합니다.
+          </p>
+          <ToolRequestForm activeTypes={activeTypes} />
+        </section>
+
+        {/* 반납 이력 */}
+        {returned.length > 0 && (
+          <section>
+            <details>
+              <summary className="text-sm text-gray-400 cursor-pointer select-none">
+                반납 이력 ({returned.length}건)
+              </summary>
+              <div className="mt-3 space-y-2">
+                {returned.map(account => (
+                  <div key={account.id} className="bg-gray-50 rounded-lg p-4 text-sm text-gray-500 flex justify-between">
+                    <span>{TOOL_LABEL[account.toolType] ?? account.toolType}</span>
+                    <span>{account.returnedAt ? new Date(account.returnedAt).toLocaleDateString('ko-KR') : '-'}</span>
+                  </div>
+                ))}
+              </div>
+            </details>
+          </section>
         )}
+
       </div>
     </div>
   )

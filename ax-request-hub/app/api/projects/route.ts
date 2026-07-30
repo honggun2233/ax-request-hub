@@ -46,9 +46,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const project = await prisma.project.create({
-    data: { ...body, source: 'ax_discovery' },
-  })
-  return NextResponse.json(project, { status: 201 })
+  try {
+    const body = await req.json()
+    const project = await prisma.project.create({
+      data: { ...body, source: body.source ?? 'ax_discovery' },
+    })
+    return NextResponse.json(project, { status: 201 })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Internal Server Error' }, { status: 500 })
+  }
 }

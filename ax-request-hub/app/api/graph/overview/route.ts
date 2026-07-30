@@ -1,37 +1,27 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const [agentCount, projectCount, dataAssetCount, employeeCount] = await Promise.all([
+      prisma.agent.count(),
+      prisma.project.count(),
+      prisma.dataAsset.count(),
+      prisma.employee.count(),
+    ])
 
-  const [projectCount, agentCount, dataAssetCount, employeeCount] = await Promise.all([
-    db.aXProject.count(),
-    db.agentRegistry.count(),
-    db.dataAsset.count(),
-    db.employee.count(),
-  ])
+    const totalNodes = agentCount + projectCount + dataAssetCount + employeeCount
 
-  const [belongsToCount, consumesCount, managedByCount] = await Promise.all([
-    db.agentProjectLink.count(),
-    db.agentDataLink.count(),
-    db.employeeAgentLink.count(),
-  ])
-
-  return NextResponse.json({
-    nodes: {
-      Project: projectCount,
-      Agent: agentCount,
-      DataAsset: dataAssetCount,
-      Employee: employeeCount,
-    },
-    edges: {
-      BELONGS_TO: belongsToCount,
-      CONSUMES: consumesCount,
-      OWNED_BY: 0,
-      MANAGES: managedByCount,
-    },
-  })
+    return NextResponse.json({
+      totalNodes,
+      byType: {
+        Agent: agentCount,
+        Project: projectCount,
+        DataAsset: dataAssetCount,
+        Employee: employeeCount,
+      },
+    })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Internal Server Error' }, { status: 500 })
+  }
 }

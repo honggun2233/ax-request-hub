@@ -108,7 +108,11 @@ export default function ExecutiveDashboard() {
 
   useEffect(() => {
     fetch('/api/executive')
-      .then((r) => r.json())
+      .then(async (r) => {
+        const json = await r.json()
+        if (!r.ok) throw new Error(json.error ?? `HTTP ${r.status}`)
+        return json as DashboardData
+      })
       .then(setData)
       .catch((e) => setError(String(e)))
   }, [])
@@ -360,8 +364,8 @@ export default function ExecutiveDashboard() {
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <SectionTitle>월별 AI 비용 추이</SectionTitle>
           <div className="flex items-end gap-2 h-28 mt-2">
-            {monthlyCost.map((m) => (
-              <div key={m.month} className="flex-1 flex flex-col items-center gap-1">
+            {monthlyCost.map((m, i) => (
+              <div key={`${m.month}-${i}`} className="flex-1 flex flex-col items-center gap-1">
                 <span className="text-xs text-gray-500 font-medium">
                   ₩{m.cost >= 1000 ? `${(m.cost / 1000).toFixed(0)}k` : m.cost.toLocaleString()}
                 </span>

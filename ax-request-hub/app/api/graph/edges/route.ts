@@ -1,64 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
-export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { searchParams } = new URL(req.url)
-  const fromType = searchParams.get('fromType')
-  const fromId = searchParams.get('fromId')
-
-  const edges: { id: string; from: string; to: string; label: string }[] = []
-
-  if (!fromType || fromType === 'Agent') {
-    const [projectLinks, dataLinks] = await Promise.all([
-      db.agentProjectLink.findMany({
-        where: fromId ? { agentId: fromId } : undefined,
+export async function GET() {
+  try {
+    const [agentProjectLinks, dataRequests] = await Promise.all([
+      prisma.agentProjectLink.findMany({
         select: { id: true, agentId: true, projectId: true },
       }),
-      db.agentDataLink.findMany({
-        where: fromId ? { agentId: fromId } : undefined,
-        select: { id: true, agentId: true, dataAssetId: true },
+      prisma.dataRequest.findMany({
+        where: { assetId: { not: null } },
+        select: { id: true, projectId: true, agentId: true, assetId: true, status: true },
       }),
     ])
 
-    edges.push(
-      ...projectLinks.map((l) => ({
-        id: l.id,
-        from: l.agentId,
-        to: l.projectId,
-        label: 'BELONGS_TO',
-      }))
-    )
+    const edges: { id: string; from: string; to: string; label: string }[] = []
 
-    edges.push(
-      ...dataLinks.map((l) => ({
-        id: l.id,
-        from: l.agentId,
-        to: l.dataAssetId,
-        label: 'CONSUMES',
-      }))
-    )
+    for (const link of agentProjectLinks) {
+      edges.push({ id: link.id, from: link.agentId, to: link.projectId, label: 'BELONGS_TO' })
+    }
+
+    for (const req of dataRequests) {
+      if (req.projectId && req.assetId) {
+        edges.push({
+          id: `proj-data-${req.id}`,
+          from: req.projectId,
+          to: req.assetId,
+          label: 'USES_DATA',
+        })
+      }
+      if (req.agentId && req.assetId) {
+        edges.push({
+          id: `agent-data-${req.id}`,
+          from: req.agentId,
+          to: req.assetId,
+          label: 'CONSUMES',
+        })
+      }
+    }
+
+    return NextResponse.json(edges)
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Internal Server Error' }, { status: 500 })
   }
-
-  if (!fromType || fromType === 'Employee') {
-    const employeeLinks = await db.employeeAgentLink.findMany({
-      where: fromId ? { employeeId: fromId } : undefined,
-      select: { id: true, employeeId: true, agentId: true },
-    })
-
-    edges.push(
-      ...employeeLinks.map((l) => ({
-        id: l.id,
-        from: l.employeeId,
-        to: l.agentId,
-        label: 'MANAGES',
-      }))
-    )
-  }
-
-  return NextResponse.json(edges)
 }

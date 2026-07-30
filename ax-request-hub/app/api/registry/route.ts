@@ -6,18 +6,22 @@ import { prisma } from '@/lib/prisma'
 const LIFECYCLE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'GATE3', 'ACTIVE', 'DEGRADED', 'RETIRED']
 
 export async function GET() {
-  const agents = await prisma.agentRegistry.findMany({
-    include: {
-      scores: { orderBy: { recordedAt: 'desc' }, take: 5 },
-      projects: { include: { project: true } },
-    },
-    orderBy: { agentName: 'asc' },
-  })
+  try {
+    const agents = await prisma.agentRegistry.findMany({
+      include: {
+        scores: { orderBy: { recordedAt: 'desc' }, take: 5 },
+        projects: { include: { project: true } },
+      },
+      orderBy: { agentName: 'asc' },
+    })
 
-  const stageCounts = LIFECYCLE_ORDER.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>)
-  agents.forEach(a => { if (stageCounts[a.lifecycleStage] !== undefined) stageCounts[a.lifecycleStage]++ })
+    const stageCounts = LIFECYCLE_ORDER.reduce((acc, s) => ({ ...acc, [s]: 0 }), {} as Record<string, number>)
+    agents.forEach(a => { if (stageCounts[a.lifecycleStage] !== undefined) stageCounts[a.lifecycleStage]++ })
 
-  return NextResponse.json({ agents, stageCounts })
+    return NextResponse.json({ agents, stageCounts })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Internal Server Error' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {

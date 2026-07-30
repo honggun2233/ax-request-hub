@@ -11,23 +11,30 @@ export async function POST(req: NextRequest) {
 
   // 이 부서장이 관리하는 쿼터 조회
   const body = await req.json()
-  const { employeeEmail, toolType, requestReason } = body
+  const { employeeEmail, quotaId, requestReason } = body
 
-  if (!employeeEmail || !toolType || !requestReason) {
+  if (!employeeEmail || !quotaId || !requestReason) {
     return NextResponse.json({ error: '필수 항목 누락' }, { status: 400 })
   }
   if (requestReason.length < 20) {
     return NextResponse.json({ error: '배정 사유는 최소 20자 이상' }, { status: 400 })
   }
 
+  const role = (session.user as any)?.role ?? 'EMPLOYEE'
+  const ADMIN_ROLES = ['AX_TEAM', 'EXECUTIVE', 'C_LEVEL']
+  const isAdmin = ADMIN_ROLES.includes(role)
+
+  // quotaId로 직접 조회; 관리자는 모든 쿼타, 부서장은 자신이 관리하는 것만
   const quota = await db.departmentQuota.findFirst({
-    where: { managedBy: deptHead, toolType },
+    where: isAdmin ? { id: quotaId } : { id: quotaId, managedBy: deptHead },
     include: { toolAccounts: { where: { status: { in: ['PENDING', 'APPROVED', 'ACTIVE'] } } } },
   })
 
   if (!quota) {
     return NextResponse.json({ error: '해당 도구 관리 권한이 없습니다.' }, { status: 403 })
   }
+
+  const toolType = quota.toolType
 
   const usedCount = quota.toolAccounts.length
   if (usedCount >= quota.totalQuota) {

@@ -12,6 +12,7 @@ export async function GET() {
     return NextResponse.json({ error: '권한 없음 — AX팀 또는 경영진만 접근 가능' }, { status: 403 })
   }
 
+  try {
   const [
     agentByStage,
     projectByStatus,
@@ -50,13 +51,12 @@ export async function GET() {
       },
     }),
 
-    // 각 프로젝트의 에이전트 단계 분포
-    db.agentProjectLink.findMany({
-      select: {
-        projectId: true,
-        agent: { select: { lifecycleStage: true } },
-      },
-    }),
+    // 각 프로젝트의 에이전트 단계 분포 (LEFT JOIN — 고아 링크 안전 처리)
+    db.$queryRaw<{ projectId: string; lifecycleStage: string | null }[]>`
+      SELECT apl."projectId", ar."lifecycleStage"
+      FROM "AgentProjectLink" apl
+      LEFT JOIN "AgentRegistry" ar ON ar.id = apl."agentId"
+    `,
 
     // 최근 감사 로그 5건
     db.auditLog.findMany({
@@ -95,8 +95,10 @@ export async function GET() {
   const statusMap: Record<string, number> = {}
   projectByStatus.forEach((p) => { statusMap[p.status] = p._count.id })
 
-  // 월별 비용 집계
+  // 월별 비용 집계 (중복 yearMonth 제거)
+  const seenMonths = new Set<string>()
   const monthlyCost = usageTrend
+    .filter((u) => { if (seenMonths.has(u.yearMonth)) return false; seenMonths.add(u.yearMonth); return true })
     .slice(-6)
     .map((u) => ({
       month: u.yearMonth,
@@ -104,11 +106,11 @@ export async function GET() {
       tokens: u._sum.tokenUsed ?? 0,
     }))
 
-  // AXProject별 에이전트 단계 집계
+  // AXProject별 에이전트 단계 집계 (lifecycleStage null = 고아 링크 → UNKNOWN)
   const projectAgentStages: Record<string, Record<string, number>> = {}
   agentLinks.forEach((link) => {
     const pid = link.projectId
-    const stage = link.agent?.lifecycleStage ?? 'UNKNOWN'
+    const stage = (link as any).lifecycleStage ?? 'UNKNOWN'
     if (!projectAgentStages[pid]) projectAgentStages[pid] = {}
     projectAgentStages[pid][stage] = (projectAgentStages[pid][stage] ?? 0) + 1
   })
@@ -178,4 +180,7 @@ export async function GET() {
       count: statusMap[s] ?? 0,
     })),
   })
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message ?? 'Internal Server Error' }, { status: 500 })
+  }
 }

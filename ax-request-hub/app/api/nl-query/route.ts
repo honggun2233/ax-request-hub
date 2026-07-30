@@ -8,32 +8,33 @@ const SCHEMA = `
 AX Hub 데이터베이스 주요 테이블 (Prisma/SQLite):
 
 1. Project — AI 과제
-   id, title(과제명), dept(부서), status(SUBMITTED/IN_REVIEW/APPROVED/REJECTED/IN_PROGRESS/COUNCIL_PENDING/ACTIVE/DEPRECATED/RETIRED),
-   dataClassification(G1/G2/G3), totalScore(AI 평가점수), submittedAt, updatedAt
+   id, title(과제명), department(부서), status(submitted/evaluated/pilot/approved/rejected/active/deprecated/retired),
+   confidentialityLevel(G1/G2/G3), totalScore(AI 평가점수), createdAt, updatedAt
 
-2. Agent — AI 에이전트 (레지스트리)
-   id, name(에이전트명), projectId, lifecycleStage(GATE1/GATE2/GATE3/ACTIVE/DEPRECATED/RETIRED),
+2. AgentRegistry — AI 에이전트 레지스트리
+   id, agentName(에이전트명), lifecycleStage(DEVELOPING/GATE1/GATE2/GATE3/ACTIVE/DEGRADED/RETIRED),
    operatorTrustScore(신뢰점수 0-100), sam30dAccuracy(30일 정확도), createdAt
 
 3. Employee — 직원
-   id, name, dept(부서), role(EMPLOYEE/DEPT_HEAD/EXECUTIVE/DATA_PLATFORM/AX_TEAM),
-   aiLevel(L0/L1/L2/L3/L4)
+   id, name, department(부서), role(EMPLOYEE/DEPT_HEAD/EXECUTIVE/DATA_PLATFORM/AX_TEAM),
+   currentLevel(L0/L1/L2/L3/L4), isActive, createdAt
 
 4. DataRequest — 데이터 신청
-   id, employeeId, projectId, datasetName(데이터셋명), purpose(목적),
-   status(PENDING/APPROVED/REJECTED/PROVISIONED), requestedAt
+   id, requestedById, projectId, assetId, purpose(목적),
+   status(PENDING/APPROVED/REJECTED/PROVISIONED), createdAt
 
 5. LevelApplication — AI 레벨 신청
-   id, employeeId, targetLevel(L1~L4), status(PENDING/APPROVED/REJECTED), createdAt
+   id, employeeId, requestedLevel(L1~L4), status(PENDING/APPROVED/REJECTED), createdAt
 
-6. AuditLog — 감사 로그
-   id, action(액션), entityType(대상유형), entityId, performedBy(수행자), createdAt
+6. LevelHistory — 레벨 변경 이력
+   id, employeeId, fromLevel, toLevel, reason, createdAt
 
-7. LiteracyCourse — 리터러시 과정
-   id, title(과정명), level(L1~L4), passScore(합격기준점수)
+7. ToolAccount — AI 도구 계정
+   id, employeeId, toolType(GPT_CHAT/GPT_EXCEL/GEMINI), toolTier,
+   status(PENDING/APPROVED/ACTIVE/SUSPENDED/RETURNED), createdAt
 
-8. ToolAccount — AI 도구 계정
-   id, toolName(GPT/Gemini 등), assignedTo(직원명), dept, status(ACTIVE/INACTIVE)
+8. DepartmentQuota — 부서별 AI 도구 쿼터
+   id, department(부서), toolType, totalQuota(총 쿼터), managedBy(부서장 이메일), createdAt
 
 SQLite 날짜 함수 사용 (date(), datetime(), strftime()).
 SELECT만 허용. LIMIT 100 권장. 결과 컬럼에는 한국어 alias 사용 권장.

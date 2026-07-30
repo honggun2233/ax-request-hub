@@ -2,7 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/src/lib/db'
 
 export async function GET() {
-  const courses = await db.literacyCourse.findMany({ include: { enrollments: true } })
+  const courses = await db.literacyCourse.findMany({
+    include: {
+      enrollments: {
+        include: { employee: { select: { name: true, email: true } } },
+        orderBy: { updatedAt: 'desc' },
+      },
+    },
+    orderBy: { isRequired: 'desc' },
+  })
   return NextResponse.json(courses)
 }
 

@@ -114,32 +114,38 @@ flowchart TD
 
 | 라우트 | 설명 | 역할 |
 |--------|------|------|
-| `/` | 홈 — 시스템 소개 | 누구나 |
+| `/` | 홈 — 개인 AI 활동 현황 | 누구나 |
 | `/login` | 로그인 | 미인증 |
-| `/submit` | AI 도입 과제 신청 | 로그인 전체 |
-| `/chat` | AI 상담 챗 (과제 구체화) | 로그인 전체 |
+| `/chat` | AI 상담 챗으로 과제 신청 | 로그인 전체 |
+| `/projects/new` | 직접 양식으로 과제 신청 (AI 없이, 대/중/소 분류) | 로그인 전체 |
 | `/skills` | AI 스킬 라이브러리 열람 | 로그인 전체 |
 | `/docs` | 거버넌스 문서 뷰어 | 로그인 전체 |
-| `/data/catalog` | 데이터 자산 카탈로그 탐색 + 이용 신청 | 로그인 전체 |
+| `/data/catalog` | 데이터 찾기 — 외부 시스템 자산 탐색 + 이용 신청 | 로그인 전체 |
 | `/status/[id]` | 내 과제 상태 상세 조회 | 로그인 전체 |
+
+> **데이터 카탈로그 설계 원칙:** 데이터 자산의 원천은 데이터플랫폼 외부 시스템(Snowflake 등).
+> AX Hub는 API를 호출해 목록을 읽어 보여주고 이용 신청만 받음. PoC 단계는 `DataAsset` 테이블을 더미 캐시로 사용.
+> `/dp/catalog` (AX Hub 내 자산 CRUD)는 설계 오류로 제거됨.
 
 ### /me — 내 정보
 
 | 라우트 | 설명 |
 |--------|------|
-| `/me` | 내 프로필 + AI 리터러시 레벨 |
+| `/me` | 내 프로필 + AI 리터러시 레벨 + 교육 이수 (클릭 시 수강 등록·완료 처리) |
 | `/me/tools` | 내 AI 도구 계정 목록 |
 | `/me/usage` | 내 토큰 사용량 현황 |
 | `/me/level` | AI 리터러시 레벨 신청 |
-| `/me/literacy` | 리터러시 교육 이수 현황 |
+| `/me/literacy` | 리터러시 교육 이수 현황 (accordian 확장·수강등록·완료) |
 | `/me/data` | 내 데이터 신청 + 제공 현황 |
-| `/me/services` | 내 사용 서비스 목록 |
+| `/me/projects` | 내 과제 현황 |
 
-### /dept — 부서장
+### /dept — 부서장 + AX팀
 
 | 라우트 | 설명 | 역할 |
 |--------|------|------|
-| `/dept/tools` | 부서 AI 도구 배정·관리 | DEPT_HEAD |
+| `/dept/tools` | **도구 배정·쿼터 통합 관리** — 전사 게이지, PENDING 처리, 쿼터 현황(여유/주의/부족/소진), 신규 배정 신청 | DEPT_HEAD (자기 부서) / AX_TEAM (전체) |
+
+> `/admin/tools`는 `/dept/tools`로 통합·리다이렉트됨.
 
 ### /dp — 데이터플랫폼팀
 
@@ -147,28 +153,25 @@ flowchart TD
 |--------|------|------|
 | `/dp/requests` | 데이터 신청 검토·승인·제공 처리 | DATA_PLATFORM |
 
-### /executive — C레벨
+### /executive — 경영진
 
 | 라우트 | 설명 | 역할 |
 |--------|------|------|
-| `/executive` | 전사 AI 현황 경영진 대시보드 | EXECUTIVE, ADMIN |
+| `/executive` | 경영 대시보드 — Gate 통과율, 월별 비용 트렌드, 프로젝트 현황 | EXECUTIVE, C_LEVEL, AX_TEAM |
 
 ### /admin — AX팀 관리자
 
 | 라우트 | 설명 |
 |--------|------|
-| `/dashboard` | 전체 과제 KPI + 칸반 보드 |
+| `/admin` | 운영 현황 — 처리 대기 큐, 거버넌스 KPI, 예외 알림 |
+| `/dashboard` | 과제 파이프라인 (KPI + 칸반) |
 | `/governance` | 감사 로그 전체 이력 |
 | `/registry` | 에이전트 레지스트리 (개발/상용 이중 라이프사이클) |
 | `/admin/employees` | 직원 계정 + 역할 관리 |
-| `/admin/tokens` | 토큰 정책 + 배분 현황 |
-| `/admin/tools` | AI 도구 계정 전체 관리 |
-| `/admin/tools/quota-setup` | 부서별 쿼터 설정 |
+| `/admin/tokens` | 토큰 한도 · 사용량 관리 |
 | `/admin/skills` | 스킬 등록·검수·폐기 |
 | `/admin/docs` | 거버넌스 문서 등록·관리 |
-| `/admin/distribution` | 토큰 배분 정책 설정 |
-| `/admin/literacy` | AI 리터러시 레벨 심사 |
-| `/admin/agents` | 레거시 에이전트 관리 |
+| `/admin/literacy` | 교육 관리 (과정 클릭 → 수강자 상세 슬라이드 패널) |
 | `/admin/retired` | 폐기 에이전트 아카이브 |
 
 ---
@@ -221,7 +224,17 @@ flowchart TD
 |--------|------|------|------|
 | GET/POST | `/api/tools` | ADMIN | 도구 목록/등록 |
 | GET/POST/PATCH | `/api/admin/tools/quota` | ADMIN | 부서 쿼터 관리 |
-| POST | `/api/dept` | DEPT_HEAD | 부서장 도구 배정 |
+| POST | `/api/dept/tools/assign` | DEPT_HEAD / AX_TEAM | 도구 배정 신청 (quotaId 기반) |
+| PATCH | `/api/dept/tools/revoke` | DEPT_HEAD / AX_TEAM | 도구 계정 회수 |
+| PATCH | `/api/admin/tools/[id]` | AX_TEAM | 계정 상태 변경 (APPROVED / RETURNED) |
+
+### 리터러시 교육
+
+| 메서드 | 경로 | 권한 | 설명 |
+|--------|------|------|------|
+| GET | `/api/admin/literacy` | AX_TEAM | 교육 과정 목록 (수강자 포함) |
+| POST | `/api/admin/literacy` | AX_TEAM | 교육 과정 등록 |
+| POST | `/api/literacy/enroll` | 로그인 | 수강 등록·완료 처리 (`{ courseId, action: 'enroll'|'complete' }`) |
 
 ### 역할 & 직원
 
@@ -246,9 +259,9 @@ flowchart TD
 
 | 역할 | 설명 | 주요 접근 범위 |
 |------|------|---------------|
-| `EMPLOYEE` | 일반 직원 | /chat, /me/*, /skills, /docs, /data/catalog, /me/data, /me/projects |
-| `DEPT_HEAD` | 부서장 | EMPLOYEE + /dept/tools (AI 도구 배정·위임) |
-| `DATA_PLATFORM` | 데이터플랫폼팀 | EMPLOYEE + /dp/requests, /dp/catalog (데이터 신청 검토·제공·카탈로그 관리) |
+| `EMPLOYEE` | 일반 직원 | /chat, /projects/new, /me/*, /skills, /docs, /data/catalog, /me/data, /me/projects |
+| `DEPT_HEAD` | 부서장 | EMPLOYEE + /dept/tools (자기 부서 AI 도구 배정·쿼터 조회) |
+| `DATA_PLATFORM` | 데이터플랫폼팀 | EMPLOYEE + /dp/requests (데이터 신청 검토·제공) — 자산 CRUD는 외부 시스템 담당 |
 | `EXECUTIVE` | C레벨 임원 | EMPLOYEE + /executive (읽기 전용 경영진 대시보드) |
 | `AX_TEAM` | AX팀 | 전체 페이지 (/admin/*, /dashboard, /governance, /registry, /council, /dp/*) |
 
@@ -463,6 +476,7 @@ flowchart TD
 |------|------|-----------|
 | v1.1 | 2026-07-23 | 사이드바 AppSidebar 교체(역할별 필터·아이콘), DEPT_HEAD/EXECUTIVE/DATA_PLATFORM 테스트 계정 추가, docs 페이지 hydration 버그 수정, 역할 표 테스트 계정 섹션 추가 |
 | v1.0 | 2026-07-23 | 최초 작성 — 전체 구조 통합 (라우트 32개, 모델 32종, 역할 5종, 서브시스템 8개) |
+| v1.2 | 2026-07-30 | UI 전면 정비 — ① 네비게이션 IA 재설계(사이드바 명칭 통일·그루핑) ② `/dept/tools` 도구·쿼터 통합(/admin/tools 폐기) ③ `/projects/new` 직접 과제 신청 추가 ④ 데이터 카탈로그 설계 원칙 명문화(AX Hub는 외부 API 호출만, /dp/catalog CRUD 제거) ⑤ 리터러시 교육 수강등록·완료 API(`/api/literacy/enroll`) 추가 ⑥ DepartmentQuota quotaId 기반 배정으로 전환 ⑦ Executive 대시보드 오류 수정(orphan FK LEFT JOIN, 중복 월 키) ⑧ 토큰 월 생성 버그 수정(Feb overflow) |
 
 ---
 

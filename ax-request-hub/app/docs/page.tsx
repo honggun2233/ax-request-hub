@@ -207,46 +207,68 @@ export default function DocsPage() {
           })}
         </div>
 
-        {/* 문서 목록 */}
-        <div className="flex-1 overflow-y-auto space-y-1.5">
+        {/* 문서 목록 — 레벨별 그룹 */}
+        <div className="flex-1 overflow-y-auto space-y-1">
           {loading && <p className="text-sm text-gray-400 text-center pt-4">로딩 중...</p>}
           {!loading && docs.length === 0 && (
             <p className="text-sm text-gray-400 text-center pt-4">문서가 없습니다</p>
           )}
-          {docs.map(doc => {
-            const ts = doc.type ? TYPE_STYLE[doc.type] : null
-            return (
-              <button key={doc.file} onClick={() => openDoc(doc)}
-                className={`w-full text-left px-3 py-2.5 rounded-lg border transition ${
-                  selected?.file === doc.file ? 'border-blue-400 bg-blue-50' : 'border-gray-100 bg-white hover:border-gray-300'
-                }`}>
-                {/* 고유번호 + 유형 */}
-                <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                  {doc.docId ? (
-                    <span className="text-xs font-mono font-bold text-gray-700">{doc.docId}</span>
-                  ) : (
-                    <span className="text-xs text-orange-400 italic">미등록</span>
-                  )}
-                  {doc.type && ts && (
-                    <span className={`text-xs px-1.5 py-0.5 rounded ${ts.bg} ${ts.text}`}>{doc.type}</span>
-                  )}
-                  {doc.level && (
-                    <span className="text-xs text-gray-400">{doc.level}</span>
-                  )}
-                </div>
-                {/* 제목 */}
-                <div className="text-sm font-medium text-gray-900 truncate">{doc.title}</div>
-                {/* 버전 + 날짜 */}
-                <div className="flex items-center gap-2 mt-0.5">
-                  {doc.version && <span className="text-xs text-gray-500">{doc.version}</span>}
-                  <span className="text-xs text-gray-400">{new Date(doc.updatedAt).toLocaleDateString('ko-KR')}</span>
-                  {doc.securityLevel && (
-                    <span className={`text-xs px-1 rounded ${SEC_STYLE[doc.securityLevel] ?? ''}`}>{doc.securityLevel}</span>
-                  )}
-                </div>
-              </button>
-            )
-          })}
+          {!loading && (() => {
+            const LEVEL_LABELS: Record<string, string> = {
+              L1: 'L1 — 규정',
+              L2: 'L2 — 지침',
+              L3: 'L3 — 가이드라인·매뉴얼',
+              L4: 'L4 — 기술문서',
+            }
+            const elements: React.ReactElement[] = []
+            let lastLevel = ''
+            for (const doc of docs) {
+              const lv = doc.level ?? (doc.registered ? '' : 'unregistered')
+              // 그룹 헤더
+              if (lv !== lastLevel) {
+                lastLevel = lv
+                const label = LEVEL_LABELS[lv] ?? (lv === 'unregistered' ? '미등록' : lv)
+                elements.push(
+                  <div key={`hdr-${lv}`} className="pt-3 pb-0.5 px-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
+                    <div className="h-px bg-gray-100 mt-1" />
+                  </div>
+                )
+              }
+              const ts = doc.type ? TYPE_STYLE[doc.type] : null
+              // 제목에서 [type]_ 접두사 제거해서 깔끔하게 표시
+              const displayTitle = doc.title?.replace(/^\[[^\]]+\]_/, '') ?? doc.title
+              elements.push(
+                <button key={doc.file} onClick={() => openDoc(doc)}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg border transition ${
+                    selected?.file === doc.file ? 'border-blue-400 bg-blue-50' : 'border-gray-100 bg-white hover:border-gray-300'
+                  }`}>
+                  {/* 고유번호 + 유형 */}
+                  <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                    {doc.docId ? (
+                      <span className="text-xs font-mono font-bold text-gray-700">{doc.docId}</span>
+                    ) : (
+                      <span className="text-xs text-orange-400 italic">미등록</span>
+                    )}
+                    {doc.type && ts && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${ts.bg} ${ts.text}`}>{doc.type}</span>
+                    )}
+                    {doc.securityLevel && (
+                      <span className={`text-xs px-1 rounded ${SEC_STYLE[doc.securityLevel] ?? ''}`}>{doc.securityLevel}</span>
+                    )}
+                  </div>
+                  {/* 제목 */}
+                  <div className="text-sm font-medium text-gray-900 truncate">{displayTitle}</div>
+                  {/* 버전 + 날짜 */}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {doc.version && <span className="text-xs text-gray-500">{doc.version}</span>}
+                    <span className="text-xs text-gray-400">{new Date(doc.updatedAt).toLocaleDateString('ko-KR')}</span>
+                  </div>
+                </button>
+              )
+            }
+            return elements
+          })()}
         </div>
       </div>
 

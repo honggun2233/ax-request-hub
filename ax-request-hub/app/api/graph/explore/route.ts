@@ -1,163 +1,133 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 
 type NodeType = 'Agent' | 'Project' | 'DataAsset' | 'Employee'
 
-interface GraphNode {
-  id: string
-  type: NodeType
-  name: string
-  [key: string]: unknown
-}
-
-interface GraphEdge {
-  id: string
-  from: string
-  to: string
-  label: string
-}
-
-async function getNodeInfo(id: string, type: NodeType): Promise<GraphNode | null> {
-  if (type === 'Agent') {
-    const a = await db.agentRegistry.findUnique({
-      where: { id },
-      select: { id: true, agentName: true, lifecycleStage: true, trustScore: true },
-    })
-    if (!a) return null
-    return { id: a.id, type: 'Agent', name: a.agentName, lifecycleStage: a.lifecycleStage, trustScore: a.trustScore }
-  }
-  if (type === 'Project') {
-    const p = await db.aXProject.findUnique({
-      where: { id },
-      select: { id: true, name: true, status: true },
-    })
-    if (!p) return null
-    return { id: p.id, type: 'Project', name: p.name, status: p.status }
-  }
-  if (type === 'DataAsset') {
-    const d = await db.dataAsset.findUnique({
-      where: { id },
-      select: { id: true, name: true, classification: true, ownerDept: true },
-    })
-    if (!d) return null
-    return { id: d.id, type: 'DataAsset', name: d.name, secretLevel: d.classification, owner: d.ownerDept }
-  }
-  if (type === 'Employee') {
-    const e = await db.employee.findUnique({
-      where: { id },
-      select: { id: true, name: true, department: true, currentLevel: true },
-    })
-    if (!e) return null
-    return { id: e.id, type: 'Employee', name: e.name, dept: e.department, literacyLevel: e.currentLevel }
-  }
-  return null
-}
-
-async function getEdgesFrom(id: string, type: NodeType): Promise<{ edges: GraphEdge[]; neighbors: { id: string; type: NodeType }[] }> {
-  const edges: GraphEdge[] = []
-  const neighbors: { id: string; type: NodeType }[] = []
-
-  if (type === 'Agent') {
-    const [projectLinks, dataLinks] = await Promise.all([
-      db.agentProjectLink.findMany({ where: { agentId: id }, select: { id: true, agentId: true, projectId: true } }),
-      db.agentDataLink.findMany({ where: { agentId: id }, select: { id: true, agentId: true, dataAssetId: true } }),
-    ])
-    for (const l of projectLinks) {
-      edges.push({ id: l.id, from: l.agentId, to: l.projectId, label: 'BELONGS_TO' })
-      neighbors.push({ id: l.projectId, type: 'Project' })
-    }
-    for (const l of dataLinks) {
-      edges.push({ id: l.id, from: l.agentId, to: l.dataAssetId, label: 'CONSUMES' })
-      neighbors.push({ id: l.dataAssetId, type: 'DataAsset' })
-    }
-    // also get incoming MANAGES edges
-    const empLinks = await db.employeeAgentLink.findMany({ where: { agentId: id }, select: { id: true, employeeId: true, agentId: true } })
-    for (const l of empLinks) {
-      edges.push({ id: l.id, from: l.employeeId, to: l.agentId, label: 'MANAGES' })
-      neighbors.push({ id: l.employeeId, type: 'Employee' })
-    }
-  }
-
-  if (type === 'Project') {
-    const links = await db.agentProjectLink.findMany({ where: { projectId: id }, select: { id: true, agentId: true, projectId: true } })
-    for (const l of links) {
-      edges.push({ id: l.id, from: l.agentId, to: l.projectId, label: 'BELONGS_TO' })
-      neighbors.push({ id: l.agentId, type: 'Agent' })
-    }
-  }
-
-  if (type === 'DataAsset') {
-    const links = await db.agentDataLink.findMany({ where: { dataAssetId: id }, select: { id: true, agentId: true, dataAssetId: true } })
-    for (const l of links) {
-      edges.push({ id: l.id, from: l.agentId, to: l.dataAssetId, label: 'CONSUMES' })
-      neighbors.push({ id: l.agentId, type: 'Agent' })
-    }
-  }
-
-  if (type === 'Employee') {
-    const links = await db.employeeAgentLink.findMany({ where: { employeeId: id }, select: { id: true, employeeId: true, agentId: true } })
-    for (const l of links) {
-      edges.push({ id: l.id, from: l.employeeId, to: l.agentId, label: 'MANAGES' })
-      neighbors.push({ id: l.agentId, type: 'Agent' })
-    }
-  }
-
-  return { edges, neighbors }
-}
-
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   const { searchParams } = new URL(req.url)
   const nodeId = searchParams.get('nodeId')
   const nodeType = searchParams.get('nodeType') as NodeType | null
-  const depthParam = parseInt(searchParams.get('depth') ?? '1', 10)
-  const depth = Math.min(Math.max(depthParam, 1), 2)
 
   if (!nodeId || !nodeType) {
     return NextResponse.json({ error: 'nodeId and nodeType are required' }, { status: 400 })
   }
 
-  const center = await getNodeInfo(nodeId, nodeType)
-  if (!center) {
-    return NextResponse.json({ error: 'Node not found' }, { status: 404 })
-  }
+  const nodes: Record<string, unknown>[] = []
+  const edges: { id: string; from: string; to: string; label: string }[] = []
 
-  const nodesMap = new Map<string, GraphNode>()
-  const edgesMap = new Map<string, GraphEdge>()
+  if (nodeType === 'Agent') {
+    // AgentProjectLink: agentId → projectId (raw, stored as Agent.id / Project.id in seeded data)
+    const links = await prisma.agentProjectLink.findMany({
+      where: { agentId: nodeId },
+      select: { id: true, projectId: true },
+    })
+    const projectIds = links.map(l => l.projectId)
+    const [projects, dataReqs] = await Promise.all([
+      prisma.project.findMany({
+        where: { id: { in: projectIds } },
+        select: { id: true, title: true, status: true, department: true },
+      }),
+      prisma.dataRequest.findMany({
+        where: { agentId: nodeId, assetId: { not: null } },
+        select: { id: true, assetId: true },
+      }),
+    ])
+    const assetIds = dataReqs.map(r => r.assetId!).filter(Boolean)
+    const assets = await prisma.dataAsset.findMany({
+      where: { id: { in: assetIds } },
+      select: { id: true, name: true, classification: true, ownerDept: true },
+    })
+    const assetMap = new Map(assets.map(a => [a.id, a]))
+    const projectMap = new Map(projects.map(p => [p.id, p]))
 
-  const { edges: d1Edges, neighbors: d1Neighbors } = await getEdgesFrom(nodeId, nodeType)
-  for (const e of d1Edges) edgesMap.set(e.id, e)
-
-  const d1NodeInfos = await Promise.all(d1Neighbors.map((n) => getNodeInfo(n.id, n.type)))
-  for (const n of d1NodeInfos) {
-    if (n) nodesMap.set(n.id, n)
-  }
-
-  if (depth === 2) {
-    const d2Fetches = d1Neighbors.map((n) => getEdgesFrom(n.id, n.type))
-    const d2Results = await Promise.all(d2Fetches)
-
-    const d2Neighbors: { id: string; type: NodeType }[] = []
-    for (const { edges, neighbors } of d2Results) {
-      for (const e of edges) edgesMap.set(e.id, e)
-      d2Neighbors.push(...neighbors)
+    for (const link of links) {
+      const proj = projectMap.get(link.projectId)
+      if (proj) {
+        nodes.push({ id: proj.id, name: proj.title, status: proj.status, dept: proj.department, type: 'Project' })
+        edges.push({ id: link.id, from: nodeId, to: proj.id, label: 'BELONGS_TO' })
+      }
     }
-
-    const d2NodeInfos = await Promise.all(
-      d2Neighbors.filter((n) => n.id !== nodeId && !nodesMap.has(n.id)).map((n) => getNodeInfo(n.id, n.type))
-    )
-    for (const n of d2NodeInfos) {
-      if (n) nodesMap.set(n.id, n)
+    for (const req of dataReqs) {
+      const asset = assetMap.get(req.assetId!)
+      if (asset) {
+        nodes.push({ id: asset.id, name: asset.name, secretLevel: asset.classification, dept: asset.ownerDept, type: 'DataAsset' })
+        edges.push({ id: `dr-${req.id}`, from: nodeId, to: asset.id, label: 'CONSUMES' })
+      }
     }
   }
 
-  return NextResponse.json({
-    center,
-    nodes: Array.from(nodesMap.values()),
-    edges: Array.from(edgesMap.values()),
-  })
+  if (nodeType === 'Project') {
+    const links = await prisma.agentProjectLink.findMany({
+      where: { projectId: nodeId },
+      select: { id: true, agentId: true },
+    })
+    const agentIds = links.map(l => l.agentId)
+    const dataReqs = await prisma.dataRequest.findMany({
+      where: { projectId: nodeId, assetId: { not: null } },
+      select: { id: true, assetId: true },
+    })
+    const assetIds = dataReqs.map(r => r.assetId!).filter(Boolean)
+    const [agents, assets] = await Promise.all([
+      prisma.agent.findMany({
+        where: { id: { in: agentIds } },
+        select: { id: true, name: true, status: true, department: true },
+      }),
+      prisma.dataAsset.findMany({
+        where: { id: { in: assetIds } },
+        select: { id: true, name: true, classification: true, ownerDept: true },
+      }),
+    ])
+    const agentMap = new Map(agents.map(a => [a.id, a]))
+    const assetMap = new Map(assets.map(a => [a.id, a]))
+
+    for (const link of links) {
+      const agent = agentMap.get(link.agentId)
+      if (agent) {
+        nodes.push({ id: agent.id, name: agent.name, status: agent.status, dept: agent.department, type: 'Agent' })
+        edges.push({ id: link.id, from: agent.id, to: nodeId, label: 'BELONGS_TO' })
+      }
+    }
+    for (const req of dataReqs) {
+      const asset = assetMap.get(req.assetId!)
+      if (asset) {
+        nodes.push({ id: asset.id, name: asset.name, secretLevel: asset.classification, dept: asset.ownerDept, type: 'DataAsset' })
+        edges.push({ id: `dr-${req.id}`, from: nodeId, to: asset.id, label: 'USES_DATA' })
+      }
+    }
+  }
+
+  if (nodeType === 'DataAsset') {
+    const reqs = await prisma.dataRequest.findMany({
+      where: { assetId: nodeId },
+      select: { id: true, agentId: true, projectId: true },
+    })
+    const agentIds = reqs.map(r => r.agentId).filter(Boolean) as string[]
+    const projectIds = reqs.map(r => r.projectId).filter(Boolean) as string[]
+    const [agents, projects] = await Promise.all([
+      prisma.agent.findMany({ where: { id: { in: agentIds } }, select: { id: true, name: true, status: true, department: true } }),
+      prisma.project.findMany({ where: { id: { in: projectIds } }, select: { id: true, title: true, status: true, department: true } }),
+    ])
+    const agentMap = new Map(agents.map(a => [a.id, a]))
+    const projectMap = new Map(projects.map(p => [p.id, p]))
+
+    for (const req of reqs) {
+      if (req.agentId) {
+        const agent = agentMap.get(req.agentId)
+        if (agent) {
+          nodes.push({ id: agent.id, name: agent.name, status: agent.status, dept: agent.department, type: 'Agent' })
+          edges.push({ id: `dr-agent-${req.id}`, from: agent.id, to: nodeId, label: 'CONSUMES' })
+        }
+      }
+      if (req.projectId) {
+        const proj = projectMap.get(req.projectId)
+        if (proj) {
+          nodes.push({ id: proj.id, name: proj.title, status: proj.status, dept: proj.department, type: 'Project' })
+          edges.push({ id: `dr-proj-${req.id}`, from: proj.id, to: nodeId, label: 'USES_DATA' })
+        }
+      }
+    }
+  }
+
+  const uniqueNodes = Array.from(new Map(nodes.map(n => [(n as { id: string }).id, n])).values())
+  return NextResponse.json({ nodes: uniqueNodes, edges })
 }

@@ -168,7 +168,10 @@ export default function GraphView() {
     if (!containerRef.current) return
 
     if (cyRef.current) {
-      cyRef.current.destroy()
+      cyRef.current.stop()
+      const old = cyRef.current
+      cyRef.current = null
+      old.destroy()
     }
 
     const cy = cytoscape({
@@ -226,8 +229,7 @@ export default function GraphView() {
       ],
       layout: {
         name: 'cose',
-        animate: true,
-        animationDuration: 600,
+        animate: false,
         randomize: false,
         nodeRepulsion: () => 8000,
         idealEdgeLength: () => 120,

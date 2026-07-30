@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation"
 
 const SERVICES = ["openai", "claude", "gemini", "all"]
 const LEVELS = ["L1", "L2", "L3", "L4"]
+const _now = new Date()
 const MONTHS = Array.from({ length: 6 }, (_, i) => {
-  const d = new Date(); d.setMonth(d.getMonth() - i)
-  return d.toISOString().slice(0, 7)
+  const d = new Date(_now.getFullYear(), _now.getMonth() - i, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 })
 
 export default function AdminTokensPage() {

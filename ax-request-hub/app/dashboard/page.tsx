@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { db } from '@/src/lib/db'
+import { ApproveButtons } from './ApproveButtons'
 
 const STATUS_CONFIG: Record<string, { label: string; badgeClass: string }> = {
   submitted: { label: '접수', badgeClass: 'bg-gray-100 text-gray-600' },
@@ -66,20 +67,7 @@ export default async function DashboardPage() {
                         </div>
                       )}
                       {project.status === 'evaluated' && (
-                        <div className="mt-2 flex gap-1.5">
-                          <form action={`/api/approve/${project.id}`} method="POST">
-                            <input type="hidden" name="action" value="approve" />
-                            <button type="submit" className="text-xs px-2.5 py-1 rounded-lg font-medium bg-green-100 text-green-700 hover:bg-green-200">
-                              승인
-                            </button>
-                          </form>
-                          <form action={`/api/approve/${project.id}`} method="POST">
-                            <input type="hidden" name="action" value="reject" />
-                            <button type="submit" className="text-xs px-2.5 py-1 rounded-lg font-medium bg-red-100 text-red-600 hover:bg-red-200">
-                              반려
-                            </button>
-                          </form>
-                        </div>
+                        <ApproveButtons projectId={project.id} />
                       )}
                       <Link href={`/status/${project.id}`} className="block text-xs text-blue-500 hover:underline mt-2">
                         상세 보기 →

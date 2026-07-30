@@ -126,9 +126,17 @@ export default function MyDataPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-gray-900">내 데이터 신청·제공 현황</h1>
-        <p className="text-sm text-gray-500 mt-0.5">데이터 이용 신청 내역 및 제공받은 데이터 목록</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">내 데이터 신청·제공 현황</h1>
+          <p className="text-sm text-gray-500 mt-0.5">데이터 이용 신청 내역 및 제공받은 데이터 목록</p>
+        </div>
+        <a
+          href="/data/catalog"
+          className="shrink-0 text-sm bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+        >
+          + 데이터 신청
+        </a>
       </div>
 
       {/* My requests */}
@@ -145,8 +153,11 @@ export default function MyDataPage() {
             {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
           </div>
         ) : requests.length === 0 ? (
-          <div className="text-center py-10 text-gray-400 text-sm bg-gray-50 rounded-xl">
-            신청 내역이 없습니다
+          <div className="text-center py-10 bg-gray-50 rounded-xl">
+            <p className="text-gray-400 text-sm mb-3">신청 내역이 없습니다</p>
+            <a href="/data/catalog" className="text-sm text-blue-600 hover:underline font-medium">
+              데이터 카탈로그에서 신청하기 →
+            </a>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
