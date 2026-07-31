@@ -54,3 +54,6 @@ docs/*.zip
 
 # 배포 산출물 — SSOT 아님, git 관리 불필요
 dist/
+
+# 거버넌스 문서 날짜별 스냅샷 — 로컬 보관용, git 관리 불필요
+docs/governance-archive/
