@@ -51,4 +51,4 @@ SLIM은 Full의 요약본이 아닙니다. 목적과 독자가 다른 별도 버
 2. `meta/CHANGELOG.md` Full 개정 내역 기록
 3. SLIM 문서 검토 — 영향 받는 조항 있으면 SLIM도 수정
 4. `meta/SLIM-DIFF.md` 조항 비교표 업데이트
-5. PR 생성 후 인표님 승인
+5. PR 생성 후 AX팀장 승인
