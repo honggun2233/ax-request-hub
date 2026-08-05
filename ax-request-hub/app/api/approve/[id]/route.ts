@@ -19,8 +19,27 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     where: { id },
     data: { status: statusMap[action], approvedBy: '홍인표 팀장', decisionNote: note ?? null },
   })
+
   if (action === 'approve') {
-    await sendApprovalEmail({ to: project.requesterEmail, projectTitle: project.title, totalScore: project.totalScore ?? 0, isAutoApproved: false })
+    // Phase A: 과제 승인 시 DRAFT DataRequest → PENDING 전환 (DATA_PLATFORM 큐 진입)
+    const draftCount = await db.dataRequest.updateMany({
+      where: { projectId: id, status: 'DRAFT' },
+      data: { status: 'PENDING' },
+    })
+
+    await sendApprovalEmail({
+      to: project.requesterEmail,
+      projectTitle: project.title,
+      totalScore: project.totalScore ?? 0,
+      isAutoApproved: false,
+    })
+
+    return NextResponse.json({
+      ok: true,
+      status: statusMap[action],
+      dataRequestsActivated: draftCount.count, // 자동 생성된 데이터 신청 수
+    })
   }
+
   return NextResponse.json({ ok: true, status: statusMap[action] })
 }

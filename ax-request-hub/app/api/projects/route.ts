@@ -48,9 +48,45 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
+    const { dataRequirements, noDataRequired, ...projectData } = body
+
+    // Q1: 데이터 요건 선언 강제 — 둘 다 없으면 거부
+    if (!noDataRequired && (!dataRequirements || dataRequirements.length === 0)) {
+      return NextResponse.json(
+        { error: '데이터 요건을 선언하거나 "별도 데이터 불필요"를 선택해야 합니다.' },
+        { status: 400 }
+      )
+    }
+
     const project = await prisma.project.create({
-      data: { ...body, source: body.source ?? 'ax_discovery' },
+      data: {
+        ...projectData,
+        noDataRequired: !!noDataRequired,
+        source: projectData.source ?? 'ax_discovery',
+        // 데이터 요건은 과제 승인 시점에 DataRequest로 변환 (approve API에서 처리)
+        // 임시 보관: description에 JSON으로 삽입하지 않고 별도 필드 없이 body만 전달
+      },
     })
+
+    // dataRequirements를 DRAFT 상태로 미리 생성 (승인 시 PENDING으로 전환)
+    if (dataRequirements && dataRequirements.length > 0) {
+      await prisma.dataRequest.createMany({
+        data: dataRequirements.map((req: any) => ({
+          projectId: project.id,
+          employeeId: projectData.requesterEmail, // FK 대신 email 임시 사용
+          type: req.trackType ?? 'ACCESS',
+          classification: req.classification ?? 'G2',
+          purpose: req.purpose ?? projectData.description ?? '',
+          periodMonths: req.periodMonths ?? 12,
+          includesPII: req.includesPII ?? false,
+          isAnonymized: false,
+          forProduction: false,
+          status: 'DRAFT', // 과제 승인 전까지 DRAFT
+          requestedSpec: req.assetDescription ?? '',
+        })),
+      })
+    }
+
     return NextResponse.json(project, { status: 201 })
   } catch (e: any) {
     return NextResponse.json({ error: e.message ?? 'Internal Server Error' }, { status: 500 })

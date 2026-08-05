@@ -42,6 +42,9 @@ model Project {
   // 데이터 거버넌스 정합성 (Phase 2 — 데이터취급지침 제5조)
   isEssentialBusiness  Boolean  @default(false)  // 본질적 업무 여부 (G3 데이터 사용 선결 조건)
 
+  // Phase A — 과제 신청 시 데이터 요건 선언
+  noDataRequired Boolean @default(false)  // true = "별도 데이터 불필요" 명시
+
   scoreCard      ScoreCard?
   chatSession    ChatSession?
   dataRequests   DataRequest[]
@@ -594,6 +597,10 @@ model DataRequest {
   accessType     String?                  // 조회 | 추출 | 반출
   isAnonymized   Boolean   @default(false) // 비식별 처리 여부
   anonNote       String?                   // 비식별 처리 방법·범위
+
+  // Phase A — 과제 신청 시 데이터 요건 선언 필드
+  includesPII    Boolean   @default(false) // 개인정보(PII) 포함 여부
+  employeeId     String?                   // 신청자 이메일 (requesterId 대체, nullable)
 }
 
 model DataProvision {

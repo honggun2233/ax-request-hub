@@ -2,57 +2,303 @@ import { db } from '@/src/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 
-const STATUS_LABELS: Record<string, { label: string; color: string; desc: string }> = {
-  submitted: { label: '접수됨', color: 'bg-gray-100 text-gray-700', desc: 'AI 평가를 기다리고 있습니다.' },
-  evaluated: { label: '검토 중', color: 'bg-yellow-100 text-yellow-700', desc: 'AX팀장 검토를 기다리고 있습니다.' },
-  pilot: { label: '파일럿 승인', color: 'bg-blue-100 text-blue-700', desc: '파일럿 단계로 승인되었습니다. AX/PI팀에서 연락드립니다.' },
-  production: { label: '운영 중', color: 'bg-green-100 text-green-700', desc: '운영 환경에 배포되어 있습니다.' },
-  closed: { label: '종료', color: 'bg-red-100 text-red-600', desc: 'AI 활용이 종료 또는 반려되었습니다.' },
+const STATUS_MAP: Record<string, { label: string; cls: string }> = {
+  submitted:  { label: '접수됨',     cls: 'bg-slate-700 text-slate-200 border-slate-500' },
+  evaluated:  { label: '검토 중',    cls: 'bg-amber-900 text-amber-300 border-amber-600' },
+  pilot:      { label: '파일럿 승인', cls: 'bg-emerald-900 text-emerald-300 border-emerald-600' },
+  production: { label: '운영 중',    cls: 'bg-blue-900 text-blue-300 border-blue-600' },
+  closed:     { label: '종료',       cls: 'bg-red-950 text-red-300 border-red-700' },
 }
+
+const DR_STATUS: Record<string, { label: string; cls: string }> = {
+  DRAFT:    { label: '임시저장',  cls: 'text-slate-400 border-slate-600 bg-slate-800' },
+  PENDING:  { label: '심사중',   cls: 'text-amber-300 border-amber-600 bg-amber-950' },
+  APPROVED: { label: '승인됨',   cls: 'text-emerald-300 border-emerald-600 bg-emerald-950' },
+  REJECTED: { label: '반려됨',   cls: 'text-red-300 border-red-700 bg-red-950' },
+}
+
+const GATE_STAGES = [
+  { key: 'DEVELOPING', label: '개발중' },
+  { key: 'GATE1',      label: 'Gate 1' },
+  { key: 'GATE2',      label: 'Gate 2' },
+  { key: 'GATE3',      label: 'Gate 3' },
+  { key: 'ACTIVE',     label: '운영중' },
+]
+
+const STAGE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'GATE3', 'ACTIVE']
 
 export default async function StatusPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const project = await db.project.findUnique({ where: { id }, include: { scoreCard: true } })
+  const project = await db.project.findUnique({
+    where: { id },
+    include: {
+      scoreCard: true,
+      dataRequests: {
+        select: {
+          id: true, type: true, classification: true, status: true,
+          requestedSpec: true, periodMonths: true, includesPII: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      },
+      agentRegistries: {
+        select: {
+          id: true, agentName: true, lifecycleStage: true,
+          gate1Passed: true, gate2Passed: true, gate3Passed: true,
+          fallbackRate: true, sam30dAccuracy: true,
+        },
+        take: 1,
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  })
   if (!project) notFound()
-  const status = STATUS_LABELS[project.status] ?? STATUS_LABELS['submitted']
+
+  const status = STATUS_MAP[project.status] ?? STATUS_MAP['submitted']
+  const agent = project.agentRegistries?.[0] ?? null
+  const isApproved = ['pilot', 'production'].includes(project.status)
+
+  const pendingDataRequests = project.dataRequests.filter(r => r.status === 'PENDING')
+  const hasDataWarning = isApproved && pendingDataRequests.length > 0 && agent?.lifecycleStage === 'GATE2'
+
+  const stageIdx = agent ? STAGE_ORDER.indexOf(agent.lifecycleStage) : -1
+
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-lg mx-auto pt-12 pb-12 px-4">
-        <h1 className="text-xl font-bold text-gray-900 mb-6">AI 활용 현황</h1>
-        <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 mb-1">{project.title}</h2>
-          <p className="text-sm text-gray-500 mb-4">{project.department} · {project.requesterName}</p>
-          <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${status.color}`}>
-            {status.label}
-          </span>
-          <p className="text-sm text-gray-600 mt-3">{status.desc}</p>
-        </div>
-        {project.scoreCard && (
-          <div className="bg-white rounded-2xl p-6 shadow-sm mb-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">AI 평가 결과</h3>
-            <div className="text-3xl font-bold text-blue-600 mb-1">
-              {project.scoreCard.totalScore.toFixed(1)}점
+    <div className="min-h-screen" style={{ background: '#152440', color: '#D4DDE8', fontFamily: 'inherit' }}>
+      {/* 헤더 */}
+      <div style={{ background: '#080F1C', borderBottom: '1px solid #2E456A', padding: '10px 28px', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <Link href="/me/projects" style={{ fontSize: 12, color: '#7A94B0', textDecoration: 'none' }}>← 내 과제 목록</Link>
+        <span style={{ color: '#2E456A' }}>|</span>
+        <span style={{ fontSize: 12, color: '#7A94B0', letterSpacing: '.04em' }}>과제 현황</span>
+      </div>
+
+      <div style={{ maxWidth: 960, margin: '0 auto', padding: '28px 24px' }}>
+
+        {/* 과제 헤더 카드 */}
+        <div style={{ background: '#1C3055', border: '1px solid #2E456A', borderRadius: 2, padding: '20px 24px', marginBottom: 20, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10, letterSpacing: '.12em', color: '#C9A96E', textTransform: 'uppercase', marginBottom: 6 }}>
+              AI 활용 과제
             </div>
-            {project.autoApproved && (
-              <span className="text-xs text-green-600 font-medium">자동 승인</span>
-            )}
-            <p className="text-sm text-gray-500 mt-3 leading-relaxed">
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: '#EBF0F5', margin: 0 }}>{project.title}</h1>
+            <div style={{ marginTop: 8, display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span className={`text-xs font-semibold px-3 py-1 rounded border ${status.cls}`} style={{ fontSize: 11, padding: '3px 10px', borderRadius: 2, fontWeight: 600 }}>
+                {status.label}
+              </span>
+              <span style={{ fontSize: 12, color: '#7A94B0' }}>{project.department} · {project.requesterName}</span>
+              <span style={{ fontSize: 12, color: '#7A94B0' }}>{new Date(project.createdAt).toLocaleDateString('ko-KR')}</span>
+            </div>
+          </div>
+          {project.scoreCard && (
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 11, color: '#7A94B0', marginBottom: 4 }}>자동 심사 점수</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: '#C9A96E', fontFamily: 'monospace', lineHeight: 1 }}>
+                {project.scoreCard.totalScore.toFixed(0)}
+                <span style={{ fontSize: 14, color: '#7A94B0' }}>/100</span>
+              </div>
+              {project.autoApproved && (
+                <div style={{ fontSize: 10, color: '#5B8C6E', marginTop: 4 }}>자동 승인</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 데이터 + 에이전트 2열 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+          {/* 데이터 승인 현황 */}
+          <div style={{ background: '#1C3055', border: '1px solid #2E456A', borderRadius: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: '1px solid #2E456A' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: '#7A94B0', textTransform: 'uppercase' }}>
+                <span style={{ width: 3, height: 14, background: '#C9A96E', borderRadius: 1, display: 'inline-block' }} />
+                데이터 승인 현황
+              </div>
+              <span style={{ fontSize: 10, color: '#7A94B0' }}>DATA_PLATFORM 팀 검토</span>
+            </div>
+            <div style={{ padding: '0 18px' }}>
+              {/* Gate2 데이터 미승인 경고 */}
+              {hasDataWarning && (
+                <div style={{ margin: '12px 0 0', borderLeft: '3px solid #D07B3A', background: 'rgba(208,123,58,.12)', padding: '8px 12px', borderRadius: '0 2px 2px 0', fontSize: 12, color: '#FFB74D', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#FFB74D', flexShrink: 0 }} />
+                  미승인 데이터가 있습니다. Gate 2 진입 전 확인하세요.
+                </div>
+              )}
+
+              {project.noDataRequired && project.dataRequests.length === 0 ? (
+                <div style={{ padding: '18px 0', fontSize: 13, color: '#7A94B0' }}>
+                  별도 데이터 불필요로 신청됨
+                </div>
+              ) : project.dataRequests.length === 0 ? (
+                <div style={{ padding: '18px 0', fontSize: 13, color: '#7A94B0' }}>
+                  데이터 요건 없음
+                </div>
+              ) : (
+                project.dataRequests.map((dr, i) => {
+                  const ds = DR_STATUS[dr.status] ?? DR_STATUS['PENDING']
+                  return (
+                    <div key={dr.id} style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px 0', borderBottom: i < project.dataRequests.length - 1 ? '1px solid #2E456A' : 'none', gap: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 13, color: '#D4DDE8', marginBottom: 3 }}>
+                          {dr.requestedSpec || `데이터 요건 #${i + 1}`}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#7A94B0', display: 'flex', gap: 10 }}>
+                          <span>{dr.type === 'NEW' ? 'Track B' : 'Track A'}</span>
+                          <span style={{ color: dr.classification === 'G3' ? '#E57373' : dr.classification === 'G2' ? '#FFB74D' : '#7EB88A' }}>
+                            {dr.classification}
+                          </span>
+                          <span>{dr.periodMonths}개월</span>
+                          {dr.includesPII && <span style={{ color: '#CE93D8' }}>개인정보 포함</span>}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 2, border: '1px solid', flexShrink: 0, ...Object.fromEntries(Object.entries(ds).filter(([k]) => k === 'cls').flatMap(() => [])) }} className={ds.cls}>
+                        {ds.label}
+                      </span>
+                    </div>
+                  )
+                })
+              )}
+              {isApproved && (
+                <div style={{ padding: '10px 0' }}>
+                  <Link href="/data/requests" style={{ fontSize: 12, color: '#C9A96E', textDecoration: 'none' }}>
+                    데이터 신청 상세 보기 ›
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 개발 결과물 */}
+          <div style={{ background: '#1C3055', border: '1px solid #2E456A', borderRadius: 2 }}>
+            <div style={{ display: 'flex', alignItems: 'center', padding: '12px 18px', borderBottom: '1px solid #2E456A', gap: 8 }}>
+              <span style={{ width: 3, height: 14, background: '#C9A96E', borderRadius: 1, display: 'inline-block' }} />
+              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: '#7A94B0', textTransform: 'uppercase' }}>
+                개발 결과물
+              </span>
+            </div>
+            <div style={{ padding: '16px 18px' }}>
+              {!isApproved ? (
+                <div style={{ fontSize: 13, color: '#7A94B0', padding: '8px 0' }}>
+                  과제 승인 후 에이전트를 등록할 수 있습니다.
+                </div>
+              ) : !agent ? (
+                /* CTA 배너 */
+                <div style={{ border: '1px dashed rgba(201,169,110,.35)', background: 'rgba(201,169,110,.08)', borderRadius: 2, padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 13, color: '#D4DDE8', marginBottom: 4 }}>과제가 승인됐습니다.</div>
+                    <div style={{ fontSize: 12, color: '#7A94B0' }}>레지스트리에 에이전트를 등록하면 Gate 1부터 라이프사이클 관리가 시작됩니다.</div>
+                  </div>
+                  <Link href={`/registry?projectId=${project.id}`}
+                    style={{ display: 'inline-block', background: '#C9A96E', color: '#0F1C2B', fontSize: 13, fontWeight: 600, padding: '8px 16px', borderRadius: 2, textDecoration: 'none', alignSelf: 'flex-start' }}>
+                    에이전트 등록하기 ›
+                  </Link>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#EBF0F5' }}>{agent.agentName}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 2, background: 'rgba(201,169,110,.12)', color: '#C9A96E', border: '1px solid rgba(201,169,110,.3)' }}>
+                      {GATE_STAGES.find(s => s.key === agent.lifecycleStage)?.label ?? agent.lifecycleStage}
+                    </span>
+                  </div>
+
+                  {/* Gate 타임라인 */}
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 16, marginBottom: 14 }}>
+                    {GATE_STAGES.map((s, i) => {
+                      const done   = stageIdx > i
+                      const active = stageIdx === i
+                      return (
+                        <div key={s.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                          {i > 0 && (
+                            <div style={{ position: 'absolute', top: 9, right: '50%', left: '-50%', height: 1, background: done ? 'rgba(201,169,110,.4)' : '#2E456A' }} />
+                          )}
+                          <div style={{
+                            width: 20, height: 20, borderRadius: '50%', position: 'relative', zIndex: 1,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 9, fontWeight: 700,
+                            border: `2px solid ${done ? '#C9A96E' : active ? '#C9A96E' : '#2E456A'}`,
+                            background: done ? '#C9A96E' : active ? 'rgba(201,169,110,.15)' : '#152440',
+                            color: done ? '#0F1C2B' : active ? '#C9A96E' : '#7A94B0',
+                          }}>
+                            {done ? '✓' : i + 1}
+                          </div>
+                          <div style={{ fontSize: 9, marginTop: 4, color: done || active ? '#C9A96E' : '#7A94B0' }}>
+                            {s.label}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {/* KPI */}
+                  {agent.fallbackRate !== null && (
+                    <div style={{ marginBottom: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#7A94B0', marginBottom: 4 }}>
+                        <span>Fallback율</span>
+                        <span style={{ fontFamily: 'monospace', color: (agent.fallbackRate ?? 0) <= 0.3 ? '#7EB88A' : '#FFB74D' }}>
+                          {((agent.fallbackRate ?? 0) * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                      <div style={{ height: 4, background: '#2E456A', borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${(agent.fallbackRate ?? 0) * 100}%`, background: (agent.fallbackRate ?? 0) <= 0.3 ? '#5B8C6E' : '#D07B3A', borderRadius: 2 }} />
+                      </div>
+                    </div>
+                  )}
+                  {agent.sam30dAccuracy !== null && (
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#7A94B0', marginBottom: 4 }}>
+                        <span>30일 정확도</span>
+                        <span style={{ fontFamily: 'monospace', color: (agent.sam30dAccuracy ?? 0) >= 0.55 ? '#7EB88A' : '#FFB74D' }}>
+                          {((agent.sam30dAccuracy ?? 0) * 100).toFixed(0)}%
+                          {agent.lifecycleStage === 'GATE2' && (agent.sam30dAccuracy ?? 0) < 0.55 && (
+                            <span style={{ fontSize: 10, color: '#E57373', marginLeft: 4 }}>기준 미달</span>
+                          )}
+                        </span>
+                      </div>
+                      <div style={{ height: 4, background: '#2E456A', borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${(agent.sam30dAccuracy ?? 0) * 100}%`, background: (agent.sam30dAccuracy ?? 0) >= 0.55 ? '#5B8C6E' : '#D07B3A', borderRadius: 2 }} />
+                      </div>
+                    </div>
+                  )}
+
+                  <Link href={`/registry?highlight=${agent.id}`}
+                    style={{ display: 'block', textAlign: 'center', fontSize: 12, color: '#C9A96E', textDecoration: 'none', padding: '8px', border: '1px solid rgba(201,169,110,.25)', borderRadius: 2 }}>
+                    레지스트리에서 상세 관리 ›
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* 스코어카드 상세 */}
+        {project.scoreCard && (
+          <div style={{ background: '#1C3055', border: '1px solid #2E456A', borderRadius: 2, marginTop: 16, padding: '16px 18px' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.06em', color: '#7A94B0', textTransform: 'uppercase', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ width: 3, height: 14, background: '#C9A96E', borderRadius: 1, display: 'inline-block' }} />
+              AI 심사 결과
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 12 }}>
+              {[
+                { label: '전략 적합성', val: project.scoreCard.strategyScore },
+                { label: '기대 효과',  val: project.scoreCard.impactScore },
+                { label: 'ROI',        val: project.scoreCard.roiScore },
+                { label: '기밀성',     val: project.scoreCard.confidentialityScore },
+                { label: '준비도',     val: project.scoreCard.readinessScore },
+                { label: '난이도',     val: project.scoreCard.difficultyScore },
+              ].map(({ label, val }) => (
+                <div key={label} style={{ background: '#152440', border: '1px solid #2E456A', borderRadius: 2, padding: '10px 12px' }}>
+                  <div style={{ fontSize: 10, color: '#7A94B0', marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#C9A96E', fontFamily: 'monospace' }}>
+                    {val?.toFixed(1) ?? '—'}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: 13, color: '#7A94B0', lineHeight: 1.6 }}>
               {project.scoreCard.evaluationRationale}
             </p>
-            {/* Gate 2 기술 표준 */}
-            {project.techStandardsPassed !== undefined && (
-              <div className={`mt-3 rounded-lg px-3 py-2 text-xs border ${project.techStandardsPassed ? 'bg-green-50 border-green-200 text-green-700' : 'bg-amber-50 border-amber-200 text-amber-700'}`}>
-                <span className="font-semibold">Gate 2 기술 표준:</span>{' '}
-                {project.techStandardsPassed
-                  ? '통과'
-                  : `보류 — ${(JSON.parse(project.techStandardsFailedItems || '[]') as string[]).join(', ')}`
-                }
-              </div>
-            )}
           </div>
         )}
-        <Link href="/" className="text-sm text-blue-600 hover:underline">← 홈으로</Link>
       </div>
-    </main>
+    </div>
   )
 }
