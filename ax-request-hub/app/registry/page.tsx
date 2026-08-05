@@ -583,6 +583,11 @@ export default function RegistryPage() {
             <div style={{ color: TEXT, fontWeight: 600 }}>총 {agentData.agents.length}개</div>
             <div>활성 {agentData.stageCounts['ACTIVE'] ?? 0}개</div>
           </div>
+          <Link href="/admin/retired" style={{
+            padding: '8px 14px', background: 'none', color: MUTED, border: `1px solid ${BDR}`, borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: 'pointer', textDecoration: 'none',
+          }}>
+            폐기 거버넌스
+          </Link>
           <button onClick={() => setShowRegister(true)} style={{
             padding: '8px 16px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
           }}>

@@ -4,8 +4,8 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
   Home, Plus, ListChecks, Database, FileText, Star, Book,
-  User, Wrench, Users, BarChart3, Cpu, Gavel, Archive, Coins,
-  GraduationCap, Shield, LogOut, LayoutDashboard, Network, Scale,
+  User, Wrench, Users, BarChart3, Cpu, Gavel, Coins,
+  Shield, LogOut, LayoutDashboard, Network, Scale,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -83,19 +83,18 @@ const NAV: NavGroup[] = [
   },
 
   // ─── AX팀 : 3기둥으로 압축 ─────────────────────────────
-  // 기둥2·3 — 에이전트 개발 지원 → 관리 (신청·개발·운영·폐기 파이프라인)
+  // 기둥2·3 — 에이전트 개발 지원 → 관리 (폐기 거버넌스는 에이전트 현황 헤더로 진입)
   {
     title: "AI 파이프라인",
     roles: ["AX_TEAM"],
     adminDivider: true,
     items: [
-      { href: "/dashboard",     label: "활용 현황",    icon: BarChart3 },
-      { href: "/registry",      label: "에이전트 현황", icon: Cpu },
-      { href: "/admin/retired", label: "폐기 아카이브", icon: Archive },
-      { href: "/council",       label: "AI 위원회",    icon: Gavel },
+      { href: "/dashboard", label: "활용 현황",    icon: BarChart3 },
+      { href: "/registry",  label: "에이전트 현황", icon: Cpu },
+      { href: "/council",   label: "AI 위원회",    icon: Gavel },
     ],
   },
-  // 운영 관리 — 심사·승인·인력·비용
+  // 운영 관리 — 심사·승인·인력·비용 (직원·교육은 서브탭으로 통합)
   {
     title: "운영 관리",
     roles: ["AX_TEAM"],
@@ -103,8 +102,7 @@ const NAV: NavGroup[] = [
       { href: "/admin",           label: "심사 관리",   icon: LayoutDashboard },
       { href: "/dp/requests",     label: "데이터 승인", icon: Database },
       { href: "/admin/appeals",   label: "이의제기",    icon: Scale },
-      { href: "/admin/employees", label: "직원 관리",   icon: Users },
-      { href: "/admin/literacy",  label: "교육 관리",   icon: GraduationCap },
+      { href: "/admin/employees", label: "직원 · 교육", icon: Users },
       { href: "/admin/tokens",    label: "토큰 · 쿼터", icon: Coins },
     ],
   },

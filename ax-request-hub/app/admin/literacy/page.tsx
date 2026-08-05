@@ -34,8 +34,12 @@ export default function AdminLiteracyPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex gap-1 border-b border-gray-200">
+        <a href="/admin/employees" className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 -mb-px">레벨 심사</a>
+        <a href="/admin/literacy" className="px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 -mb-px">교육 관리</a>
+      </div>
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">리터러시 관리</h1>
+        <h1 className="text-xl font-bold">교육 관리</h1>
         <button
           onClick={() => setShowAdd(true)}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium"

@@ -160,6 +160,7 @@ export default function RetiredAgentsPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
+      <a href="/registry" className="text-sm text-gray-500 hover:underline">← 에이전트 현황</a>
       <h1 className="text-xl font-bold">폐기 에이전트 거버넌스</h1>
 
       {msg && (

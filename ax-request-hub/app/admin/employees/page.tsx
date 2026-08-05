@@ -55,7 +55,7 @@ export default function AdminEmployeesPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <a href="/admin" className="text-sm text-gray-500 hover:underline">← 관리 포털</a>
-            <h1 className="text-2xl font-bold mt-1">직원 레벨 관리</h1>
+            <h1 className="text-2xl font-bold mt-1">직원 · 교육 관리</h1>
           </div>
           <div className="flex gap-2">
             <a href="/api/admin/employees/export" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700">엑셀 다운로드</a>
@@ -64,6 +64,11 @@ export default function AdminEmployeesPage() {
             </button>
             <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
           </div>
+        </div>
+
+        <div className="flex gap-1 mb-6 border-b border-gray-200">
+          <a href="/admin/employees" className="px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 -mb-px">레벨 심사</a>
+          <a href="/admin/literacy" className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 -mb-px">교육 관리</a>
         </div>
 
         {uploadMsg && <div className="bg-blue-50 text-blue-800 rounded-lg p-3 mb-4 text-sm">{uploadMsg}</div>}
