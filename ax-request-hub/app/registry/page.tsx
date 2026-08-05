@@ -85,18 +85,27 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
   const [addingProject, setAddingProject] = useState(false)
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [selectedRole, setSelectedRole] = useState('PRIMARY')
+  const [dataWarning, setDataWarning] = useState<{ pendingCount: number; totalCount: number } | null>(null)
 
   const linkedProjectIds = new Set((agent.projects ?? []).map((p: any) => p.projectId))
   const unlinkableProjects = allProjects.filter(p => !linkedProjectIds.has(p.id))
 
   const advanceStage = async (newStage: string) => {
     setSaving(true)
-    await fetch('/api/registry', {
+    setDataWarning(null)
+    const res = await fetch('/api/registry', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: agent.id, lifecycleStage: newStage, operatorTrustScore: trustScore, operatorComment: comment }),
     })
+    const json = await res.json()
     setSaving(false)
+    // Phase C — Q3=B: Gate 2 진입 시 데이터 미승인 경고 (슬라이드오버는 열어둠)
+    if (json.dataWarning) {
+      setDataWarning(json.dataWarning)
+      onStageChange() // 카드 목록은 갱신
+      return          // 슬라이드오버는 닫지 않고 경고 표시
+    }
     onStageChange()
     onClose()
   }
@@ -233,6 +242,26 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
               ))}
             </div>
           </div>
+
+          {/* Phase C — Gate 2 데이터 미승인 경고 배너 */}
+          {dataWarning && (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+              <div className="flex items-start gap-2">
+                <span className="text-amber-500 mt-0.5">⚠</span>
+                <div>
+                  <p className="text-sm font-semibold text-amber-800">데이터 미승인 경고</p>
+                  <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                    연결 AI 활용 신청의 데이터 요건 {dataWarning.totalCount}건 중{' '}
+                    <strong>{dataWarning.pendingCount}건이 아직 미승인</strong> 상태입니다.
+                    Gate 2는 진행됐지만, 데이터 승인 전까지 에이전트가 실데이터를 사용할 수 없습니다.
+                  </p>
+                  <p className="text-xs text-amber-600 mt-1.5">
+                    DATA_PLATFORM 팀 검토 완료 후 데이터가 연결됩니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Gate2 운용역 리뷰 */}
           {agent.lifecycleStage === 'GATE2' && (

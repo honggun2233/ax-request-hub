@@ -69,9 +69,32 @@ export async function PATCH(req: NextRequest) {
     updateData.operatorComment = operatorComment
     updateData.sam30dAccuracy = sam30dAccuracy
   }
+  if (lifecycleStage === 'GATE1') {
+    updateData.gate1Passed = true
+    updateData.gate1PassedAt = now
+  }
+  if (lifecycleStage === 'GATE3') {
+    updateData.gate3Passed = true
+    updateData.gate3PassedAt = now
+  }
   if (lifecycleStage === 'DEGRADED') updateData.degradedSince = now
   if (lifecycleStage === 'RETIRED') { updateData.retiredAt = now; updateData.retireReason = retireReason }
 
   const agent = await prisma.agentRegistry.update({ where: { id }, data: updateData })
-  return NextResponse.json(agent)
+
+  // Phase C — Q3=B: Gate 2 진입 시 데이터 승인 상태 확인 (경고 반환, 차단 아님)
+  let dataWarning: { pendingCount: number; totalCount: number } | null = null
+  if (lifecycleStage === 'GATE2' && agent.projectId) {
+    const [total, pending] = await Promise.all([
+      prisma.dataRequest.count({ where: { projectId: agent.projectId } }),
+      prisma.dataRequest.count({
+        where: { projectId: agent.projectId, status: { in: ['DRAFT', 'PENDING'] } },
+      }),
+    ])
+    if (total > 0 && pending > 0) {
+      dataWarning = { pendingCount: pending, totalCount: total }
+    }
+  }
+
+  return NextResponse.json({ ...agent, dataWarning })
 }
