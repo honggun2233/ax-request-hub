@@ -2,18 +2,18 @@ import Link from 'next/link'
 import { db } from '@/src/lib/db'
 import { ApproveButtons } from './ApproveButtons'
 
-const CARD  = '#1C3055'
-const BDR   = '#2E456A'
-const GOLD  = '#C9A96E'
-const TEXT  = '#D4DDE8'
-const MUTED = '#7A94B0'
+const CARD  = '#1E293B'
+const BDR   = '#334155'
+const GOLD  = '#3B82F6'
+const TEXT  = '#F1F5F9'
+const MUTED = '#94A3B8'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; stripe: string }> = {
-  submitted:  { label: '접수',   color: MUTED,     stripe: '#4A6080' },
-  evaluated:  { label: '검토 중', color: GOLD,      stripe: GOLD },
-  pilot:      { label: '파일럿', color: '#7EB88A',  stripe: '#5B8C6E' },
-  production: { label: '운영',   color: '#5B8C6E',  stripe: '#3D6B52' },
-  closed:     { label: '종료',   color: '#B04040',  stripe: '#8B3030' },
+  submitted:  { label: '접수',   color: MUTED,     stripe: '#475569' },
+  evaluated:  { label: '검토 중', color: '#F59E0B', stripe: '#F59E0B' },
+  pilot:      { label: '파일럿', color: '#34D399',  stripe: '#10B981' },
+  production: { label: '운영',   color: '#10B981',  stripe: '#059669' },
+  closed:     { label: '종료',   color: '#F87171',  stripe: '#EF4444' },
 }
 
 const STATUS_ORDER = ['submitted', 'evaluated', 'pilot', 'production', 'closed']
@@ -36,8 +36,8 @@ export default async function DashboardPage() {
           <h1 style={{ fontSize: 20, fontWeight: 700, color: '#EBF0F5', margin: 0 }}>AI 활용 포트폴리오</h1>
           <p style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>총 {projects.length}개 AI 활용 신청</p>
         </div>
-        <Link href="/chat" style={{
-          fontSize: 13, fontWeight: 600, color: '#080F1C',
+        <Link href="/projects/new" style={{
+          fontSize: 13, fontWeight: 600, color: '#ffffff',
           background: GOLD, padding: '8px 16px', borderRadius: 4, textDecoration: 'none',
         }}>
           + AI 활용 신청

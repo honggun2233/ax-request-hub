@@ -3,19 +3,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-const CARD  = '#1C3055'
-const BDR   = '#2E456A'
-const GOLD  = '#C9A96E'
-const TEXT  = '#D4DDE8'
-const MUTED = '#7A94B0'
+const CARD  = '#1E293B'
+const BDR   = '#334155'
+const GOLD  = '#3B82F6'
+const TEXT  = '#F1F5F9'
+const MUTED = '#94A3B8'
 
 const STEPS = ['신청', '심사', '승인', '개발', '운영']
 
 const STATUS_INFO: Record<string, { label: string; step: number; color: string }> = {
-  submitted:  { label: '심사 중',     step: 1, color: GOLD },
-  evaluated:  { label: '검토 완료',   step: 2, color: '#A0C8A8' },
-  pilot:      { label: '파일럿 승인', step: 3, color: '#7EB88A' },
-  production: { label: '운영 중',     step: 4, color: '#5B8C6E' },
+  submitted:  { label: '심사 중',     step: 1, color: '#F59E0B' },
+  evaluated:  { label: '검토 완료',   step: 2, color: '#60A5FA' },
+  pilot:      { label: '파일럿 승인', step: 3, color: '#34D399' },
+  production: { label: '운영 중',     step: 4, color: '#10B981' },
   closed:     { label: '종료',        step: 0, color: MUTED },
 }
 
@@ -63,24 +63,14 @@ export default function MyProjectsPage() {
           <h1 style={{ fontSize: 20, fontWeight: 700, color: '#EBF0F5', margin: 0 }}>내 AI 활용</h1>
           <p style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>신청한 AI 활용의 진행 현황을 확인하세요.</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Link href="/projects/new" style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: 13, fontWeight: 600, color: MUTED,
-            background: 'transparent', border: `1px solid ${BDR}`,
-            padding: '7px 14px', borderRadius: 4, textDecoration: 'none',
-          }}>
-            <Plus size={14} /> 직접 작성
-          </Link>
-          <Link href="/chat" style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: 13, fontWeight: 600, color: '#080F1C',
-            background: GOLD, border: `1px solid ${GOLD}`,
-            padding: '7px 14px', borderRadius: 4, textDecoration: 'none',
-          }}>
-            <Plus size={14} /> AI 상담
-          </Link>
-        </div>
+        <Link href="/projects/new" style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: 13, fontWeight: 600, color: '#ffffff',
+          background: GOLD, border: `1px solid ${GOLD}`,
+          padding: '7px 14px', borderRadius: 4, textDecoration: 'none',
+        }}>
+          <Plus size={14} /> AI 활용 신청
+        </Link>
       </div>
 
       {loading && (
@@ -90,14 +80,9 @@ export default function MyProjectsPage() {
       {!loading && projects.length === 0 && (
         <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 4, padding: '48px 24px', textAlign: 'center' }}>
           <p style={{ color: MUTED, fontSize: 14, marginBottom: 16 }}>아직 신청한 AI 활용이 없습니다.</p>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-            <Link href="/projects/new" style={{ fontSize: 13, color: MUTED, border: `1px solid ${BDR}`, padding: '8px 16px', borderRadius: 4, textDecoration: 'none' }}>
-              직접 양식으로 신청
-            </Link>
-            <Link href="/chat" style={{ fontSize: 13, color: '#080F1C', background: GOLD, padding: '8px 16px', borderRadius: 4, textDecoration: 'none', fontWeight: 600 }}>
-              AI 상담으로 구체화
-            </Link>
-          </div>
+          <Link href="/projects/new" style={{ fontSize: 13, color: '#ffffff', background: GOLD, padding: '8px 16px', borderRadius: 4, textDecoration: 'none', fontWeight: 600 }}>
+            AI 활용 신청하기
+          </Link>
         </div>
       )}
 

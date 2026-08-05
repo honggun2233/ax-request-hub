@@ -20,7 +20,7 @@ export default async function RootLayout({
   const role = ((session?.user as any)?.role ?? "EMPLOYEE") as Role;
   return (
     <html lang="ko">
-      <body className="bg-[#152440]">
+      <body className="bg-[#111827]">
         <Providers>
           {session ? (
             <div className="flex">

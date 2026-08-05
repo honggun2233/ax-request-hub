@@ -2,18 +2,18 @@
 import { useState, useEffect } from 'react'
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
-const CARD  = '#1C3055'
-const CARD2 = '#223565'
-const BDR   = '#2E456A'
-const GOLD  = '#C9A96E'
-const TEXT  = '#D4DDE8'
-const MUTED = '#7A94B0'
+const CARD  = '#1E293B'
+const CARD2 = '#243447'
+const BDR   = '#334155'
+const GOLD  = '#3B82F6'
+const TEXT  = '#F1F5F9'
+const MUTED = '#94A3B8'
 
 const KPIs = [
-  { key: 'activeEmployees',    label: 'AI 활용 직원',    icon: '👥', accent: '#5B8C6E' },
+  { key: 'activeEmployees',    label: 'AI 활용 직원',    icon: '👥', accent: '#10B981' },
   { key: 'monthlyTokens',      label: '이번달 토큰',     icon: '⚡', accent: GOLD,     fmt: (v: number) => v.toLocaleString() },
-  { key: 'pendingApplications',label: '심사 대기',        icon: '⏳', accent: '#D07B3A' },
-  { key: 'activeProjects',     label: '진행 중 AI 활용', icon: '🚀', accent: '#7B6EC8' },
+  { key: 'pendingApplications',label: '심사 대기',        icon: '⏳', accent: '#F59E0B' },
+  { key: 'activeProjects',     label: '진행 중 AI 활용', icon: '🚀', accent: '#A78BFA' },
 ]
 
 const STATUS_LABEL: Record<string, string> = { PENDING: '대기', APPROVED: '승인', REJECTED: '반려' }
