@@ -334,15 +334,100 @@ model Project {
 
 ---
 
-## 7. 미결 결정 사항
+## 7. 정책 결정 사항 (2026-08-05 확정)
 
-| # | 질문 | 선택지 | 권장 |
-|---|------|--------|------|
-| Q1 | 데이터 요건 미입력 시 과제 신청 가능한가? | A: 필수 / B: "데이터 없음" 명시 강제 / C: 완전 선택 | **B** — 최소한 "이 과제는 별도 데이터 불필요"를 명시 선택하게 해 거버넌스 유지 |
-| Q2 | 과제 없는 에이전트 등록을 완전 차단할 것인가? | A: 완전 차단 / B: 경고만 | **A** — 승인받지 않은 AI 개발을 허용하면 거버넌스 무력화 |
-| Q3 | 데이터 미승인 시 Gate 2를 자동 블록할 것인가? | A: 자동 블록 / B: 경고 표시만 | **B** — 긴급 운영 상황 유연성 확보. 단, 경고가 명시적으로 보여야 함 |
-| Q4 | DataRequest.projectId: 과제 연결 필수 vs optional 유지? | A: 과제 연결 항상 필수 / B: 과제에서 나온 신청은 필수, 독립 신청은 optional | **B** — 범용 데이터 신청 시나리오 허용하되 UX에서 명확히 구분 |
+| # | 질문 | **확정 결정** | 구현 방향 |
+|---|------|--------------|----------|
+| Q1 | 데이터 요건 미입력 시 과제 신청 가능한가? | **B: "데이터 없음" 명시 강제** | 신청 폼에 "별도 데이터 불필요" 체크박스 — 미선택 시 제출 차단 |
+| Q2 | 과제 없는 에이전트 등록을 완전 차단할 것인가? | **A: 완전 차단** | AgentRegistry 등록 API에서 projectId 검증 필수. 승인된 Project 없으면 400 반환 |
+| Q3 | 데이터 미승인 시 Gate 2를 자동 블록할 것인가? | **B: 경고 표시만** | Gate 2 전환 버튼은 활성화 유지. 단, 미승인 DataRequest 목록을 빨간 경고 배너로 표시 |
+| Q4 | DataRequest.projectId: 과제 연결 필수 vs optional? | **B: 과제 연결 여부 명시 선택** | 신청 폼에 "과제 연결" 토글 — ON 시 과제 선택 필수(projectId 저장), OFF 시 null 허용 |
 
 ---
 
-*초안 작성: 2026-08-05 | 검토 및 결정 후 구현 착수*
+## 8. Phase A 구현 상세 (Q1~Q4 반영)
+
+> 이 섹션은 개발자(cwhong)가 구현 시 참고하는 기준입니다.
+
+### Phase A-1: `/submit` 폼 — 데이터 요건 섹션 추가
+
+**변경 파일**: `app/submit/page.tsx` (또는 `app/projects/new/page.tsx`)
+
+추가할 섹션 (폼 하단):
+```
+[데이터 요건]
+  ○ 이 과제는 별도 데이터가 필요 없습니다  ← Q1: 반드시 이 중 하나 선택
+  ○ 아래 데이터가 필요합니다:
+      + 데이터 추가
+      ┌──────────────────────────────────────────┐
+      │ 데이터 설명        [텍스트 입력]          │
+      │ 유형               ○ Track A  ○ Track B   │
+      │ 기밀 등급          [G1 / G2 / G3]        │
+      │ 개인정보 포함      □ 포함                 │
+      │ 사용 기간          [  ] 개월              │
+      └──────────────────────────────────────────┘
+```
+
+**API 변경**: `POST /api/projects` — 요청 body에 `dataRequirements[]` 배열 추가
+```typescript
+dataRequirements: Array<{
+  assetDescription: string
+  trackType: 'ACCESS' | 'NEW'
+  classification: 'G1' | 'G2' | 'G3'
+  includesPII: boolean
+  periodMonths: number
+  purpose: string  // project.description에서 자동 복사 가능
+}>
+noDataRequired: boolean  // Q1: true면 dataRequirements 빈 배열 허용
+```
+
+### Phase A-2: 과제 승인 시 DataRequest 자동 생성
+
+**변경 파일**: `app/api/approve/[id]/route.ts`
+
+과제 승인(status → 'approved') 처리 시:
+```typescript
+// 승인 핸들러 내부
+if (project.dataRequirements.length > 0) {
+  await prisma.dataRequest.createMany({
+    data: project.dataRequirements.map(req => ({
+      projectId: project.id,
+      employeeId: project.requester.id,
+      type: req.trackType,
+      classification: req.classification,
+      assetDescription: req.assetDescription,
+      includesPII: req.includesPII,
+      periodMonths: req.periodMonths,
+      status: 'PENDING',   // DATA_PLATFORM 팀 큐에 들어감
+    }))
+  })
+}
+```
+
+### Phase A-3: `/status/[id]` — 두 개 카드 추가
+
+**변경 파일**: `app/status/[id]/page.tsx`
+
+추가할 UI 블록 두 개:
+1. **데이터 승인 현황 카드**: 연결된 DataRequest 목록 + 각 상태(PENDING/APPROVED/REJECTED)
+2. **개발 결과물 카드**: 연결된 AgentRegistry + 현재 Gate 단계 + fallback율 (에이전트 없으면 "에이전트 등록하기" CTA 표시)
+
+**API**: `GET /api/projects/[id]` 에 `include: { dataRequests: true, agentRegistries: true }` 추가
+
+### Phase B-1: `/registry` — 과제 연결 필수 (Q2)
+
+**변경 파일**: `app/api/registry/route.ts` (POST 핸들러)
+```typescript
+// Q2: 과제 없는 에이전트 등록 차단
+if (!body.projectId) {
+  return NextResponse.json({ error: '승인된 과제를 선택해야 합니다.' }, { status: 400 })
+}
+const project = await prisma.project.findUnique({ where: { id: body.projectId, status: 'approved' } })
+if (!project) {
+  return NextResponse.json({ error: '승인된 과제가 아닙니다.' }, { status: 400 })
+}
+```
+
+---
+
+*초안 작성: 2026-08-05 | 정책 결정: 2026-08-05 | Phase A 구현 준비 완료*

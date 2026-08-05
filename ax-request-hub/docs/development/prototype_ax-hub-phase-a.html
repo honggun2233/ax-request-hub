@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AX Hub — Phase A 프로토타입</title>
+<style>
+  /* ─── 토큰 ─────────────────────────────── */
+  :root {
+    --bg:       #0F1C2B;
+    --bg-card:  #162338;
+    --bg-row:   #1A2940;
+    --border:   #253A52;
+    --gold:     #C9A96E;
+    --gold-dim: rgba(201,169,110,.12);
+    --gold-mid: rgba(201,169,110,.30);
+    --text:     #D4DDE8;
+    --text-dim: #7A94B0;
+    --text-inv: #0F1C2B;
+    --green:    #5B8C6E;
+    --green-bg: rgba(91,140,110,.15);
+    --amber:    #D07B3A;
+    --amber-bg: rgba(208,123,58,.15);
+    --red:      #B85445;
+    --red-bg:   rgba(184,84,69,.15);
+    --blue:     #4A7FA5;
+    --blue-bg:  rgba(74,127,165,.15);
+    --radius:   2px;
+    --mono:     'JetBrains Mono', 'Consolas', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── 상단 뷰 탭 ────────────────────────── */
+  .view-tabs {
+    display: flex;
+    gap: 0;
+    background: #0A1520;
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+  }
+  .view-tab {
+    padding: 12px 20px;
+    font-size: 12px;
+    letter-spacing: .06em;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+    background: none; border-top: none; border-left: none; border-right: none;
+  }
+  .view-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ─── 레이아웃 ──────────────────────────── */
+  .shell { display: flex; flex: 1; }
+
+  nav {
+    width: 220px;
+    background: #0A1520;
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .nav-logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .nav-logo-mark {
+    font-size: 11px;
+    letter-spacing: .12em;
+    color: var(--gold);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .nav-logo-sub { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+  .nav-section { padding: 8px 20px 4px; font-size: 10px; letter-spacing: .1em; color: var(--text-dim); text-transform: uppercase; }
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 20px; font-size: 13px; color: var(--text-dim);
+    cursor: pointer; border-left: 2px solid transparent;
+    transition: all .12s;
+    background: none; border-top: none; border-right: none; border-bottom: none;
+    width: 100%; text-align: left;
+  }
+  .nav-item:hover { color: var(--text); background: var(--gold-dim); }
+  .nav-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--gold-dim); }
+  .nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .5; flex-shrink: 0; }
+
+  main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+  /* ─── 뷰 패널 ──────────────────────────── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ─── 페이지 헤더 ───────────────────────── */
+  .page-hd {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-eyebrow {
+    font-size: 10px; letter-spacing: .12em; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .page-title { font-size: 22px; font-weight: 600; color: #EBF0F5; }
+  .page-desc { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ─── 버튼 ──────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; font-size: 13px; font-weight: 500;
+    border-radius: var(--radius); cursor: pointer;
+    border: 1px solid transparent; transition: all .12s;
+    text-decoration: none; font-family: inherit;
+  }
+  .btn-primary { background: var(--gold); color: var(--text-inv); border-color: var(--gold); }
+  .btn-primary:hover { background: #E8C98A; border-color: #E8C98A; }
+  .btn-ghost { background: transparent; color: var(--text-dim); border-color: var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--text-dim); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-danger { background: var(--red-bg); color: #E57373; border-color: var(--red); }
+
+  /* ─── 카드 ──────────────────────────────── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+  }
+  .card-hd {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 12px; font-weight: 600; letter-spacing: .06em;
+    color: var(--text-dim); text-transform: uppercase;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-stripe { width: 3px; height: 14px; background: var(--gold); border-radius: 1px; }
+  .card-body { padding: 20px; }
+
+  /* ─── 폼 요소 ───────────────────────────── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .form-full { grid-column: 1 / -1; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .label {
+    font-size: 11px; letter-spacing: .06em; color: var(--text-dim);
+    font-weight: 600; text-transform: uppercase;
+  }
+  .label .req { color: var(--gold); margin-left: 3px; }
+  input[type=text], input[type=number], textarea, select {
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); border-radius: var(--radius);
+    padding: 8px 12px; font-size: 13px; font-family: inherit;
+    transition: border-color .12s; outline: none; width: 100%;
+  }
+  input[type=text]:focus, input[type=number]:focus,
+  textarea:focus, select:focus { border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 80px; }
+  select option { background: var(--bg-card); }
+
+  .radio-group { display: flex; gap: 0; }
+  .radio-opt {
+    flex: 1; padding: 8px 12px; font-size: 13px; color: var(--text-dim);
+    border: 1px solid var(--border); cursor: pointer; text-align: center;
+    transition: all .12s; background: var(--bg);
+  }
+  .radio-opt:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+  .radio-opt:last-child  { border-radius: 0 var(--radius) var(--radius) 0; }
+  .radio-opt + .radio-opt { border-left: none; }
+  .radio-opt.active { background: var(--gold-dim); color: var(--gold); border-color: var(--gold); z-index: 1; }
+
+  .chip-group { display: flex; gap: 6px; }
+  .chip {
+    padding: 5px 14px; font-size: 12px; font-weight: 600;
+    border-radius: var(--radius); border: 1px solid transparent;
+    cursor: pointer; transition: all .12s; letter-spacing: .04em;
+  }
+  .chip-g1 { background: var(--green-bg); color: #7EB88A; border-color: var(--green); }
+  .chip-g1.active { background: var(--green); color: var(--text-inv); }
+  .chip-g2 { background: var(--amber-bg); color: #FFB74D; border-color: var(--amber); }
+  .chip-g2.active { background: var(--amber); color: var(--text-inv); }
+  .chip-g3 { background: var(--red-bg); color: #E57373; border-color: var(--red); }
+  .chip-g3.active { background: var(--red); color: #fff; }
+
+  .toggle-wrap { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .toggle {
+    width: 36px; height: 20px; background: var(--border); border-radius: 10px;
+    position: relative; transition: background .15s; flex-shrink: 0;
+    border: none; cursor: pointer;
+  }
+  .toggle.on { background: var(--gold); }
+  .toggle::after {
+    content: ''; position: absolute; top: 3px; left: 3px;
+    width: 14px; height: 14px; border-radius: 50%; background: #fff;
+    transition: left .15s;
+  }
+  .toggle.on::after { left: 19px; }
+  .toggle-label { font-size: 13px; color: var(--text); }
+
+  /* ─── 데이터 요건 블록 ──────────────────── */
+  .req-block {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .req-block-hd {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg-row);
+    border-bottom: 1px solid var(--border);
+  }
+  .req-block-label { font-size: 11px; color: var(--gold); letter-spacing: .08em; font-weight: 600; }
+  .req-block-body { padding: 14px; }
+
+  /* ─── 구분선 ────────────────────────────── */
+  .section-div {
+    border-top: 1px solid var(--border);
+    margin: 24px 0;
+    position: relative;
+  }
+  .section-div-label {
+    position: absolute; top: -10px; left: 0;
+    background: var(--bg-card); padding: 0 10px;
+    font-size: 10px; letter-spacing: .1em; color: var(--text-dim);
+    text-transform: uppercase;
+  }
+
+  /* ─── 스텝 번호 ─────────────────────────── */
+  .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 1px solid var(--gold); color: var(--gold);
+    font-size: 11px; font-weight: 700; flex-shrink: 0;
+  }
+
+  /* ─── STATUS PAGE ───────────────────────── */
+  .status-header {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .status-badge {
+    padding: 4px 12px; font-size: 11px; font-weight: 600;
+    letter-spacing: .06em; border-radius: var(--radius);
+    text-transform: uppercase;
+  }
+  .badge-approved { background: var(--green-bg); color: #7EB88A; border: 1px solid var(--green); }
+  .badge-pending  { background: var(--amber-bg); color: #FFB74D; border: 1px solid var(--amber); }
+  .badge-rejected { background: var(--red-bg);   color: #E57373; border: 1px solid var(--red);   }
+  .badge-active   { background: var(--blue-bg);  color: #82BFDF; border: 1px solid var(--blue);  }
+  .badge-gate     { background: var(--gold-dim); color: var(--gold); border: 1px solid var(--gold-mid); }
+
+  .status-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ─── 데이터 행 ─────────────────────────── */
+  .data-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .data-row:last-child { border-bottom: none; }
+  .data-row-left { display: flex; flex-direction: column; gap: 2px; }
+  .data-row-name { font-size: 13px; color: var(--text); }
+  .data-row-meta { font-size: 11px; color: var(--text-dim); }
+  .data-row-meta span { margin-right: 10px; }
+
+  /* ─── Gate 타임라인 ─────────────────────── */
+  .gate-line {
+    display: flex; align-items: center; gap: 0;
+    margin: 16px 0 12px;
+  }
+  .gate-node {
+    display: flex; flex-direction: column; align-items: center; flex: 1;
+    position: relative;
+  }
+  .gate-node::before {
+    content: ''; position: absolute; top: 9px; left: calc(-50% + 10px);
+    right: calc(50% + 10px); height: 1px;
+    background: var(--border);
+  }
+  .gate-node:first-child::before { display: none; }
+  .gate-node.done::before { background: var(--gold-mid); }
+  .gate-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; position: relative; z-index: 1;
+    transition: all .2s;
+  }
+  .gate-node.done .gate-dot   { border-color: var(--gold); background: var(--gold); color: var(--text-inv); }
+  .gate-node.active .gate-dot { border-color: var(--gold); background: var(--gold-dim); color: var(--gold); }
+  .gate-label { font-size: 10px; color: var(--text-dim); margin-top: 5px; letter-spacing: .04em; }
+  .gate-node.done  .gate-label { color: var(--gold); }
+  .gate-node.active .gate-label { color: var(--text); }
+
+  /* ─── KPI 바 ────────────────────────────── */
+  .kpi-bar-wrap { margin-top: 12px; }
+  .kpi-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); margin-bottom: 4px; }
+  .kpi-bar-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .kpi-bar-fill  { height: 100%; border-radius: 2px; }
+  .kpi-green { background: var(--green); }
+  .kpi-amber { background: var(--amber); }
+  .kpi-red   { background: var(--red);   }
+
+  /* ─── 경고 배너 ─────────────────────────── */
+  .alert {
+    border-left: 3px solid var(--amber);
+    background: var(--amber-bg);
+    padding: 10px 14px;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 12px; color: #FFB74D;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .alert-dot { width: 6px; height: 6px; border-radius: 50%; background: #FFB74D; flex-shrink: 0; }
+
+  /* ─── CTA 배너 ──────────────────────────── */
+  .cta-banner {
+    border: 1px dashed var(--gold-mid);
+    background: var(--gold-dim);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cta-banner-text { font-size: 13px; color: var(--text); }
+  .cta-banner-sub  { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  /* ─── 헬퍼 ──────────────────────────────── */
+  .txt-dim { color: var(--text-dim); }
+  .txt-gold { color: var(--gold); }
+  .mt-4  { margin-top: 4px; }
+  .mt-8  { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-20 { margin-top: 20px; }
+  .mb-4  { margin-bottom: 4px; }
+  .mb-8  { margin-bottom: 8px; }
+  .flex  { display: flex; }
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .gap-8 { gap: 8px; }
+  .gap-12 { gap: 12px; }
+  .items-center { align-items: center; }
+  .font-mono { font-family: var(--mono); }
+  .text-11 { font-size: 11px; }
+  .text-12 { font-size: 12px; }
+  .text-13 { font-size: 13px; }
+  .divider { border-top: 1px solid var(--border); margin: 16px 0; }
+</style>
+</head>
+<body>
+
+<!-- 상단 뷰 탭 -->
+<div class="view-tabs">
+  <button class="view-tab active" onclick="switchView('submit')">AI 과제 신청 — /submit</button>
+  <button class="view-tab" onclick="switchView('status')">과제 현황 — /status/[id]</button>
+</div>
+
+<div class="shell">
+  <!-- 사이드바 -->
+  <nav>
+    <div class="nav-logo">
+      <div class="nav-logo-mark">AX Hub</div>
+      <div class="nav-logo-sub">삼성자산운용 AI 거버넌스</div>
+    </div>
+
+    <div class="nav-section">AI 활용·에이전트</div>
+    <button class="nav-item active" onclick="switchView('submit'); setActive(this)">
+      <span class="nav-dot"></span> AI 과제 신청
+    </button>
+    <button class="nav-item" onclick="switchView('status'); setActive(this)">
+      <span class="nav-dot"></span> 내 과제 현황
+    </button>
+    <button class="nav-item">
+      <span class="nav-dot"></span> 에이전트 레지스트리
+    </button>
+    <button class="nav-item">
+      <span class="nav-dot"></span> AI 스킬 라이브러리
+    </button>
+
+    <div class="nav-section" style="margin-top:12px">데이터 신청</div>
+    <button class="nav-item">
+      <span class="nav-dot"></span> 데이터 카탈로그
+    </button>
+    <button class="nav-item">
+      <span class="nav-dot"></span> 내 데이터 신청
+    </button>
+
+    <div class="nav-section" style="margin-top:12px">AI 도구·토큰</div>
+    <button class="nav-item">
+      <span class="nav-dot"></span> 내 도구 현황
+    </button>
+    <button class="nav-item">
+      <span class="nav-dot"></span> 사용량 조회
+    </button>
+  </nav>
+
+  <main>
+
+    <!-- ═══════════════════════════════════════
+         뷰 1: AI 과제 신청 /submit
+    ═══════════════════════════════════════ -->
+    <div class="view active" id="view-submit">
+
+      <div class="page-hd">
+        <div>
+          <div class="page-eyebrow">AI 활용 과제</div>
+          <div class="page-title">AI 과제 신청</div>
+          <div class="page-desc txt-dim">신청한 과제는 AX팀의 6차원 자동 심사 후 승인됩니다.</div>
+        </div>
+      </div>
+
+      <!-- 섹션 1: 기본 정보 -->
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-title">
+            <span class="card-stripe"></span>
+            <span class="step-num">1</span>
+            과제 기본 정보
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="field form-full">
+              <label class="label">과제명 <span class="req">*</span></label>
+              <input type="text" placeholder="예: ETF 리밸런싱 자동화 에이전트">
+            </div>
+            <div class="field">
+              <label class="label">신청 부서 <span class="req">*</span></label>
+              <select>
+                <option>AX팀</option>
+                <option>AI데이터플랫폼팀</option>
+                <option>IT업무개발팀</option>
+                <option>운용1팀</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label">기밀 등급 <span class="req">*</span></label>
+              <div class="chip-group" style="margin-top:2px">
+                <div class="chip chip-g1" onclick="selectChip(this,'g1')">G1 공개</div>
+                <div class="chip chip-g2 active" onclick="selectChip(this,'g2')">G2 대외비</div>
+                <div class="chip chip-g3" onclick="selectChip(this,'g3')">G3 기밀</div>
+              </div>
+            </div>
+            <div class="field form-full">
+              <label class="label">현황 (As-Is) <span class="req">*</span></label>
+              <textarea placeholder="현재 업무 방식과 불편한 점을 작성하세요."></textarea>
+            </div>
+            <div class="field form-full">
+              <label class="label">기대 효과 <span class="req">*</span></label>
+              <textarea placeholder="AI 도입 후 개선될 사항과 정량적 효과를 작성하세요."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 섹션 2: 데이터 요건 — Phase A 신규 -->
+      <div class="card">
+        <div class="card-hd">
+          <div class="card-title">
+            <span class="card-stripe"></span>
+            <span class="step-num">2</span>
+            데이터 요건 <span style="font-size:10px;color:var(--gold);margin-left:6px;font-weight:400">Phase A 신규</span>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- Q1: 데이터 필요 여부 선택 강제 -->
+          <div class="alert">
+            <span class="alert-dot"></span>
+            데이터 요건을 반드시 선택해야 합니다. 데이터가 불필요한 경우에도 아래에서 명시해 주세요.
+          </div>
+
+          <div class="radio-group" style="max-width:560px; margin-bottom:20px">
+            <div class="radio-opt" onclick="selectDataMode('none',this)">
+              이 과제는 별도 데이터가 필요 없습니다
+            </div>
+            <div class="radio-opt active" onclick="selectDataMode('has',this)">
+              아래 데이터를 활용합니다
+            </div>
+          </div>
+
+          <!-- 데이터 요건 블록 목록 -->
+          <div id="data-req-list">
+            <!-- 블록 1 -->
+            <div class="req-block">
+              <div class="req-block-hd">
+                <span class="req-block-label">데이터 요건 #1</span>
+                <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red)">삭제</button>
+              </div>
+              <div class="req-block-body">
+                <div class="form-grid">
+                  <div class="field form-full">
+                    <label class="label">데이터 설명 <span class="req">*</span></label>
+                    <input type="text" value="Snowflake ETF 종목 가격 데이터 (3년치)">
+                  </div>
+                  <div class="field">
+                    <label class="label">유형 <span class="req">*</span></label>
+                    <div class="radio-group">
+                      <div class="radio-opt active" onclick="selectRadio(this)">Track A — 기존 데이터</div>
+                      <div class="radio-opt" onclick="selectRadio(this)">Track B — 신규 요청</div>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="label">기밀 등급 <span class="req">*</span></label>
+                    <div class="chip-group" style="margin-top:2px">
+                      <div class="chip chip-g1 active" onclick="selectChip(this,'g1')">G1</div>
+                      <div class="chip chip-g2" onclick="selectChip(this,'g2')">G2</div>
+                      <div class="chip chip-g3" onclick="selectChip(this,'g3')">G3</div>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="label">사용 기간</label>
+                    <input type="number" value="12" style="width:80px"> <span class="txt-dim text-12" style="margin-left:6px;line-height:34px">개월</span>
+                  </div>
+                  <div class="field form-full">
+                    <label class="label" style="margin-bottom:4px">개인정보 포함</label>
+                    <button class="toggle" onclick="this.classList.toggle('on')"></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 블록 2 -->
+            <div class="req-block">
+              <div class="req-block-hd">
+                <span class="req-block-label">데이터 요건 #2</span>
+                <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red)">삭제</button>
+              </div>
+              <div class="req-block-body">
+                <div class="form-grid">
+                  <div class="field form-full">
+                    <label class="label">데이터 설명 <span class="req">*</span></label>
+                    <input type="text" value="KRX 호가 실시간 데이터 (신규 연동 필요)">
+                  </div>
+                  <div class="field">
+                    <label class="label">유형 <span class="req">*</span></label>
+                    <div class="radio-group">
+                      <div class="radio-opt" onclick="selectRadio(this)">Track A — 기존 데이터</div>
+                      <div class="radio-opt active" onclick="selectRadio(this)">Track B — 신규 요청</div>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="label">기밀 등급 <span class="req">*</span></label>
+                    <div class="chip-group" style="margin-top:2px">
+                      <div class="chip chip-g1" onclick="selectChip(this,'g1')">G1</div>
+                      <div class="chip chip-g2 active" onclick="selectChip(this,'g2')">G2</div>
+                      <div class="chip chip-g3" onclick="selectChip(this,'g3')">G3</div>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="label">사용 기간</label>
+                    <input type="number" value="24" style="width:80px">
+                    <span class="txt-dim text-12" style="margin-left:6px;line-height:34px">개월</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-ghost btn-sm mt-8" onclick="addDataReq()">
+            + 데이터 요건 추가
+          </button>
+        </div>
+      </div>
+
+      <!-- 제출 버튼 -->
+      <div class="flex-between" style="margin-top:8px">
+        <button class="btn btn-ghost">임시 저장</button>
+        <div style="display:flex;gap:10px;align-items:center">
+          <span class="text-12 txt-dim">제출 시 6차원 자동 심사가 시작됩니다.</span>
+          <button class="btn btn-primary">과제 신청 제출</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         뷰 2: 과제 현황 /status/[id]
+    ═══════════════════════════════════════ -->
+    <div class="view" id="view-status">
+
+      <!-- 과제 헤더 카드 -->
+      <div class="status-header">
+        <div>
+          <div class="page-eyebrow">과제 현황 · AX-2026-0047</div>
+          <div class="page-title" style="font-size:20px;margin-top:4px">ETF 리밸런싱 자동화 에이전트</div>
+          <div class="mt-8" style="display:flex;gap:8px;align-items:center">
+            <span class="status-badge badge-approved">승인됨</span>
+            <span class="text-12 txt-dim">2026-07-28 · 홍길동 · AX팀</span>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="text-12 txt-dim mb-4">자동 심사 점수</div>
+          <div style="font-size:28px;font-weight:700;color:var(--gold);font-family:var(--mono)">83<span style="font-size:14px;color:var(--text-dim)">/100</span></div>
+          <div class="text-12 txt-dim mt-4">자동 승인 기준 70점 이상</div>
+        </div>
+      </div>
+
+      <div class="status-cols">
+
+        <!-- 왼쪽: 데이터 승인 현황 — Phase A 신규 -->
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">
+              <span class="card-stripe"></span>
+              데이터 승인 현황
+              <span style="font-size:10px;color:var(--gold);font-weight:400">Phase A 신규</span>
+            </div>
+            <span class="text-11 txt-dim">DATA_PLATFORM 팀 검토 중</span>
+          </div>
+          <div class="card-body" style="padding:0 20px">
+
+            <!-- 경고: 데이터 미승인 경고 (Q3: 경고 표시만) -->
+            <div class="alert mt-12">
+              <span class="alert-dot"></span>
+              KRX 호가 데이터가 아직 미승인입니다. Gate 2 진입 전 승인을 확인하세요.
+            </div>
+
+            <!-- 데이터 행 -->
+            <div class="data-row">
+              <div class="data-row-left">
+                <span class="data-row-name">Snowflake ETF 종목 가격 데이터</span>
+                <span class="data-row-meta">
+                  <span>Track A</span>
+                  <span style="color:var(--green)">G1 공개</span>
+                  <span>12개월</span>
+                </span>
+              </div>
+              <span class="status-badge badge-approved" style="font-size:10px">승인됨</span>
+            </div>
+            <div class="data-row">
+              <div class="data-row-left">
+                <span class="data-row-name">KRX 호가 실시간 데이터</span>
+                <span class="data-row-meta">
+                  <span>Track B</span>
+                  <span style="color:#FFB74D">G2 대외비</span>
+                  <span>24개월</span>
+                </span>
+              </div>
+              <span class="status-badge badge-pending" style="font-size:10px">심사중</span>
+            </div>
+            <div style="padding:14px 0">
+              <a href="#" class="text-12" style="color:var(--gold)">데이터 신청 상세 보기 ›</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 오른쪽: 개발 결과물 (에이전트) — Phase B 신규 -->
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">
+              <span class="card-stripe"></span>
+              개발 결과물
+              <span style="font-size:10px;color:var(--gold);font-weight:400">Phase B 신규</span>
+            </div>
+          </div>
+          <div class="card-body">
+
+            <!-- 에이전트 있는 경우 -->
+            <div>
+              <div class="flex-between mb-4">
+                <span style="font-size:14px;font-weight:600;color:#EBF0F5">ETF 리밸런싱 에이전트 v1</span>
+                <span class="status-badge badge-gate" style="font-size:10px">Gate 1</span>
+              </div>
+              <span class="text-12 txt-dim">등록일 2026-08-01 · cwhong</span>
+
+              <!-- Gate 타임라인 -->
+              <div class="gate-line mt-16">
+                <div class="gate-node done">
+                  <div class="gate-dot">DEV</div>
+                  <div class="gate-label">개발중</div>
+                </div>
+                <div class="gate-node active">
+                  <div class="gate-dot">G1</div>
+                  <div class="gate-label">QA 검증</div>
+                </div>
+                <div class="gate-node">
+                  <div class="gate-dot">G2</div>
+                  <div class="gate-label">도메인</div>
+                </div>
+                <div class="gate-node">
+                  <div class="gate-dot">G3</div>
+                  <div class="gate-label">스트레스</div>
+                </div>
+                <div class="gate-node">
+                  <div class="gate-dot">ON</div>
+                  <div class="gate-label">운영중</div>
+                </div>
+              </div>
+
+              <!-- KPI 바 -->
+              <div class="kpi-bar-wrap">
+                <div class="kpi-bar-label">
+                  <span>Fallback율</span>
+                  <span style="color:var(--green);font-family:var(--mono)">22%</span>
+                </div>
+                <div class="kpi-bar-track">
+                  <div class="kpi-bar-fill kpi-green" style="width:22%"></div>
+                </div>
+              </div>
+              <div class="kpi-bar-wrap mt-8">
+                <div class="kpi-bar-label">
+                  <span>30일 정확도</span>
+                  <span style="color:#FFB74D;font-family:var(--mono)">51%</span>
+                </div>
+                <div class="kpi-bar-track">
+                  <div class="kpi-bar-fill kpi-amber" style="width:51%"></div>
+                </div>
+              </div>
+              <div class="text-11 txt-dim mt-8">Gate 2 기준: 30일 정확도 55% 이상 — 현재 미달</div>
+
+              <div class="divider"></div>
+              <a href="#" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">레지스트리에서 상세 관리 ›</a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 에이전트 없는 경우: CTA 배너 (Phase B) -->
+      <div class="card" style="display:none" id="no-agent-cta">
+        <div class="card-hd">
+          <div class="card-title"><span class="card-stripe"></span> 개발 결과물</div>
+        </div>
+        <div class="card-body">
+          <div class="cta-banner">
+            <div>
+              <div class="cta-banner-text">과제가 승인됐습니다. 에이전트를 등록하세요.</div>
+              <div class="cta-banner-sub txt-dim">레지스트리에 에이전트를 등록하면 Gate 1부터 라이프사이클 관리가 시작됩니다.</div>
+            </div>
+            <button class="btn btn-primary" style="white-space:nowrap">에이전트 등록하기 ›</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /view-status -->
+
+  </main>
+</div>
+
+<script>
+  function switchView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    const tabs = document.querySelectorAll('.view-tab');
+    if (name === 'submit') tabs[0].classList.add('active');
+    if (name === 'status') tabs[1].classList.add('active');
+    // nav sync
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems[0].classList.toggle('active', name === 'submit');
+    navItems[1].classList.toggle('active', name === 'status');
+  }
+
+  function setActive(el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function selectChip(el, type) {
+    const group = el.parentElement;
+    group.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function selectRadio(el) {
+    const group = el.parentElement;
+    group.querySelectorAll('.radio-opt').forEach(r => r.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function selectDataMode(mode, el) {
+    el.parentElement.querySelectorAll('.radio-opt').forEach(r => r.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('data-req-list').style.opacity = mode === 'none' ? '.3' : '1';
+    document.getElementById('data-req-list').style.pointerEvents = mode === 'none' ? 'none' : '';
+  }
+
+  let reqCount = 3;
+  function addDataReq() {
+    const list = document.getElementById('data-req-list');
+    const block = document.createElement('div');
+    block.className = 'req-block';
+    block.innerHTML = `
+      <div class="req-block-hd">
+        <span class="req-block-label">데이터 요건 #${reqCount++}</span>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red)" onclick="this.closest('.req-block').remove()">삭제</button>
+      </div>
+      <div class="req-block-body">
+        <div class="form-grid">
+          <div class="field form-full">
+            <label class="label">데이터 설명 <span class="req">*</span></label>
+            <input type="text" placeholder="어떤 데이터가 필요한지 설명하세요">
+          </div>
+          <div class="field">
+            <label class="label">유형 <span class="req">*</span></label>
+            <div class="radio-group">
+              <div class="radio-opt active" onclick="selectRadio(this)">Track A — 기존 데이터</div>
+              <div class="radio-opt" onclick="selectRadio(this)">Track B — 신규 요청</div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label">기밀 등급</label>
+            <div class="chip-group" style="margin-top:2px">
+              <div class="chip chip-g1" onclick="selectChip(this,'g1')">G1</div>
+              <div class="chip chip-g2 active" onclick="selectChip(this,'g2')">G2</div>
+              <div class="chip chip-g3" onclick="selectChip(this,'g3')">G3</div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    list.appendChild(block);
+  }
+</script>
+</body>
+</html>
