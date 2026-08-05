@@ -12,14 +12,14 @@ export interface ScoreCardResult {
   evaluationRationale: string
 }
 
-const EVAL_SYSTEM = `당신은 삼성자산운용 AX/PI팀의 AI 과제 평가 전문가입니다.
-다음 6가지 차원으로 과제를 평가하고 점수를 JSON으로 출력하세요.
+const EVAL_SYSTEM = `당신은 삼성자산운용 AX/PI팀의 AI 활용 평가 전문가입니다.
+다음 6가지 차원으로 AI 활용 신청을 평가하고 점수를 JSON으로 출력하세요.
 
 차원별 배점:
 - impactScore: 0-25 (영향 인원수·업무빈도·전략정합성)
 - roiScore: 0-25 (시간절감·비용절감·수익기여)
 - confidentialityScore: G1=15, G2=10, G3=3
-- difficultyScore: 0-15 (낮을수록 쉬운 과제, 빠른 win 우선)
+- difficultyScore: 0-15 (낮을수록 쉬운 AI 활용, 빠른 win 우선)
 - readinessScore: 0-10 (데이터가용성·챔피언유무·As-Is명확도)
 - strategyScore: 0-10 (AX 청사진 등대과제·100일 로드맵 정합성)
 
@@ -36,7 +36,7 @@ const EVAL_SYSTEM = `당신은 삼성자산운용 AX/PI팀의 AI 과제 평가 �
 
 export class EvaluationAgent {
   async evaluate(project: ExtractedProject): Promise<ScoreCardResult> {
-    const userMessage = `과제 정보:
+    const userMessage = `AI 활용 정보:
 제목: ${project.title}
 부서: ${project.department}
 설명: ${project.description}

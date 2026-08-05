@@ -6,7 +6,7 @@ export async function GET() {
     include: {
       enrollments: {
         include: { employee: { select: { name: true, email: true } } },
-        orderBy: { updatedAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
       },
     },
     orderBy: { isRequired: 'desc' },

@@ -50,6 +50,10 @@ export async function POST(req: NextRequest) {
       periodMonths,
       requestedSpec,
       forProduction,
+      trackType,
+      accessType,
+      isAnonymized,
+      anonNote,
     } = body
 
     // Validate required fields
@@ -62,7 +66,7 @@ export async function POST(req: NextRequest) {
     if (resolvedProjectId) {
       const exists = await prisma.project.findUnique({ where: { id: resolvedProjectId }, select: { id: true } })
       if (!exists) {
-        return NextResponse.json({ error: `과제 ID "${resolvedProjectId}"를 찾을 수 없습니다` }, { status: 400 })
+        return NextResponse.json({ error: `AI 활용 ID "${resolvedProjectId}"를 찾을 수 없습니다` }, { status: 400 })
       }
     }
 
@@ -87,6 +91,10 @@ export async function POST(req: NextRequest) {
         ...(agentId ? { agentId } : {}),
         ...(requestedSpec !== undefined ? { requestedSpec } : {}),
         ...(forProduction !== undefined ? { forProduction: Boolean(forProduction) } : {}),
+        ...(trackType ? { trackType } : {}),
+        ...(accessType ? { accessType } : {}),
+        ...(isAnonymized !== undefined ? { isAnonymized: Boolean(isAnonymized) } : {}),
+        ...(anonNote ? { anonNote } : {}),
       },
     })
 

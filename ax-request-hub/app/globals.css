@@ -1,26 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* AX Hub design system */
+  --color-ax-navy:    #0B1F3A;
+  --color-ax-navy-md: #1E3A5F;
+  --color-ax-gold:    #C8A84B;
+  --color-ax-gold-lt: #E8D48A;
+  --color-ax-ivory:   #F7F6F3;
+  --color-ax-surface: #FFFFFF;
+  --color-ax-slate:   #334155;
+  --color-ax-muted:   #94A3B8;
+  --color-ax-border:  #E2E8F0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #F7F6F3;
+  --foreground: #334155;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, "Malgun Gothic", "맑은 고딕", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* KPI number pulse animation for demo */
+@keyframes kpi-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.kpi-animate { animation: kpi-in 0.4s ease both; }
+
+/* Gate pipeline connector */
+@keyframes pipeline-flow {
+  0%   { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
 }

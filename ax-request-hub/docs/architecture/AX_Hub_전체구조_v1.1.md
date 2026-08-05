@@ -3,8 +3,9 @@
 | 항목 | 내용 |
 |------|------|
 | 문서번호 | AX-ARCH-2026-001 |
-| 버전 | v1.1 |
+| 버전 | v1.3 |
 | 작성일 | 2026-07-23 |
+| 최종 수정 | 2026-08-03 |
 | 레포 | honggun2233/ax-request-hub (PRIVATE) |
 | 로컬 주소 | http://localhost:3005 |
 | 목적 | AX Hub 전체 구조를 단일 문서로 정리 — 검토·공유·온보딩 기준 문서 |
@@ -27,7 +28,7 @@
    - 8-4. AI 도구 계정 · 토큰 관리
    - 8-5. AI 스킬 라이브러리
    - 8-6. AI 리터러시 레벨
-   - 8-7. 협의회(AX위원회) 심의
+   - 8-7. AI 위원회 심의
    - 8-8. 감사 로그 & 거버넌스
 9. [설계 원칙 & 미결 사항](#9-설계-원칙--미결-사항)
 10. [문서 이력](#10-문서-이력)
@@ -102,7 +103,8 @@ flowchart TD
 | 인증 | NextAuth.js (credentials) |
 | ORM | Prisma 6 |
 | DB | SQLite (`prisma/dev.db`) → PostgreSQL 전환 예정 |
-| AI | Anthropic Claude API (claude-sonnet-4-5) |
+| AI (스코어링) | Anthropic Claude API (현재) → Qwen 온프레미스 전환 예정 (LLM provider 추상화 필요) |
+| AI (챗봇) | `/chat` — Claude API 기반, 과제 신청 경로에서 제외. 일반 채팅 유지 여부 별도 결정 |
 | 미들웨어 | `proxy.ts` (nextauth withAuth 기반 라우트 보호) |
 | 로컬 포트 | 3005 |
 
@@ -116,8 +118,8 @@ flowchart TD
 |--------|------|------|
 | `/` | 홈 — 개인 AI 활동 현황 | 누구나 |
 | `/login` | 로그인 | 미인증 |
-| `/chat` | AI 상담 챗으로 과제 신청 | 로그인 전체 |
-| `/projects/new` | 직접 양식으로 과제 신청 (AI 없이, 대/중/소 분류) | 로그인 전체 |
+| `/chat` | AI 채팅 (일반 용도). **과제 신청 경로에서 제외** — 키인 폼 방식으로 대체됨 (2026-08-03 확정) | 로그인 전체 |
+| `/projects/new` | **직접 키인 폼으로 과제 신청** — 과제 신청 에이전트의 공식 경로 (대/중/소 분류, Gate 2 자가점검 포함) | 로그인 전체 |
 | `/skills` | AI 스킬 라이브러리 열람 | 로그인 전체 |
 | `/docs` | 거버넌스 문서 뷰어 | 로그인 전체 |
 | `/data/catalog` | 데이터 찾기 — 외부 시스템 자산 탐색 + 이용 신청 | 로그인 전체 |
@@ -417,7 +419,7 @@ flowchart TD
 - 레벨별 AI 도구 접근 권한 연계 (상위 도구는 L3+ 요건)
 - `/admin/literacy`에서 심사 관리
 
-### 8-7. 협의회(AX위원회) 심의
+### 8-7. AI 위원회 심의
 
 **안건 유형 5종:**
 | 유형 | 설명 |
@@ -460,13 +462,19 @@ flowchart TD
 | 1 | SQLite → PostgreSQL 전환 (전사 배포 시 동시성·백업) | 배포 전 필수 |
 | 2 | 감사로그 보존기간·위변조 방지 (전자금융감독규정) | 배포 전 필수 |
 | 3 | 시크릿 관리 (NEXTAUTH_SECRET, ANTHROPIC_API_KEY) | 배포 전 필수 |
+| **11** | **LLM provider 추상화 레이어 (`lib/llm.ts`) — Claude→Qwen 전환 가능하게** | **배포 전 필수** |
 | 4 | G3 신청서 외부 API 전송 마스킹 or 선판정 구현 | P1 |
+| **12** | **Gate 2 정보전략팀 검토 플래그 (`infoSecReviewRequired` 필드) 추가** | **P1** |
 | 5 | KPI 3개월 60% 미달 자동 판정 배치 스케줄러 | P2 |
 | 6 | 레거시 Agent/AgentKpiRecord 모델 제거 (v3 이관 완료 후) | P2 |
 | 7 | 폐기 에이전트 DataProvision 자동 회수 로직 | P2 |
 | 8 | /council 협의회 안건 관리 UI 미구현 | P2 |
 | 9 | Telegram 알림 → 사내 메일/메신저 교체 | P3 |
 | 10 | 이의제기 SLA 정의 (현재 API만 있고 SLA 미명세) | P3 |
+
+> **정보전략팀 역할(INFORMATION_SECURITY)은 DB role로 추가하지 않음.**  
+> Gate 2 보안 검토는 시스템 외부 절차(오프라인 체크리스트 + 서명)로 처리.  
+> AX Hub는 고위험·기밀 과제에 `infoSecReviewRequired: true` 플래그 표시만 담당.
 
 ---
 
@@ -476,7 +484,8 @@ flowchart TD
 |------|------|-----------|
 | v1.1 | 2026-07-23 | 사이드바 AppSidebar 교체(역할별 필터·아이콘), DEPT_HEAD/EXECUTIVE/DATA_PLATFORM 테스트 계정 추가, docs 페이지 hydration 버그 수정, 역할 표 테스트 계정 섹션 추가 |
 | v1.0 | 2026-07-23 | 최초 작성 — 전체 구조 통합 (라우트 32개, 모델 32종, 역할 5종, 서브시스템 8개) |
-| v1.2 | 2026-07-30 | UI 전면 정비 — ① 네비게이션 IA 재설계(사이드바 명칭 통일·그루핑) ② `/dept/tools` 도구·쿼터 통합(/admin/tools 폐기) ③ `/projects/new` 직접 과제 신청 추가 ④ 데이터 카탈로그 설계 원칙 명문화(AX Hub는 외부 API 호출만, /dp/catalog CRUD 제거) ⑤ 리터러시 교육 수강등록·완료 API(`/api/literacy/enroll`) 추가 ⑥ DepartmentQuota quotaId 기반 배정으로 전환 ⑦ Executive 대시보드 오류 수정(orphan FK LEFT JOIN, 중복 월 키) ⑧ 토큰 월 생성 버그 수정(Feb overflow) |
+| v1.2 | 2026-07-30 | UI 전면 정비 — ① 네비게이션 IA 재설계 ② `/dept/tools` 도구·쿼터 통합 ③ `/projects/new` 직접 과제 신청 추가 ④ 데이터 카탈로그 설계 원칙 명문화 ⑤ 리터러시 교육 수강등록 API 추가 ⑥ DepartmentQuota quotaId 기반 배정 ⑦ 대시보드·토큰 버그 수정 |
+| v1.3 | 2026-08-03 | 키인 방식 확정 — ① `/projects/new` 과제 신청 공식 경로 지정·`/chat` 과제신청 제외 ② LLM provider 추상화(#11) 신규 미결 추가 ③ Qwen 온프레미스 전환 예정 반영 ④ 정보전략팀 DB role 제외·오프라인 절차 처리 방침·`infoSecReviewRequired` 플래그(#12) 명시 |
 
 ---
 

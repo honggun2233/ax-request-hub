@@ -33,13 +33,13 @@ export function determineApproval(
   if (confidentialityLevel === 'G3') {
     return {
       autoApproved: false,
-      reason: 'G3 기밀 과제: 점수 무관 인표님 보고 필수',
+      reason: 'G3 기밀(극비) AI 활용: 점수 무관 인표님 보고 필수',
     }
   }
   if (totalScore >= AUTO_APPROVE_THRESHOLD) {
     return {
       autoApproved: true,
-      reason: `G1/G2 과제 자동 파일럿 승인 (${totalScore}점)`,
+      reason: `G1/G2 AI 활용 자동 파일럿 승인 (${totalScore}점)`,
     }
   }
   if (totalScore >= BORDERLINE_THRESHOLD) {

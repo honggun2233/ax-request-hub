@@ -51,7 +51,7 @@ const ADMIN_NAV: NavItem[] = [
   { kind: 'section', label: '운영 현황' },
   { kind: 'link', href: '/admin',     label: '전체 대시보드', icon: '🏠' },
   { kind: 'link', href: '/executive', label: '경영진 뷰', icon: '📈' },
-  { kind: 'link', href: '/council',   label: '운영위원회', icon: '⚖️' },
+  { kind: 'link', href: '/council',   label: 'AI 위원회', icon: '⚖️' },
 
   { kind: 'section', label: '과제·에이전트' },
   { kind: 'link', href: '/registry',       label: '에이전트 레지스트리' },

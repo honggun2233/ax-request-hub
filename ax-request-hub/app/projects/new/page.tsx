@@ -109,16 +109,16 @@ export default function DirectProjectPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">AI 과제 직접 신청</h1>
+        <h1 className="text-xl font-bold text-gray-900">AI 활용 직접 신청</h1>
         <p className="mt-1 text-sm text-gray-500">
-          AI 상담 없이 과제 내용을 직접 작성합니다.{' '}
+          AI 상담 없이 AI 활용 내용을 직접 작성합니다.{' '}
           <a href="/chat" className="text-blue-600 hover:underline">AI 상담으로 작성하기 →</a>
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* 과제명 */}
-        <Field label="과제명" required>
+        {/* AI 활용명 */}
+        <Field label="AI 활용명" required>
           <input
             type="text"
             value={form.title}
@@ -163,7 +163,7 @@ export default function DirectProjectPage() {
         </div>
 
         {/* 목적 */}
-        <Field label="목적" required hint="이 과제를 왜 하려는지, 해결하려는 문제는 무엇인지 설명하세요. (20자 이상)">
+        <Field label="목적" required hint="이 AI 활용을 왜 하려는지, 해결하려는 문제는 무엇인지 설명하세요. (20자 이상)">
           <textarea
             value={form.목적}
             onChange={set('목적')}
@@ -208,15 +208,15 @@ export default function DirectProjectPage() {
               {DEPT_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </Field>
-          <Field label="기밀등급" hint="G1=공개 G2=내부 G3=기밀">
+          <Field label="기밀등급" hint="G1=공개정보 G2=대외비 G3=기밀(극비)">
             <select
               value={form.confidentialityLevel}
               onChange={set('confidentialityLevel')}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="G1">G1 — 공개</option>
-              <option value="G2">G2 — 내부 (기본)</option>
-              <option value="G3">G3 — 기밀</option>
+              <option value="G1">G1 — 공개정보</option>
+              <option value="G2">G2 — 대외비 (기본)</option>
+              <option value="G3">G3 — 기밀(극비)</option>
             </select>
           </Field>
         </div>
@@ -238,7 +238,7 @@ export default function DirectProjectPage() {
             disabled={!valid || submitting}
             className="flex-1 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
-            {submitting ? '제출 중…' : '과제 신청'}
+            {submitting ? '제출 중…' : 'AI 활용 신청'}
           </button>
           <button
             type="button"

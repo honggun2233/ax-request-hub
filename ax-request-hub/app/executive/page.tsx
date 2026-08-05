@@ -77,26 +77,27 @@ const AUDIT_LABEL: Record<string, string> = {
   LEVEL_REJECTED: '레벨 신청 반려',
   LEVEL_APPROVED: '레벨 신청 승인',
   AGENT_PROMOTED: '에이전트 단계 승진',
-  PROJECT_APPROVED: '과제 승인',
-  PROJECT_REJECTED: '과제 반려',
+  PROJECT_APPROVED: 'AI 활용 승인',
+  PROJECT_REJECTED: 'AI 활용 반려',
 }
 
 function KpiCard({
-  label, value, sub, color,
-}: { label: string; value: string | number; sub?: string; color?: string }) {
+  label, value, sub, accent,
+}: { label: string; value: string | number; sub?: string; accent?: string }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-      <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">{label}</p>
-      <p className={`text-3xl font-bold ${color ?? 'text-gray-900'}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+    <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-sm kpi-animate">
+      <p className="text-[10px] text-[#94A3B8] font-semibold uppercase tracking-widest mb-2">{label}</p>
+      <p className="text-3xl font-bold text-[#0B1F3A]">{value}</p>
+      {sub && <p className="text-[11px] text-[#94A3B8] mt-1.5">{sub}</p>}
+      {accent && <div className="mt-3 h-0.5 rounded-full" style={{ background: `${accent}25` }}><div className="h-0.5 rounded-full w-2/3" style={{ background: accent }} /></div>}
     </div>
   )
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-      <span className="w-1 h-4 bg-blue-500 rounded-full inline-block" />
+    <h2 className="text-[11px] font-semibold text-[#94A3B8] uppercase tracking-widest mb-3 flex items-center gap-2">
+      <span className="w-0.5 h-4 bg-[#C8A84B] rounded-full inline-block" />
       {children}
     </h2>
   )
@@ -139,45 +140,26 @@ export default function ExecutiveDashboard() {
       {/* 헤더 */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">경영진 AI 현황</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="text-[22px] font-bold text-[#0B1F3A]">경영진 AI 현황</h1>
+          <p className="text-sm text-[#94A3B8] mt-0.5">
             삼성자산운용 AX 포트폴리오 · {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
-        <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1 rounded-full font-medium">
+        <span className="flex items-center gap-1.5 text-[11px] text-[#94A3B8] bg-white border border-[#E2E8F0] px-3 py-1.5 rounded-full shadow-sm">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
           실시간
         </span>
       </div>
 
       {/* KPI 타일 */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard
-          label="운영 에이전트"
-          value={kpi.activeAgents}
-          sub={`전체 ${kpi.totalAgents}개 중 실운용`}
-          color="text-green-600"
-        />
-        <KpiCard
-          label="AI 전환 과제"
-          value={kpi.productionProjects}
-          sub={`접수 포함 전체 ${kpi.totalProjects}건`}
-          color="text-blue-600"
-        />
-        <KpiCard
-          label="평균 타당성 점수"
-          value={`${kpi.avgScore}점`}
-          sub="6개 항목 가중 평균"
-          color={kpi.avgScore >= 70 ? 'text-green-600' : 'text-orange-500'}
-        />
-        <KpiCard
-          label="누적 AI 비용"
-          value={`₩${kpi.totalCostKrw.toLocaleString()}`}
-          sub={`${(kpi.totalTokens / 10000).toFixed(0)}만 토큰`}
-          color="text-gray-900"
-        />
+        <KpiCard label="운영 에이전트"    value={kpi.activeAgents}                           sub={`전체 ${kpi.totalAgents}개 중`}           accent="#10B981" />
+        <KpiCard label="AI 활용"           value={kpi.productionProjects}                     sub={`전체 ${kpi.totalProjects}건`}            accent="#3B82F6" />
+        <KpiCard label="평균 타당성 점수" value={`${kpi.avgScore}점`}                        sub="6개 항목 가중 평균"                         accent={kpi.avgScore >= 70 ? '#10B981' : '#F59E0B'} />
+        <KpiCard label="누적 AI 비용"     value={`₩${kpi.totalCostKrw.toLocaleString()}`}   sub={`${(kpi.totalTokens / 10000).toFixed(0)}만 토큰`} accent="#C8A84B" />
       </div>
 
-      {/* 에이전트 Gate 퍼널 + 과제 파이프라인 */}
+      {/* 에이전트 Gate 퍼널 + AI 활용 파이프라인 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gate 퍼널 */}
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
@@ -212,9 +194,9 @@ export default function ExecutiveDashboard() {
           </p>
         </div>
 
-        {/* 과제 파이프라인 */}
+        {/* AI 활용 파이프라인 */}
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-          <SectionTitle>AI 전환 과제 파이프라인</SectionTitle>
+          <SectionTitle>AI 활용 파이프라인</SectionTitle>
           <div className="space-y-3">
             {projectFunnel.map((p) => (
               <div key={p.status} className="flex items-center gap-3">
@@ -237,7 +219,7 @@ export default function ExecutiveDashboard() {
             ))}
           </div>
           <p className="text-xs text-gray-400 mt-4 pt-3 border-t">
-            파일럿+운영 = 실제 현업 적용 중인 AI 과제
+            파일럿+운영 = 실제 현업 적용 중인 AI 활용
           </p>
         </div>
       </div>

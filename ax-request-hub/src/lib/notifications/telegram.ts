@@ -10,7 +10,7 @@ export async function sendTelegramApprovalRequest(params: {
   const chatId = process.env.TELEGRAM_CHAT_ID
   if (!botToken || !chatId) return
   const text =
-    `🔔 *AX 과제 검토 요청*\n\n📋 *${params.title}*\n🏢 ${params.department}\n` +
+    `🔔 *AX AI 활용 검토 요청*\n\n📋 *${params.title}*\n🏢 ${params.department}\n` +
     `📊 종합 스코어: *${params.totalScore.toFixed(1)}점*\n\n💡 ${params.rationale}\n\n승인/거절: ${params.approvalUrl}`
   await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: 'POST',

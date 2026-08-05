@@ -27,14 +27,14 @@ export default async function DashboardPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">AX 과제 포트폴리오</h1>
-            <p className="text-sm text-gray-500 mt-1">총 {projects.length}개 과제</p>
+            <h1 className="text-2xl font-bold text-gray-900">AX AI 활용 포트폴리오</h1>
+            <p className="text-sm text-gray-500 mt-1">총 {projects.length}개 AI 활용</p>
           </div>
           <Link
             href="/chat"
             className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors"
           >
-            + 과제 신청
+            + AI 활용 신청
           </Link>
         </div>
         <div className="grid grid-cols-5 gap-4">

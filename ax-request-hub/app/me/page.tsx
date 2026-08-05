@@ -93,7 +93,7 @@ export default function MePage() {
         <Link href="/me/projects">
           <Card className="h-full transition-colors hover:bg-accent/40">
             <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground">내 과제</p>
+              <p className="text-xs text-muted-foreground">내 AI 활용</p>
               <p className="mt-1.5 text-2xl font-semibold">
                 {s.projects.activeCount}
                 <span className="ml-1 text-xs font-normal text-muted-foreground">건 진행 중</span>
@@ -104,7 +104,7 @@ export default function MePage() {
                     {p.title} — <span className={p.tone === "warning" ? "text-amber-600" : p.tone === "success" ? "text-green-600" : "text-primary"}>{p.label}</span>
                   </p>
                 ))}
-                {s.projects.activeCount === 0 && <p className="text-xs text-muted-foreground">신청한 과제가 없습니다</p>}
+                {s.projects.activeCount === 0 && <p className="text-xs text-muted-foreground">신청한 AI 활용이 없습니다</p>}
               </div>
             </CardContent>
           </Card>

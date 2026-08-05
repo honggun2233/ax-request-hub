@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -35,9 +35,12 @@ model Project {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
-  // PI ?�과 ?�현 추적 (v3.2)
-  expectedBenefitValue Float?   // ?�량 ?�상 ?�과 (?�간 ?�산)
+  // PI 효과 실현 추적 (v3.2)
+  expectedBenefitValue Float?   // 정량 예상 효과 (연간 환산)
   expectedBenefitUnit  String?  // "HOURS_YEAR" | "KRW_10K_YEAR"
+
+  // 데이터 거버넌스 정합성 (Phase 2 — 데이터취급지침 제5조)
+  isEssentialBusiness  Boolean  @default(false)  // 본질적 업무 여부 (G3 데이터 사용 선결 조건)
 
   scoreCard      ScoreCard?
   chatSession    ChatSession?
@@ -105,7 +108,9 @@ model Employee {
   inputUsageRecords    UsageRecord[]       @relation("InputterUsage")
   usageAlerts          UsageAlert[]
   toolAccounts         ToolAccount[]
-  agentLinks      EmployeeAgentLink[]
+  agentLinks           EmployeeAgentLink[]
+  ownedAssets          DataAsset[]
+  literacyEnrollments  LiteracyEnrollment[]
 }
 
 model DepartmentQuota {
@@ -344,6 +349,7 @@ model LiteracyEnrollment {
   employeeId  String
   courseId    String
   course      LiteracyCourse @relation(fields: [courseId], references: [id])
+  employee    Employee       @relation(fields: [employeeId], references: [id])
   status      String    @default("IN_PROGRESS")
   completedAt DateTime?
   score       Int?
@@ -521,12 +527,15 @@ model CouncilAgendaItem {
   meeting      CouncilMeeting @relation(fields: [meetingId], references: [id])
   agentId      String
   agent        AgentRegistry  @relation(fields: [agentId], references: [id])
-  itemType     String         // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE
-  packageMeta  String         // ?�의 ?�키지 ?�냅??(JSON)
+  itemType     String         // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE | DATA_REQUEST
+  packageMeta  String         // 의회 패키지 스냅샷 (JSON)
   decision     String?        // CouncilDecision: APPROVED|CONDITIONAL|REMANDED|REJECTED|DEFERRED
   decisionNote String?
   conditions   String?        // JSON: [{condition, done, checkedBy}]
   decidedAt    DateTime?
+
+  // 데이터 거버넌스 정합성 (Phase 2 — 데이터신청 안건 연결)
+  dataRequestId String?       // DataRequest와 연결 (DATA_REQUEST 안건 유형 시)
 }
 
 // ?�?�?� v3: ?�이???�랫??모델 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
@@ -552,6 +561,10 @@ model DataAsset {
   syncedAt        DateTime?
   snowflakeDb     String?
   snowflakeSchema String?
+
+  // 데이터 거버넌스 정합성 (Phase 2 — 데이터관리규정 v1.2: 데이터 오너 = 현업 부서장)
+  dataOwnerId     String?                           // FK to Employee (데이터 오너)
+  dataOwner       Employee? @relation(fields: [dataOwnerId], references: [id])
 }
 
 model DataRequest {
@@ -575,6 +588,12 @@ model DataRequest {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   provision      DataProvision?
+
+  // 데이터 거버넌스 정합성 (Phase 2 — 데이터취급지침 제25조)
+  trackType      String    @default("A")  // Track A(데이터 활용) | Track B(AI 연계)
+  accessType     String?                  // 조회 | 추출 | 반출
+  isAnonymized   Boolean   @default(false) // 비식별 처리 여부
+  anonNote       String?                   // 비식별 처리 방법·범위
 }
 
 model DataProvision {

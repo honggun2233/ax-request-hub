@@ -24,6 +24,7 @@ interface ProjectFormData {
   confidentialityLevel: 'G1' | 'G2' | 'G3'
   championName: string
   estimatedUsers: number
+  isEssentialBusiness?: boolean
 }
 
 export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
@@ -66,7 +67,7 @@ export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
   return (
     <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">과제명</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">AI 활용명</label>
         <input type="text" value={data.title}
           onChange={(e) => setData({ ...data, title: e.target.value })}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
@@ -129,9 +130,9 @@ export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
         <select value={data.confidentialityLevel}
           onChange={(e) => setData({ ...data, confidentialityLevel: e.target.value as 'G1' | 'G2' | 'G3' })}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="G1">G1 — 공개·저민감</option>
-          <option value="G2">G2 — 사내일반</option>
-          <option value="G3">G3 — 고기밀</option>
+          <option value="G1">G1 — 공개정보</option>
+          <option value="G2">G2 — 대외비</option>
+          <option value="G3">G3 — 기밀(극비)</option>
         </select>
       </div>
       <div className="mb-4">
@@ -145,6 +146,25 @@ export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
         <input type="number" value={data.estimatedUsers}
           onChange={(e) => setData({ ...data, estimatedUsers: parseInt(e.target.value) || 0 })}
           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+      </div>
+
+      {/* 본질적 업무 여부 (데이터취급지침 제5조 — G3 데이터 사용 선결 조건) */}
+      <div className="mb-4 border border-orange-200 rounded-xl p-4 bg-orange-50">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={data.isEssentialBusiness ?? false}
+            onChange={(e) => setData({ ...data, isEssentialBusiness: e.target.checked })}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+          />
+          <div>
+            <span className="text-sm font-semibold text-orange-900">본질적 업무 해당</span>
+            <p className="text-xs text-orange-700 mt-0.5">
+              데이터취급지침 제5조 — G3(기밀·극비) 데이터 사용 시 필수 선결 조건.
+              이 AI 활용이 회사의 핵심 운용·투자 의사결정 업무에 직결됨을 확인합니다.
+            </p>
+          </div>
+        </label>
       </div>
 
       {/* Gate 2: 기술 표준 체크리스트 */}

@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { CONF_LABEL, CONF_COLOR } from '@/lib/confidentiality'
 
 interface DataRequest {
   id: string
@@ -20,11 +21,16 @@ interface DataRequest {
   updatedAt: string
   asset?: { name: string; classification: string }
   project?: { title: string }
+  trackType?: string
+  accessType?: string
+  isAnonymized?: boolean
+  anonNote?: string
 }
 
 const STATUS_LABELS: Record<string, string> = {
   REQUESTED: '신청됨',
   REVIEWING: '검토중',
+  OWNER_REVIEW: '오너검토',
   SEC_REVIEW: '보안검토',
   APPROVED: '승인됨',
   REJECTED: '반려됨',
@@ -37,6 +43,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_COLOR: Record<string, string> = {
   REQUESTED: 'bg-blue-100 text-blue-700',
   REVIEWING: 'bg-yellow-100 text-yellow-700',
+  OWNER_REVIEW: 'bg-amber-100 text-amber-700',
   SEC_REVIEW: 'bg-orange-100 text-orange-700',
   APPROVED: 'bg-green-100 text-green-700',
   REJECTED: 'bg-red-100 text-red-700',
@@ -44,17 +51,12 @@ const STATUS_COLOR: Record<string, string> = {
   PROVISIONED: 'bg-gray-100 text-gray-600',
 }
 
-const CLASS_COLOR: Record<string, string> = {
-  G1: 'bg-green-100 text-green-800',
-  G2: 'bg-yellow-100 text-yellow-800',
-  G3: 'bg-red-100 text-red-800',
-}
 
 type Tab = 'pending' | 'reviewing' | 'done'
 
 const TAB_STATUSES: Record<Tab, string[]> = {
   pending: ['REQUESTED'],
-  reviewing: ['REVIEWING', 'SEC_REVIEW'],
+  reviewing: ['REVIEWING', 'OWNER_REVIEW', 'SEC_REVIEW'],
   done: ['APPROVED', 'REJECTED', 'COLLECTING', 'PROVISIONED'],
 }
 
@@ -68,8 +70,8 @@ function StatusBadge({ status }: { status: string }) {
 
 function ClassBadge({ cls }: { cls: string }) {
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CLASS_COLOR[cls] ?? 'bg-gray-100 text-gray-600'}`}>
-      {cls}
+    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CONF_COLOR[cls] ?? 'bg-gray-100 text-gray-600'}`}>
+      {CONF_LABEL[cls] ?? cls}
     </span>
   )
 }
@@ -183,11 +185,36 @@ function RequestSheet({
             <Row label="기밀등급" value={<ClassBadge cls={req.classification} />} />
             <Row label="이용기간" value={`${req.periodMonths}개월`} />
             <Row label="프로덕션" value={req.forProduction ? '예' : '아니오'} />
+            {req.trackType && (
+              <Row
+                label="이용 트랙"
+                value={
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    req.trackType === 'A' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
+                  }`}>
+                    Track {req.trackType} — {req.trackType === 'A' ? '데이터 활용' : 'AI 연계'}
+                  </span>
+                }
+              />
+            )}
+            {req.accessType && (
+              <Row label="접근 유형" value={req.accessType} />
+            )}
+            {req.isAnonymized !== undefined && (
+              <Row
+                label="비식별 처리"
+                value={
+                  req.isAnonymized
+                    ? <span className="text-xs text-green-700 font-medium">적용 {req.anonNote ? `(${req.anonNote})` : ''}</span>
+                    : <span className="text-xs text-gray-500">미적용</span>
+                }
+              />
+            )}
             <Row
               label="신청일"
               value={new Date(req.createdAt).toLocaleDateString('ko-KR')}
             />
-            {req.project && <Row label="연계 과제" value={req.project.title} />}
+            {req.project && <Row label="연계 AI 활용" value={req.project.title} />}
           </div>
 
           <div className="space-y-1">
@@ -219,7 +246,7 @@ function RequestSheet({
               onChange={(e) => setNewStatus(e.target.value)}
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-300"
             >
-              {['REVIEWING', 'SEC_REVIEW', 'APPROVED', 'REJECTED', 'COLLECTING', 'PROVISIONED'].map(
+              {['REVIEWING', 'OWNER_REVIEW', 'SEC_REVIEW', 'APPROVED', 'REJECTED', 'COLLECTING', 'PROVISIONED'].map(
                 (s) => (
                   <option key={s} value={s}>
                     {STATUS_LABELS[s]} ({s})

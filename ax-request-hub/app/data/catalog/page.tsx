@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { CONF_LABEL, CONF_COLOR } from '@/lib/confidentiality'
 
 // ── Types ──────────────────────────────────────────────────────
 interface DataAsset {
@@ -20,13 +21,6 @@ interface ModalState {
   type: 'ACCESS' | 'NEW'
 }
 
-// ── Classification badge ───────────────────────────────────────
-const CLASS_COLOR: Record<string, string> = {
-  G1: 'bg-green-100 text-green-800',
-  G2: 'bg-yellow-100 text-yellow-800',
-  G3: 'bg-red-100 text-red-800',
-}
-
 // ── Skeleton card ──────────────────────────────────────────────
 function SkeletonCard() {
   return (
@@ -43,8 +37,8 @@ function AssetCard({ asset, onRequest }: { asset: DataAsset; onRequest: (asset: 
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <p className="font-semibold text-gray-900 leading-tight">{asset.name}</p>
-        <span className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${CLASS_COLOR[asset.classification] ?? 'bg-gray-100 text-gray-600'}`}>
-          {asset.classification}
+        <span className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${CONF_COLOR[asset.classification] ?? 'bg-gray-100 text-gray-600'}`}>
+          {CONF_LABEL[asset.classification] ?? asset.classification}
         </span>
       </div>
 
@@ -102,6 +96,10 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
   const [classification, setClassification] = useState(asset.classification)
   const [periodMonths, setPeriodMonths] = useState(3)
   const [requestedSpec, setRequestedSpec] = useState('')
+  const [trackType, setTrackType] = useState<'A' | 'B'>('A')
+  const [accessType, setAccessType] = useState<'조회' | '추출' | '반출'>('조회')
+  const [isAnonymized, setIsAnonymized] = useState(false)
+  const [anonNote, setAnonNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
@@ -130,6 +128,10 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
           classification,
           periodMonths,
           requestedSpec: type === 'NEW' ? requestedSpec : undefined,
+          trackType,
+          accessType,
+          isAnonymized,
+          anonNote: isAnonymized ? anonNote : undefined,
         }),
       })
       if (!res.ok) {
@@ -187,7 +189,7 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
 
             {/* Project selector */}
             <div>
-              <label className="text-xs font-medium text-gray-700 block mb-1">연계 과제 (선택)</label>
+              <label className="text-xs font-medium text-gray-700 block mb-1">연계 AI 활용 (선택)</label>
               <select
                 value={projectId}
                 onChange={e => setProjectId(e.target.value)}
@@ -213,18 +215,73 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
               />
             </div>
 
-            {/* Classification */}
+            {/* Classification — 데이터 오너가 지정, 신청자가 변경 불가 (데이터취급지침 제10조) */}
             <div>
               <label className="text-xs font-medium text-gray-700 block mb-1">기밀등급</label>
+              <div className={`w-full text-sm border border-gray-200 rounded-lg p-2.5 bg-gray-50 ${CONF_COLOR[classification] ?? ''}`}>
+                {CONF_LABEL[classification] ?? classification}
+                <span className="ml-2 text-xs text-gray-400">(데이터 오너 지정, 변경 불가)</span>
+              </div>
+            </div>
+
+            {/* Track Type — 데이터취급지침 제25조 */}
+            <div>
+              <label className="text-xs font-medium text-gray-700 block mb-1">
+                이용 트랙 <span className="text-red-500">*</span>
+                <span className="ml-1 text-gray-400 font-normal">(데이터취급지침 제25조)</span>
+              </label>
+              <div className="flex gap-2">
+                {(['A', 'B'] as const).map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTrackType(t)}
+                    className={`flex-1 py-2 text-sm rounded-lg border font-medium transition-colors ${
+                      trackType === t
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                    }`}
+                  >
+                    Track {t} — {t === 'A' ? '데이터 활용' : 'AI 연계'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Access Type — 조회/추출/반출 */}
+            <div>
+              <label className="text-xs font-medium text-gray-700 block mb-1">접근 유형 <span className="text-red-500">*</span></label>
               <select
-                value={classification}
-                onChange={e => setClassification(e.target.value as 'G1' | 'G2' | 'G3')}
-                className="w-full text-sm border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:border-blue-300"
+                value={accessType}
+                onChange={e => setAccessType(e.target.value as '조회' | '추출' | '반출')}
+                className="w-full text-sm border border-gray-200 rounded-lg p-2.5 focus:outline-none focus:border-blue-300 bg-white"
               >
-                <option value="G1">G1 — 일반</option>
-                <option value="G2">G2 — 내부용</option>
-                <option value="G3">G3 — 기밀</option>
+                <option value="조회">조회 — 시스템 내 확인만 허용</option>
+                <option value="추출">추출 — 파일·API 형태 다운로드 허용</option>
+                <option value="반출">반출 — 외부 반출 허용 (추가 심의 필요)</option>
               </select>
+            </div>
+
+            {/* Anonymization */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isAnonymized}
+                  onChange={e => setIsAnonymized(e.target.checked)}
+                  className="w-4 h-4 rounded text-blue-600"
+                />
+                <span className="text-xs font-medium text-gray-700">비식별 처리 적용</span>
+              </label>
+              {isAnonymized && (
+                <textarea
+                  value={anonNote}
+                  onChange={e => setAnonNote(e.target.value)}
+                  rows={2}
+                  placeholder="비식별 처리 방법 및 범위를 기재해 주세요 (예: k-익명화, 마스킹 대상 컬럼 등)"
+                  className="w-full text-sm border border-gray-200 rounded-lg p-2.5 resize-none focus:outline-none focus:border-blue-300"
+                />
+              )}
             </div>
 
             {/* Period months */}
@@ -368,7 +425,7 @@ export default function DataCatalogPage() {
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
-              {c === '' ? '전체' : c}
+              {c === '' ? '전체' : CONF_LABEL[c]}
             </button>
           ))}
         </div>

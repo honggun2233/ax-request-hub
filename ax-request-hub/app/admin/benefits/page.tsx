@@ -51,13 +51,13 @@ export default function BenefitsPage() {
       <div>
         <h1 className="text-xl font-semibold">PI 효과 실현</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          상용 전환 과제의 신청 시 예상 효과 대비 분기별 실현치를 기록합니다. 경영 보고의 근거 자료가 됩니다.
+          상용 전환된 AI 활용의 신청 시 예상 효과 대비 분기별 실현치를 기록합니다. 경영 보고의 근거 자료가 됩니다.
         </p>
       </div>
 
       {rows.length === 0 && (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">
-          상용 전환된 과제가 아직 없습니다. 협의회 승인 후 이 목록에 나타납니다.
+          상용 전환된 AI 활용이 아직 없습니다. AI 위원회 승인 후 이 목록에 나타납니다.
         </CardContent></Card>
       )}
 

@@ -77,14 +77,14 @@ export default function AdminConsolePage() {
           <Card className="h-full transition-colors hover:bg-accent/40"><CardContent className="p-4">
             <p className="text-xs font-semibold text-primary">① 전략 · 거버넌스</p>
             <p className="mt-2 text-sm">문서 개정 대기 <b>{s.cards.governance.draftDocs}</b>건</p>
-            <p className="mt-0.5 text-sm text-muted-foreground">이번 달 G3 과제 {s.cards.governance.g3ThisMonth}건</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">이번 달 G3 AI 활용 {s.cards.governance.g3ThisMonth}건</p>
           </CardContent></Card>
         </Link>
 
         <Link href="/dashboard">
           <Card className="h-full transition-colors hover:bg-accent/40"><CardContent className="p-4">
             <p className="text-xs font-semibold text-primary">② PI 지원</p>
-            <p className="mt-2 text-sm">개선 진행 <b>{s.cards.pi.activeDepartments}</b>개 부서 · 과제 {s.cards.pi.activeProjects}건</p>
+            <p className="mt-2 text-sm">개선 진행 <b>{s.cards.pi.activeDepartments}</b>개 부서 · AI 활용 {s.cards.pi.activeProjects}건</p>
             <p className="mt-0.5 text-sm text-muted-foreground">
               효과 실현 {s.cards.pi.benefitRealizedPct !== null ? `${s.cards.pi.benefitRealizedPct}%` : "— (집계 준비 중)"}
             </p>

@@ -22,10 +22,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!project) return NextResponse.json({ error: '과제를 찾을 수 없습니다.' }, { status: 404 })
 
   if (project.status !== 'submitted') {
-    return NextResponse.json({ message: '이미 처리된 과제입니다.', status: project.status })
+    return NextResponse.json({ message: '이미 처리된 AI 활용입니다.', status: project.status })
   }
 
-  // P1-1 안A: G3 기밀 과제는 Claude API 평가 생략 → 즉시 AX팀 수동 검토 에스컬레이션
+  // G3 기밀(극비) AI 활용은 Claude API 평가 생략 → 즉시 AX팀 수동 검토 에스컬레이션
   if (project.confidentialityLevel === 'G3') {
     await db.project.update({
       where: { id: project.id },
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     })
     return NextResponse.json({
       skipped: true,
-      reason: 'G3 기밀 과제 — Claude API 평가 생략, AX팀 수동 검토 필요',
+      reason: 'G3 기밀(극비) AI 활용 — Claude API 평가 생략, AX팀 수동 검토 필요',
       status: 'evaluated',
     })
   }

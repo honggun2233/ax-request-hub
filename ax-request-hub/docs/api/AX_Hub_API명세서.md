@@ -382,7 +382,7 @@ Snowflake 메타데이터 수동 동기화.
 
 ---
 
-## 4. 협의회 (AX위원회)
+## 4. AI 위원회
 
 ### `GET /api/council/meetings`
 협의회 회의 목록.

@@ -12,8 +12,8 @@ import { Plus, Gavel } from "lucide-react";
 type Meeting = { id: string; meetingNo: number; heldAt: string; notes?: string; _count: { items: number } };
 
 /**
- * 협의회 기록 (ADMIN 전용).
- * 협의회는 오프라인으로 진행되며, 이 화면은 AX팀 간사가
+ * AI 위원회 기록 (ADMIN 전용).
+ * AI 위원회는 오프라인으로 진행되며, 이 화면은 AX팀 간사가
  * 회의 전 안건을 편성하고 회의 후 의결 결과를 기록하는 도구다.
  */
 export default function CouncilPage() {
@@ -41,9 +41,9 @@ export default function CouncilPage() {
     <div className="mx-auto max-w-4xl space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">협의회 기록</h1>
+          <h1 className="text-xl font-semibold">AI 위원회 기록</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            협의회는 오프라인으로 진행됩니다. 회의 전 안건을 편성하고, 회의 후 의결 결과를 여기에 기록하세요.
+            AI 위원회는 오프라인으로 진행됩니다. 회의 전 안건을 편성하고, 회의 후 의결 결과를 여기에 기록하세요.
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -51,7 +51,7 @@ export default function CouncilPage() {
             <Button><Plus className="mr-1.5 h-4 w-4" />회의 등록</Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>협의회 등록</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>AI 위원회 등록</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="heldAt">개최일</Label>
@@ -72,7 +72,7 @@ export default function CouncilPage() {
 
       {meetings.length === 0 && (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">
-          등록된 협의회가 없습니다. 첫 회의를 등록하세요.
+          등록된 회의가 없습니다. 첫 회의를 등록하세요.
         </CardContent></Card>
       )}
 
@@ -83,7 +83,7 @@ export default function CouncilPage() {
             <div className="flex items-center gap-3">
               <Gavel className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="font-medium">제{m.meetingNo}차 협의회</p>
+                <p className="font-medium">제{m.meetingNo}차 AI 위원회</p>
                 <p className="text-sm text-muted-foreground">
                   {new Date(m.heldAt).toLocaleDateString("ko-KR")} · 안건 {m._count.items}건
                 </p>

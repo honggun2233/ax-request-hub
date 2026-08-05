@@ -150,13 +150,13 @@
 
 ---
 
-### 7. 협의회 (AX위원회)
+### 7. AI 위원회
 
-#### `/council` — 협의회 목록
+#### `/council` — AI 위원회 목록
 - **접근**: AX_TEAM, EXECUTIVE
-- **기능**: 협의회 회의 목록, 상태 (DRAFT / SCHEDULED / IN_PROGRESS / CLOSED), 신규 회의 생성
+- **기능**: AI 위원회 회의 목록, 상태 (DRAFT / SCHEDULED / IN_PROGRESS / CLOSED), 신규 회의 생성
 
-#### `/council/[meetingId]` — 협의회 회의 상세
+#### `/council/[meetingId]` — AI 위원회 회의 상세
 - **접근**: AX_TEAM, EXECUTIVE
 - **기능**:
   - 안건 목록 (상정된 에이전트/과제)

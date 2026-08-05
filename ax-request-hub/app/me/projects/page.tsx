@@ -13,7 +13,7 @@ type MyProject = {
   pendingAppeal?: boolean;
 };
 
-/** 직원용 내 과제 목록 — 내부 코드(devStage 등) 대신 쉬운 라벨 + 진행 바 노출 */
+/** 직원용 내 AI 활용 목록 — 내부 코드(devStage 등) 대신 쉬운 라벨 + 진행 바 노출 */
 export default function MyProjectsPage() {
   const [projects, setProjects] = useState<MyProject[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,8 +29,8 @@ export default function MyProjectsPage() {
     <div className="mx-auto max-w-3xl space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">내 과제</h1>
-          <p className="mt-1 text-sm text-muted-foreground">신청한 AI 과제의 진행 상황을 확인하세요.</p>
+          <h1 className="text-xl font-semibold">내 AI 활용</h1>
+          <p className="mt-1 text-sm text-muted-foreground">신청한 AI 활용의 진행 상황을 확인하세요.</p>
         </div>
         <div className="flex items-center gap-2">
           <Button asChild variant="outline">
@@ -46,7 +46,7 @@ export default function MyProjectsPage() {
 
       {!loading && projects.length === 0 && (
         <Card><CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-          <p className="text-sm text-muted-foreground">아직 신청한 과제가 없습니다.</p>
+          <p className="text-sm text-muted-foreground">아직 신청한 AI 활용이 없습니다.</p>
           <div className="flex gap-2">
             <Button asChild variant="outline"><Link href="/projects/new">직접 양식으로 신청하기</Link></Button>
             <Button asChild variant="outline"><Link href="/chat">AI 상담으로 구체화하기</Link></Button>
@@ -56,7 +56,7 @@ export default function MyProjectsPage() {
 
       <div className="space-y-3">
         {projects.map((p) => {
-          // 에이전트가 생성됐으면 에이전트 단계가, 아니면 과제 상태가 사용자의 현재 위치
+          // 에이전트가 생성됐으면 에이전트 단계가, 아니면 AI 활용 상태가 사용자의 현재 위치
           const info = p.agent?.devStage
             ? DEV_STAGE_LABELS[p.agent.devStage] ?? PROJECT_STATUS_LABELS[p.status]
             : p.agent?.prodStatus
