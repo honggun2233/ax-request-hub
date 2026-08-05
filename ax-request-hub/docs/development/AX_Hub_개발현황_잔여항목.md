@@ -3,10 +3,52 @@
 | 항목 | 내용 |
 |------|------|
 | 문서번호 | AX-DEV-2026-001 |
-| 버전 | v1.1 |
+| 버전 | v1.2 |
 | 작성일 | 2026-07-29 |
-| 최종 수정 | 2026-08-03 |
+| 최종 수정 | 2026-08-05 |
 | 기준 브랜치 | master + feat/external-integrations (PR #12) |
+
+---
+
+## v3.1 변경 사항 (2026-08-05)
+
+> 이 섹션은 2026-08-05 배포된 변경 사항을 기록합니다.
+
+### 변경 1 — 사이드바 전면 교체 (AppSidebar)
+
+| 항목 | 내용 |
+|------|------|
+| 변경 파일 | `components/AppSidebar.tsx` (신규), `components/Sidebar.tsx` (대체) |
+| 변경 내용 | 구 `Sidebar.tsx` → 역할별 메뉴 + 아이콘 + 프로필이 포함된 `AppSidebar`로 전면 교체 |
+| 역할별 노출 | EMPLOYEE·DEPT_HEAD·DATA_PLATFORM·AX_TEAM·EXECUTIVE 각각 접근 가능한 메뉴 분기 |
+| 주요 경로 | `/registry`(에이전트), `/data/catalog`, `/dp/requests`, `/executive` 등 역할에 따라 표시 |
+
+### 변경 2 — 기밀 분류 레이블 표준화 (`lib/confidentiality.ts`)
+
+| 항목 | 내용 |
+|------|------|
+| 신규 파일 | `lib/confidentiality.ts` |
+| 내용 | G1(공개정보) / G2(대외비) / G3(기밀(극비)) 레이블 및 Tailwind 색상 상수 |
+| 준거 | 데이터관리규정 v1.2 기밀 분류 체계와 동일 |
+| 사용처 | 데이터 카탈로그(`/data/catalog`), 데이터 신청 폼, DataProvision 뷰 |
+
+### 변경 3 — API 권한 정비 및 역할 분리
+
+| 항목 | 내용 |
+|------|------|
+| 수정 API | 8개 엔드포인트 권한 재정의 |
+| EXECUTIVE 역할 | 기존 MANAGER 권한 일부에서 분리. `/executive` 대시보드 전용 역할 확정 |
+| DEPT_HEAD 전환 | MANAGER → DEPT_HEAD로 명칭 변경 + `/dept/tools` API 권한 연동 |
+| DataRequest 권한 | `GET /api/data/requests`: DATA_PLATFORM·AX_TEAM은 전체 조회, 나머지는 본인 신청만 |
+| PATCH 403 수정 | `PATCH /api/data/requests/[id]`: DATA_PLATFORM 또는 AX_TEAM 허용 (기존 DATA_PLATFORM만) |
+
+### 변경 4 — ProjectForm projectId 선택 항목화
+
+| 항목 | 내용 |
+|------|------|
+| 변경 내용 | DataRequest.projectId 타입: `String` → `String?` (optional) |
+| 이유 | 특정 프로젝트에 귀속되지 않는 범용 데이터 신청 지원 |
+| UI 반영 | `/data/requests` 신청 폼의 projectId 드롭다운을 선택 → 미선택 가능으로 전환 |
 
 ---
 
@@ -85,6 +127,9 @@
 | G3 데이터 이중 승인 흐름 | ✅ | |
 | DataProvision 이용 기간 관리 | ✅ | |
 | 내 데이터 신청 현황 (`/me/data`) | ✅ | |
+| 기밀 분류 레이블 G1/G2/G3 (`lib/confidentiality.ts`) | ✅ | 데이터관리규정 v1.2 준거 (2026-08-05) |
+| Track A / Track B 구분 신청 | ✅ | `trackType` 필드, `/data/requests` 폼 |
+| 데이터플랫폼팀 카탈로그 관리 (`/dp/catalog`) | ✅ | |
 
 ### 1-4. AI 도구·토큰 관리
 | 기능 | 상태 | 비고 |
@@ -230,4 +275,4 @@
 
 ---
 
-*최초 작성: 2026-07-29 | v1.1 수정: 2026-08-03 (키인 방식 확정, LLM 추상화, 정보전략팀 처리 방식)*
+*최초 작성: 2026-07-29 | v1.1 수정: 2026-08-03 (키인 방식 확정, LLM 추상화, 정보전략팀 처리 방식) | v1.2 수정: 2026-08-05 (AppSidebar 교체, confidentiality.ts, API 권한 정비, 데이터 프로비저닝 UI 완성)*
