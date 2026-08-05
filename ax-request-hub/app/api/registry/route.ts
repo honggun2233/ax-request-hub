@@ -30,6 +30,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Forbidden — AX팀만 에이전트 등록 가능' }, { status: 403 })
   }
   const data = await req.json()
+
+  // Phase B — Q2=A: 승인된 과제 연결 필수
+  if (!data.projectId) {
+    return NextResponse.json(
+      { error: '승인된 AI 활용 과제를 연결해야 합니다. /me/projects 에서 과제 승인 후 등록하세요.' },
+      { status: 400 }
+    )
+  }
+  const project = await prisma.project.findUnique({ where: { id: data.projectId } })
+  if (!project) {
+    return NextResponse.json({ error: '연결된 과제를 찾을 수 없습니다.' }, { status: 404 })
+  }
+  if (!['pilot', 'production'].includes(project.status)) {
+    return NextResponse.json(
+      { error: `과제가 아직 승인되지 않았습니다. (현재 상태: ${project.status}) 승인 후 에이전트를 등록하세요.` },
+      { status: 400 }
+    )
+  }
+
   const agent = await prisma.agentRegistry.create({ data })
   return NextResponse.json(agent, { status: 201 })
 }

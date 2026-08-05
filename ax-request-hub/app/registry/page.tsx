@@ -1,5 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 const LIFECYCLE_STAGES = [
   { key: 'DEVELOPING', label: '개발중',         color: 'bg-gray-100 text-gray-600 border-gray-300' },
@@ -290,6 +292,149 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
   )
 }
 
+// ── 에이전트 등록 모달 ────────────────────────────────────────
+function RegisterModal({
+  approvedProjects,
+  defaultProjectId,
+  onClose,
+  onCreated,
+}: {
+  approvedProjects: any[]
+  defaultProjectId: string
+  onClose: () => void
+  onCreated: () => void
+}) {
+  const [form, setForm] = useState({
+    agentName: '',
+    agentKey: '',
+    purpose: '',
+    dataSource: '',
+    projectId: defaultProjectId,
+    lifecycleStage: 'DEVELOPING',
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.projectId) { setError('승인된 과제를 선택하세요.'); return }
+    setSaving(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/registry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error ?? '등록 오류')
+      }
+      onCreated()
+      onClose()
+    } catch (e: any) {
+      setError(e.message)
+      setSaving(false)
+    }
+  }
+
+  const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b bg-gray-50">
+          <div>
+            <h2 className="font-semibold text-gray-900">에이전트 등록</h2>
+            <p className="text-xs text-gray-500 mt-0.5">승인된 AI 활용 과제와 연결 필수 (Q2)</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-5 space-y-3">
+          {/* 승인 과제 선택 — 필수 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              연결 과제 <span className="text-red-500">*</span>
+              <span className="ml-1 text-gray-400 font-normal">(승인된 과제만 표시)</span>
+            </label>
+            {approvedProjects.length === 0 ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 text-sm text-amber-700">
+                승인된 과제가 없습니다.{' '}
+                <Link href="/me/projects" className="underline font-medium">과제 목록</Link>에서 먼저 과제를 신청하세요.
+              </div>
+            ) : (
+              <select value={form.projectId} onChange={e => setForm({ ...form, projectId: e.target.value })}
+                required className={inputCls}>
+                <option value="">-- 과제 선택 --</option>
+                {approvedProjects.map(p => (
+                  <option key={p.id} value={p.id}>
+                    [{p.status === 'pilot' ? '파일럿승인' : '운영중'}] {p.title} · {p.department}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">에이전트 이름 <span className="text-red-500">*</span></label>
+            <input type="text" required value={form.agentName}
+              onChange={e => setForm({ ...form, agentName: e.target.value })}
+              placeholder="예: ETF-Rebalance-Agent" className={inputCls} />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">에이전트 키 (영문소문자·하이픈) <span className="text-red-500">*</span></label>
+            <input type="text" required value={form.agentKey}
+              onChange={e => setForm({ ...form, agentKey: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
+              placeholder="etf-rebalance-agent" className={inputCls} />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">목적·기능 설명 <span className="text-red-500">*</span></label>
+            <textarea required value={form.purpose}
+              onChange={e => setForm({ ...form, purpose: e.target.value })}
+              rows={2} placeholder="에이전트가 하는 일을 1~2문장으로 설명하세요"
+              className={inputCls + ' resize-none'} />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">데이터 소스</label>
+            <input type="text" value={form.dataSource}
+              onChange={e => setForm({ ...form, dataSource: e.target.value })}
+              placeholder="예: KRX API, 내부 DB, Mock" className={inputCls} />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">시작 라이프사이클 단계</label>
+            <select value={form.lifecycleStage} onChange={e => setForm({ ...form, lifecycleStage: e.target.value })}
+              className={inputCls}>
+              <option value="DEVELOPING">DEVELOPING (개발중)</option>
+              <option value="GATE1">GATE1 (QA 검증)</option>
+            </select>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{error}</div>
+          )}
+
+          <div className="pt-1 flex gap-2">
+            <button type="button" onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50">
+              취소
+            </button>
+            <button type="submit" disabled={saving || approvedProjects.length === 0}
+              className="flex-1 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-40">
+              {saving ? '등록 중...' : '등록'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ── 프로젝트 뷰 ──────────────────────────────────────────────
 function ProjectView({ projects, onAgentClick }: { projects: any[]; onAgentClick: (agent: any) => void }) {
   const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set(projects.map(p => p.key)))
@@ -376,29 +521,42 @@ function ProjectView({ projects, onAgentClick }: { projects: any[]; onAgentClick
 
 // ── 메인 페이지 ──────────────────────────────────────────────
 export default function RegistryPage() {
+  const searchParams = useSearchParams()
+  const defaultProjectId = searchParams.get('projectId') ?? ''
+  const highlightAgentId = searchParams.get('highlight') ?? ''
+
   const [agentData, setAgentData] = useState<{ agents: any[]; stageCounts: Record<string, number> }>({ agents: [], stageCounts: {} })
   const [projects, setProjects] = useState<any[]>([])
+  const [approvedProjects, setApprovedProjects] = useState<any[]>([])
   const [selectedStage, setSelectedStage] = useState<string | null>(null)
   const [selectedAgent, setSelectedAgent] = useState<any | null>(null)
   const [viewMode, setViewMode] = useState<'agent' | 'project'>('agent')
   const [loading, setLoading] = useState(true)
+  const [showRegister, setShowRegister] = useState(!!defaultProjectId)
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
-      const [regRes, projRes] = await Promise.all([
+      const [regRes, projRes, myProjRes] = await Promise.all([
         fetch('/api/registry'),
         fetch('/api/ax-projects'),
+        fetch('/api/projects'),
       ])
       const regJson  = await regRes.json()
       const projJson = await projRes.json()
+      const myProj   = await myProjRes.json()
       setAgentData(regJson)
       setProjects(projJson.projects ?? [])
+      // 승인된 과제만 필터 (pilot | production)
+      const approved = Array.isArray(myProj)
+        ? myProj.filter((p: any) => ['pilot', 'production'].includes(p.status))
+        : []
+      setApprovedProjects(approved)
     } catch { /* ignore */ } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [load])
 
   const filtered = selectedStage ? agentData.agents.filter(a => a.lifecycleStage === selectedStage) : agentData.agents
   const stageAction = selectedStage ? STAGE_ACTIONS[selectedStage] : null
@@ -408,6 +566,14 @@ export default function RegistryPage() {
     const fresh = agentData.agents.find(a => a.id === agent.id) ?? agent
     setSelectedAgent(fresh)
   }
+
+  // highlight: ?projectId 경유로 들어온 에이전트 자동 열기
+  useEffect(() => {
+    if (highlightAgentId && agentData.agents.length > 0) {
+      const target = agentData.agents.find(a => a.id === highlightAgentId)
+      if (target) setSelectedAgent(target)
+    }
+  }, [highlightAgentId, agentData.agents])
 
   return (
     <div className="space-y-5">
@@ -422,6 +588,12 @@ export default function RegistryPage() {
             <div className="font-medium text-gray-900">총 {agentData.agents.length}개</div>
             <div className="text-gray-500">활성 {agentData.stageCounts['ACTIVE'] ?? 0}개</div>
           </div>
+          {/* 에이전트 등록 버튼 */}
+          <button
+            onClick={() => setShowRegister(true)}
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+            + 에이전트 등록
+          </button>
           {/* 뷰 전환 탭 */}
           <div className="flex bg-gray-100 rounded-lg p-0.5">
             <button onClick={() => setViewMode('agent')}
@@ -541,6 +713,15 @@ export default function RegistryPage() {
           allProjects={projects}
           onClose={() => setSelectedAgent(null)}
           onStageChange={load}
+        />
+      )}
+
+      {showRegister && (
+        <RegisterModal
+          approvedProjects={approvedProjects}
+          defaultProjectId={defaultProjectId}
+          onClose={() => setShowRegister(false)}
+          onCreated={load}
         />
       )}
     </div>
