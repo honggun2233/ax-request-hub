@@ -1,86 +1,139 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { StatusBadge, ProgressSteps } from "@/components/status-badge";
-import { PROJECT_STATUS_LABELS, DEV_STAGE_LABELS } from "@/lib/lifecycle-labels";
 
-type MyProject = {
-  id: string; title: string; status: string; createdAt: string;
-  agent?: { devStage?: string; phase?: string; prodStatus?: string } | null;
-  pendingAppeal?: boolean;
-};
+const CARD  = '#1C3055'
+const BDR   = '#2E456A'
+const GOLD  = '#C9A96E'
+const TEXT  = '#D4DDE8'
+const MUTED = '#7A94B0'
 
-/** 직원용 내 AI 활용 목록 — 내부 코드(devStage 등) 대신 쉬운 라벨 + 진행 바 노출 */
+const STEPS = ['신청', '심사', '승인', '개발', '운영']
+
+const STATUS_INFO: Record<string, { label: string; step: number; color: string }> = {
+  submitted:  { label: '심사 중',     step: 1, color: GOLD },
+  evaluated:  { label: '검토 완료',   step: 2, color: '#A0C8A8' },
+  pilot:      { label: '파일럿 승인', step: 3, color: '#7EB88A' },
+  production: { label: '운영 중',     step: 4, color: '#5B8C6E' },
+  closed:     { label: '종료',        step: 0, color: MUTED },
+}
+
+function ProgressBar({ step }: { step: number }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, marginTop: 12 }}>
+      {STEPS.map((s, i) => {
+        const done    = i < step
+        const current = i === step
+        return (
+          <div key={s} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ width: '100%', display: 'flex', alignItems: 'center' }}>
+              {i > 0 && <div style={{ flex: 1, height: 1, background: done ? 'rgba(201,169,110,.45)' : BDR }} />}
+              <div style={{
+                width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                background: done ? GOLD : current ? 'rgba(201,169,110,.35)' : BDR,
+                border: current ? `2px solid ${GOLD}` : 'none',
+              }} />
+              {i < STEPS.length - 1 && <div style={{ flex: 1, height: 1, background: done ? 'rgba(201,169,110,.45)' : BDR }} />}
+            </div>
+            <span style={{ fontSize: 9, color: done || current ? GOLD : MUTED, marginTop: 4, letterSpacing: '.04em' }}>{s}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function MyProjectsPage() {
-  const [projects, setProjects] = useState<MyProject[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/projects?mine=1") // 기존 GET /api/projects의 역할별 필터 활용
+    fetch("/api/projects?mine=1")
       .then((r) => r.json())
       .then(setProjects)
       .finally(() => setLoading(false));
   }, []);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 p-6">
-      <div className="flex items-center justify-between">
+    <div style={{ color: TEXT, maxWidth: 720, margin: '0 auto' }}>
+      {/* 헤더 */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
-          <h1 className="text-xl font-semibold">내 AI 활용</h1>
-          <p className="mt-1 text-sm text-muted-foreground">신청한 AI 활용의 진행 상황을 확인하세요.</p>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#EBF0F5', margin: 0 }}>내 AI 활용</h1>
+          <p style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>신청한 AI 활용의 진행 현황을 확인하세요.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
-            <Link href="/projects/new"><Plus className="mr-1.5 h-4 w-4" />직접 작성</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/chat"><Plus className="mr-1.5 h-4 w-4" />AI 상담</Link>
-          </Button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link href="/projects/new" style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: 13, fontWeight: 600, color: MUTED,
+            background: 'transparent', border: `1px solid ${BDR}`,
+            padding: '7px 14px', borderRadius: 4, textDecoration: 'none',
+          }}>
+            <Plus size={14} /> 직접 작성
+          </Link>
+          <Link href="/chat" style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: 13, fontWeight: 600, color: '#080F1C',
+            background: GOLD, border: `1px solid ${GOLD}`,
+            padding: '7px 14px', borderRadius: 4, textDecoration: 'none',
+          }}>
+            <Plus size={14} /> AI 상담
+          </Link>
         </div>
       </div>
 
-      {loading && <p className="py-10 text-center text-sm text-muted-foreground">불러오는 중…</p>}
-
-      {!loading && projects.length === 0 && (
-        <Card><CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-          <p className="text-sm text-muted-foreground">아직 신청한 AI 활용이 없습니다.</p>
-          <div className="flex gap-2">
-            <Button asChild variant="outline"><Link href="/projects/new">직접 양식으로 신청하기</Link></Button>
-            <Button asChild variant="outline"><Link href="/chat">AI 상담으로 구체화하기</Link></Button>
-          </div>
-        </CardContent></Card>
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '60px 0', color: MUTED, fontSize: 13 }}>불러오는 중…</div>
       )}
 
-      <div className="space-y-3">
-        {projects.map((p) => {
-          // 에이전트가 생성됐으면 에이전트 단계가, 아니면 AI 활용 상태가 사용자의 현재 위치
-          const info = p.agent?.devStage
-            ? DEV_STAGE_LABELS[p.agent.devStage] ?? PROJECT_STATUS_LABELS[p.status]
-            : p.agent?.prodStatus
-              ? { label: "정식 운영 중", step: 5, tone: "success" as const }
-              : PROJECT_STATUS_LABELS[p.status] ?? { label: p.status, step: 0, tone: "default" as const };
-          return (
-            <Link key={p.id} href={`/status/${p.id}`} className="block">
-              <Card className="transition-colors hover:bg-accent/40">
-                <CardContent className="space-y-3 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="truncate font-medium">{p.title}</p>
-                    <div className="flex shrink-0 items-center gap-2">
-                      {p.pendingAppeal && <StatusBadge label="이의제기 진행 중" tone="warning" />}
-                      <StatusBadge label={info.label} tone={info.tone} />
-                    </div>
-                  </div>
-                  <ProgressSteps step={info.step} />
-                  <p className="text-xs text-muted-foreground">
-                    신청일 {new Date(p.createdAt).toLocaleDateString("ko-KR")}
-                  </p>
-                </CardContent>
-              </Card>
+      {!loading && projects.length === 0 && (
+        <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 4, padding: '48px 24px', textAlign: 'center' }}>
+          <p style={{ color: MUTED, fontSize: 14, marginBottom: 16 }}>아직 신청한 AI 활용이 없습니다.</p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+            <Link href="/projects/new" style={{ fontSize: 13, color: MUTED, border: `1px solid ${BDR}`, padding: '8px 16px', borderRadius: 4, textDecoration: 'none' }}>
+              직접 양식으로 신청
             </Link>
-          );
+            <Link href="/chat" style={{ fontSize: 13, color: '#080F1C', background: GOLD, padding: '8px 16px', borderRadius: 4, textDecoration: 'none', fontWeight: 600 }}>
+              AI 상담으로 구체화
+            </Link>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {projects.map((p) => {
+          const info = STATUS_INFO[p.status] ?? { label: p.status, step: 0, color: MUTED }
+          return (
+            <Link key={p.id} href={`/status/${p.id}`} style={{ textDecoration: 'none' }}>
+              <div
+                style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 4, padding: '16px 20px', cursor: 'pointer', transition: 'border-color .15s' }}
+                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(201,169,110,.4)')}
+                onMouseLeave={e => (e.currentTarget.style.borderColor = BDR)}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: '#EBF0F5', flex: 1, lineHeight: 1.4, margin: 0 }}>
+                    {p.title}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    {p.pendingAppeal && (
+                      <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 2, color: '#FFB74D', background: 'rgba(208,123,58,.15)', border: '1px solid rgba(208,123,58,.3)' }}>
+                        이의제기
+                      </span>
+                    )}
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 2, color: info.color, background: `${info.color}1A`, border: `1px solid ${info.color}4D` }}>
+                      {info.label}
+                    </span>
+                  </div>
+                </div>
+                <ProgressBar step={info.step} />
+                <p style={{ fontSize: 11, color: MUTED, marginTop: 10 }}>
+                  신청일 {new Date(p.createdAt).toLocaleDateString('ko-KR')}
+                  {p.department && <span style={{ marginLeft: 10 }}>· {p.department}</span>}
+                </p>
+              </div>
+            </Link>
+          )
         })}
       </div>
     </div>

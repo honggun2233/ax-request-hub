@@ -20,14 +20,14 @@ export default async function RootLayout({
   const role = ((session?.user as any)?.role ?? "EMPLOYEE") as Role;
   return (
     <html lang="ko">
-      <body className="bg-[#F7F6F3]">
+      <body className="bg-[#152440]">
         <Providers>
           {session ? (
             <div className="flex">
               <aside className="w-[248px] h-screen fixed top-0 left-0 z-10">
                 <AppSidebar role={role} />
               </aside>
-              <main className="ml-[248px] flex-1 min-h-screen p-6">{children}</main>
+              <main className="ml-[248px] flex-1 min-h-screen p-6 text-[#D4DDE8]">{children}</main>
             </div>
           ) : (
             <main className="min-h-screen">{children}</main>

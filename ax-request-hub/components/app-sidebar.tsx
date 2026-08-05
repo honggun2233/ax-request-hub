@@ -165,7 +165,7 @@ export function AppSidebar({ role }: { role: Role }) {
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   return (
-    <aside className="flex h-full w-[248px] flex-col bg-[#0B1F3A]">
+    <aside className="flex h-full w-[248px] flex-col bg-[#080F1C] border-r border-[#1E3050]">
       {/* 헤더 */}
       <div className="px-5 py-4 border-b border-white/10">
         <Link href="/" className="flex items-center gap-2.5 group">
