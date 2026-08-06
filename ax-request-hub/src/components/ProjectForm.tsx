@@ -105,6 +105,9 @@ export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
     { key: 'techHasTestCoverage', label: '테스트 커버리지', desc: '핵심 비즈니스 로직 80% 이상 단위 테스트가 작성되어 있다' },
   ]
 
+  // 데이터 요건(Q1) 충족 여부 — 버튼 활성 조건
+  const dataReqOk = noDataRequired || dataRequirements.length > 0
+
   return (
     <form onSubmit={handleSubmit} className="max-w-xl mx-auto">
       <div className="mb-4">
@@ -329,9 +332,14 @@ export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
         )}
       </div>
 
+      {!dataReqOk && (
+        <p className="text-sm mb-2 text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+          제출하려면 위 <strong>데이터 요건</strong>에서 &lsquo;별도 데이터 불필요&rsquo;를 체크하거나 요건을 하나 이상 추가하세요.
+        </p>
+      )}
       {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-      <button type="submit" disabled={submitting}
-        className="w-full bg-blue-600 text-white rounded-xl py-3 font-semibold mt-2 hover:bg-blue-700 transition-colors disabled:opacity-40">
+      <button type="submit" disabled={submitting || !dataReqOk}
+        className="w-full bg-blue-600 text-white rounded-xl py-3 font-semibold mt-2 hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
         {submitting ? '평가 중... (30초~1분 소요)' : '신청서 제출 및 AI 평가 시작'}
       </button>
     </form>
