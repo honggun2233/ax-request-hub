@@ -1,6 +1,7 @@
 import { db } from '@/src/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { AppealSection } from '@/components/appeal-section'
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   submitted:  { label: '접수됨',     cls: 'bg-slate-700 text-slate-200 border-slate-500' },
@@ -53,9 +54,21 @@ export default async function StatusPage({ params }: { params: Promise<{ id: str
   })
   if (!project) notFound()
 
+  const appeals = await db.projectAppeal.findMany({
+    where: { projectId: id },
+    orderBy: { createdAt: 'desc' },
+  })
+  const appealsData = appeals.map(a => ({
+    id: a.id, reason: a.reason, evidenceNote: a.evidenceNote, status: a.status,
+    reviewNote: a.reviewNote, reviewedBy: a.reviewedBy,
+    createdAt: a.createdAt.toISOString(), resolvedAt: a.resolvedAt?.toISOString() ?? null,
+  }))
+
   const status = STATUS_MAP[project.status] ?? STATUS_MAP['submitted']
   const agent = project.agentRegistries?.[0] ?? null
   const isApproved = ['pilot', 'production'].includes(project.status)
+  // 반려/종료된 과제에 한해 이의제기 가능
+  const canAppeal = project.status === 'closed'
 
   const pendingDataRequests = project.dataRequests.filter(r => r.status === 'PENDING')
   const hasDataWarning = isApproved && pendingDataRequests.length > 0 && agent?.lifecycleStage === 'GATE2'
@@ -298,6 +311,9 @@ export default async function StatusPage({ params }: { params: Promise<{ id: str
             </p>
           </div>
         )}
+
+        {/* 이의제기 */}
+        <AppealSection projectId={project.id} appeals={appealsData} canAppeal={canAppeal} />
       </div>
     </div>
   )
