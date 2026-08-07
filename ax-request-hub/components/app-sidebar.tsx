@@ -104,6 +104,7 @@ const NAV: NavGroup[] = [
       { href: "/admin/appeals",   label: "이의제기",    icon: Scale },
       { href: "/admin/employees", label: "직원 · 교육", icon: Users },
       { href: "/admin/tokens",    label: "토큰 · 쿼터", icon: Coins },
+      { href: "/dept/tools",      label: "도구 배정",   icon: Wrench },
     ],
   },
   // 기둥1 지원 + 거버넌스 — 규정·감사·자산
