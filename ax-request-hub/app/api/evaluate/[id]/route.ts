@@ -6,6 +6,7 @@ import { determineApproval, checkTechStandards } from '@/src/lib/scoring'
 import { db } from '@/src/lib/db'
 import { sendApprovalEmail } from '@/src/lib/notifications/email'
 import { ExtractedProject } from '@/src/lib/agents/consultation'
+import { notify } from '@/lib/notify'
 
 // P1-2: Telegram 알림 제거 — 외부 개인 메신저 사용 불가 (금융회사 망분리·기록보존 컴플라이언스)
 // 사내 채널 연동은 추후 결정 시 이 위치에 추가
@@ -37,6 +38,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       totalScore: 0,
       isAutoApproved: false,
     })
+    const axTeamMembers = await db.employee.findMany({
+      where: { role: 'AX_TEAM', isActive: true },
+      select: { email: true },
+    })
+    for (const member of axTeamMembers) {
+      await notify(
+        member.email,
+        `[G3 수동검토 필요] ${project.title}`,
+        `G3(극비) 기밀 등급 AI 활용으로 자동 평가가 생략되었습니다. AX팀 수동 검토가 필요합니다.`,
+        `/admin?projectId=${project.id}`
+      )
+    }
     return NextResponse.json({
       skipped: true,
       reason: 'G3 기밀(극비) AI 활용 — Claude API 평가 생략, AX팀 수동 검토 필요',
