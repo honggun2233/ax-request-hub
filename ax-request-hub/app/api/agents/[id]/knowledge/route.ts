@@ -58,9 +58,15 @@ export async function DELETE(
   const role = (session.user as any)?.role
   if (!ALLOWED_ROLES.includes(role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
+  const { id } = await params
   const extractId = req.nextUrl.searchParams.get('extractId')
   if (!extractId) return NextResponse.json({ error: 'extractId required' }, { status: 400 })
 
-  await db.agentKnowledgeExtract.delete({ where: { id: extractId } })
+  try {
+    await db.agentKnowledgeExtract.delete({ where: { id: extractId, agentId: id } })
+  } catch (e: any) {
+    if (e.code === 'P2025') return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    throw e
+  }
   return new NextResponse(null, { status: 204 })
 }

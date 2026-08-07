@@ -31,7 +31,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = "AX_TEAM" // 개발 단계: 모든 사용자 최고 권한
+        token.role = (user as any).role
         token.currentLevel = (user as any).currentLevel
         token.department = (user as any).department
       }
@@ -51,5 +51,5 @@ export const authOptions: NextAuthOptions = {
     signIn: "/login",
   },
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET || "ai-hub-dev-secret-change-in-prod",
+  secret: process.env.NEXTAUTH_SECRET,
 }

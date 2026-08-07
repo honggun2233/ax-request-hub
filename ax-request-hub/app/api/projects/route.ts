@@ -46,6 +46,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireRole()
+  if ('error' in auth) return auth.error
+
   try {
     const body = await req.json()
     const { dataRequirements, noDataRequired, ...projectData } = body
@@ -90,6 +93,11 @@ export async function POST(req: NextRequest) {
             requestedSpec: req.assetDescription ?? '',
           })),
         })
+      } else {
+        return NextResponse.json(
+          { error: '신청자 이메일을 찾을 수 없습니다. requesterEmail을 확인해주세요.' },
+          { status: 400 }
+        )
       }
     }
 

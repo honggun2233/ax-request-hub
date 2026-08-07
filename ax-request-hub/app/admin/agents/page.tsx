@@ -54,7 +54,7 @@ export default function AgentsPage() {
   useEffect(() => { load() }, [])
 
   const addAgent = async () => {
-    await fetch('/api/admin/agents', {
+    const res = await fetch('/api/admin/agents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -62,6 +62,11 @@ export default function AgentsPage() {
         kpiTarget: form.kpiTarget !== '' ? Number(form.kpiTarget) : undefined,
       }),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error ?? '에이전트 등록에 실패했습니다.')
+      return
+    }
     setShowAdd(false)
     setForm(EMPTY_FORM)
     load()
