@@ -199,6 +199,16 @@ export default function MyDataPage() {
                     <span className="text-xs text-red-700">{req.rejectReason}</span>
                   </div>
                 )}
+                {(req.status === 'REJECTED' || req.status === 'EXPIRED') && (
+                  <div className="pt-1">
+                    <button
+                      onClick={() => router.push('/data/catalog')}
+                      className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      재신청
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
