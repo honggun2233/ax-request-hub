@@ -96,8 +96,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
     return NextResponse.json({ scoreCard, decision, techStandards: techResult })
   } catch (error) {
-    await db.project.update({ where: { id: project.id }, data: { status: 'evaluated' } })
     console.error('Evaluation error:', error)
-    return NextResponse.json({ error: '평가 오류, 수동 검토 대상으로 등록됨' }, { status: 500 })
+    return NextResponse.json({ error: '평가 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' }, { status: 500 })
   }
 }
