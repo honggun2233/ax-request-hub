@@ -64,11 +64,12 @@ export default function AgentsPage() {
 
   const deprecate = async (id: string) => {
     if (!reason) return
-    await fetch(`/api/agents/${id}/deprecate`, {
+    const res = await fetch(`/api/agents/${id}/deprecate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deprecationReason: reason }),
     })
+    if (!res.ok) { alert('폐기 처리에 실패했습니다.'); return }
     setShowDeprecate(null)
     setReason('')
     load()
@@ -84,8 +85,15 @@ export default function AgentsPage() {
         body: JSON.stringify(knowledgeForm),
       })
       if (!kRes.ok) throw new Error('지식 추출 저장 실패')
+      const kData = await kRes.json()
       const rRes = await fetch(`/api/agents/${id}/retire`, { method: 'POST' })
-      if (!rRes.ok) { const err = await rRes.json(); throw new Error(err.error ?? 'RETIRE 처리 실패') }
+      if (!rRes.ok) {
+        // knowledge 레코드 롤백
+        await fetch(`/api/agents/${id}/knowledge?extractId=${kData.id}`, { method: 'DELETE' }).catch(() => {})
+        let errMsg = 'RETIRE 처리 실패'
+        try { const err = await rRes.json(); errMsg = err.error ?? errMsg } catch {}
+        throw new Error(errMsg)
+      }
       setShowRetireModal(null)
       setKnowledgeForm({ useCaseSummary: '', lessonsLearned: '', promptPatterns: '', failureCases: '' })
       load()
@@ -361,7 +369,7 @@ export default function AgentsPage() {
                 className="flex-1 bg-red-500 text-white py-2 rounded text-sm disabled:opacity-50">
                 {retiring ? '처리 중...' : '지식 저장 후 RETIRE'}
               </button>
-              <button onClick={() => { setShowRetireModal(null); setRetireError(null) }}
+              <button onClick={() => { setShowRetireModal(null); setRetireError(null); setKnowledgeForm({ useCaseSummary: '', lessonsLearned: '', promptPatterns: '', failureCases: '' }) }}
                 className="flex-1 border py-2 rounded text-sm">취소</button>
             </div>
           </div>
