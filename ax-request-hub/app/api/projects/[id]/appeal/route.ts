@@ -71,6 +71,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       detail: JSON.stringify({ appealId, result, reviewNote }),
     },
   });
+  if (result === "ACCEPTED") {
+    await prisma.project.update({
+      where: { id },
+      data: { status: "evaluated" },
+    });
+  }
   await notify(
     appeal.requesterEmail,
     result === "ACCEPTED" ? "이의제기 수용" : "이의제기 기각",
