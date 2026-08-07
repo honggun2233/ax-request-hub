@@ -136,11 +136,11 @@ export function AppSidebar({ role }: { role: Role }) {
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 
   return (
-    <aside className="flex h-full w-[248px] flex-col bg-[#0F172A] border-r border-[#1E293B]">
+    <aside className="flex h-full w-[248px] flex-col bg-[#1E3560] border-r border-[#2A4576]">
       {/* 헤더 */}
       <div className="px-5 py-4 border-b border-white/10">
         <Link href="/" className="flex items-center gap-2.5 group">
-          <span className="w-7 h-7 rounded-md bg-[#C8A84B] flex items-center justify-center shrink-0">
+          <span className="w-7 h-7 rounded-md bg-[#B8956A] flex items-center justify-center shrink-0">
             <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
               <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" />
               <path d="M2 17l10 5 10-5" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
@@ -184,9 +184,9 @@ export function AppSidebar({ role }: { role: Role }) {
                       )}
                     >
                       {active && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#C8A84B] rounded-r-full" />
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-[#B8956A] rounded-r-full" />
                       )}
-                      <Icon className={cn("h-4 w-4 shrink-0", active ? "text-[#C8A84B]" : "")} />
+                      <Icon className={cn("h-4 w-4 shrink-0", active ? "text-[#B8956A]" : "")} />
                       <span className="flex-1 truncate">{item.label}</span>
                     </Link>
                   );
@@ -201,7 +201,7 @@ export function AppSidebar({ role }: { role: Role }) {
       {session && (
         <div className="p-3 border-t border-white/10">
           <div className="flex items-center gap-2.5 mb-2.5">
-            <div className="w-8 h-8 rounded-full bg-[#C8A84B]/20 border border-[#C8A84B]/40 flex items-center justify-center text-[13px] font-bold text-[#C8A84B] shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[#B8956A]/20 border border-[#B8956A]/40 flex items-center justify-center text-[13px] font-bold text-[#B8956A] shrink-0">
               {session.user?.name?.[0] ?? "?"}
             </div>
             <div className="flex-1 min-w-0">
