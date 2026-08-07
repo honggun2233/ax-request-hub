@@ -33,7 +33,7 @@ export default function GovernancePage() {
         )}
       </div>
       <div className="flex gap-3">
-        <select value={entityType} onChange={e => setEntityType(e.target.value)} className="border rounded px-3 py-1.5 text-sm">
+        <select value={entityType} onChange={e => setEntityType(e.target.value)} className="border border-[#E4E9F2] rounded px-3 py-1.5 text-sm bg-white text-[#18243D]">
           <option value="">전체 유형</option>
           {types.map(t => <option key={t as string} value={t as string}>{t as string}</option>)}
         </select>

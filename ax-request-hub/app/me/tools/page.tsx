@@ -41,8 +41,7 @@ export default async function MyToolsPage() {
     .map(a => a.toolType)
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-3xl mx-auto space-y-8">
 
         {/* 현재 사용 중인 도구 */}
         <section>
@@ -52,7 +51,7 @@ export default async function MyToolsPage() {
           </p>
 
           {active.length === 0 ? (
-            <div className="bg-white rounded-xl p-6 text-center text-[var(--muted)] shadow-sm">
+            <div className="bg-white rounded-xl p-6 text-center text-[var(--muted)] shadow-sm border border-[#E4E9F2]">
               아직 배정된 AI 도구가 없습니다.
               <br />
               <span className="text-sm">아래에서 바로 신청하세요.</span>
@@ -62,7 +61,7 @@ export default async function MyToolsPage() {
               {active.map(account => {
                 const s = STATUS_LABEL[account.status] ?? { text: account.status, color: 'bg-gray-100 text-gray-600' }
                 return (
-                  <div key={account.id} className="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between">
+                  <div key={account.id} className="bg-white rounded-xl p-5 shadow-sm flex items-center justify-between border border-[#E4E9F2]">
                     <div>
                       <div className="font-semibold">{TOOL_LABEL[account.toolType] ?? account.toolType}</div>
                       {account.requestReason && (
@@ -86,7 +85,7 @@ export default async function MyToolsPage() {
         </section>
 
         {/* AI 도구 신청 */}
-        <section className="bg-white rounded-xl p-6 shadow-sm">
+        <section className="bg-white rounded-xl p-6 shadow-sm border border-[#E4E9F2]">
           <h2 className="text-base font-semibold mb-1">AI 도구 신청</h2>
           <p className="text-sm text-[var(--muted)] mb-5">
             신청 후 AX팀 검토 → 부서장 배정 완료 시 사용 가능합니다.
@@ -113,7 +112,6 @@ export default async function MyToolsPage() {
           </section>
         )}
 
-      </div>
     </div>
   )
 }

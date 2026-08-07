@@ -80,8 +80,7 @@ export default async function DeptToolsPage() {
   const deptLabel = isAdmin ? '전사 관리' : (quotas[0]?.department ?? '내 부서')
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto space-y-10">
+    <div className="max-w-6xl mx-auto space-y-10">
 
         {/* 헤더 */}
         <div>
@@ -100,7 +99,7 @@ export default async function DeptToolsPage() {
                 const pct = Math.min(100, Math.round((used / limit) * 100))
                 const { bar } = quotaStatus(pct, limit - used)
                 return (
-                  <div key={toolType} className="bg-white rounded-xl p-5 shadow-sm">
+                  <div key={toolType} className="bg-white rounded-xl p-5 shadow-sm border border-[#E4E9F2]">
                     <div className="text-sm font-medium mb-3">{TOOL_LABEL[toolType]}</div>
                     <div className="flex items-end gap-2 mb-2">
                       <span className="text-3xl font-bold">{used}</span>
@@ -121,7 +120,7 @@ export default async function DeptToolsPage() {
         {isAdmin && pending.length > 0 && (
           <section>
             <h2 className="text-base font-semibold mb-3">⏳ SDS 발급 요청 대기 ({pending.length}건)</h2>
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-[#E4E9F2]">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
@@ -155,7 +154,7 @@ export default async function DeptToolsPage() {
         {isAdmin && (
           <section>
             <h2 className="text-base font-semibold mb-3">부서별 쿼터 현황</h2>
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-[#E4E9F2]">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b">
                   <tr>
@@ -213,7 +212,7 @@ export default async function DeptToolsPage() {
         <section>
           <h2 className="text-base font-semibold mb-3">배정 현황</h2>
           {quotas.length === 0 ? (
-            <div className="bg-white rounded-xl p-8 text-center text-[var(--muted)] shadow-sm">
+            <div className="bg-white rounded-xl p-8 text-center text-[var(--muted)] shadow-sm border border-[#E4E9F2]">
               등록된 AI 도구 쿼터가 없습니다. AX팀에 문의하세요.
             </div>
           ) : (
@@ -221,7 +220,7 @@ export default async function DeptToolsPage() {
               {quotas.map(q => {
                 const members = q.toolAccounts.filter(a => a.status !== 'RETURNED')
                 return (
-                  <div key={q.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                  <div key={q.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-[#E4E9F2]">
                     <div className="px-5 py-3 bg-gray-50 border-b flex items-center justify-between">
                       <div>
                         <span className="text-sm font-semibold">{TOOL_LABEL[q.toolType] ?? q.toolType}</span>
@@ -277,7 +276,7 @@ export default async function DeptToolsPage() {
         {/* ── 신규 배정 신청 ──────────────────────────────────────── */}
         <section>
           <h2 className="text-base font-semibold mb-3">신규 배정 신청</h2>
-          <div className="bg-white rounded-xl p-6 shadow-sm max-w-lg">
+          <div className="bg-white rounded-xl p-6 shadow-sm max-w-lg border border-[#E4E9F2]">
             <DeptAssignForm quotas={quotas.map(q => ({
               id: q.id,
               toolType: q.toolType,
@@ -287,7 +286,6 @@ export default async function DeptToolsPage() {
           </div>
         </section>
 
-      </div>
     </div>
   )
 }

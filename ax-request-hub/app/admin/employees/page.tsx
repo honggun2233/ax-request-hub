@@ -50,94 +50,92 @@ export default function AdminEmployeesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <a href="/admin" className="text-sm text-[var(--muted)] hover:underline">← 관리 포털</a>
-            <h1 className="text-2xl font-bold mt-1">직원 · 교육 관리</h1>
-          </div>
-          <div className="flex gap-2">
-            <a href="/api/admin/employees/export" className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700">엑셀 다운로드</a>
-            <button onClick={() => fileRef.current?.click()} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700" disabled={uploading}>
-              {uploading ? "업로드 중..." : "엑셀 업로드"}
-            </button>
-            <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
-          </div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <a href="/admin" className="text-sm text-[var(--muted)] hover:underline">← 관리 포털</a>
+          <h1 className="text-2xl font-bold mt-1">직원 · 교육 관리</h1>
         </div>
-
-        <div className="flex gap-1 mb-6 border-b border-gray-200">
-          <a href="/admin/employees" className="px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 -mb-px">레벨 심사</a>
-          <a href="/admin/literacy" className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-[var(--muted)] hover:text-gray-700 -mb-px">교육 관리</a>
+        <div className="flex gap-2">
+          <a href="/api/admin/employees/export" className="bg-[#4A6FA5] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1E3560]">엑셀 다운로드</a>
+          <button onClick={() => fileRef.current?.click()} className="bg-[#4A6FA5] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1E3560]" disabled={uploading}>
+            {uploading ? "업로드 중..." : "엑셀 업로드"}
+          </button>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
         </div>
-
-        {uploadMsg && <div className="bg-blue-50 text-blue-800 rounded-lg p-3 mb-4 text-sm">{uploadMsg}</div>}
-
-        <div className="grid grid-cols-4 gap-4">
-          {COLUMNS.map(col => (
-            <div key={col} className="bg-gray-100 rounded-xl p-3">
-              <h3 className="font-semibold text-sm mb-3 flex justify-between">
-                {STATUS_LABELS[col]}
-                <span className="bg-white rounded-full px-2 text-xs font-normal">
-                  {data.applications.filter((a: any) => a.status === col).length}
-                </span>
-              </h3>
-              <div className="space-y-2">
-                {data.applications.filter((a: any) => a.status === col).map((app: any) => (
-                  <div key={app.id} className="bg-white rounded-lg p-3 shadow-sm cursor-pointer hover:shadow-md" onClick={() => { setSelected(app); setGrantLevel(app.requestedLevel) }}>
-                    <p className="font-medium text-sm">{app.employee?.name}</p>
-                    <p className="text-xs text-[var(--muted)]">{app.employee?.department}</p>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-xs font-bold text-blue-600">{app.requestedLevel} 신청</span>
-                      <span className="text-xs text-[var(--muted)]">{new Date(app.createdAt).toLocaleDateString("ko-KR")}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {selected && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelected(null)}>
-            <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-xl" onClick={e => e.stopPropagation()}>
-              <h2 className="text-lg font-bold mb-4">{selected.employee?.name} — {selected.requestedLevel} 신청 심사</h2>
-              <div className="space-y-3 mb-4 text-sm">
-                <div><span className="font-medium">부서:</span> {selected.employee?.department}</div>
-                <div><span className="font-medium">현재 레벨:</span> {selected.currentLevel}</div>
-                <div><span className="font-medium">자기소개:</span><p className="bg-gray-50 rounded p-2 mt-1">{selected.selfIntro || "—"}</p></div>
-                <div><span className="font-medium">교육 이수:</span><p className="bg-gray-50 rounded p-2 mt-1">{selected.trainingCompleted || "—"}</p></div>
-                <div><span className="font-medium">활용 계획:</span><p className="bg-gray-50 rounded p-2 mt-1">{selected.utilizationPlan || "—"}</p></div>
-              </div>
-              {selected.status === "PENDING" || selected.status === "REVIEWING" ? (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">부여 레벨</label>
-                    <select value={grantLevel} onChange={e => setGrantLevel(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm">
-                      {["L1", "L2", "L3", "L4"].map(l => <option key={l} value={l}>{l}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">심사 코멘트</label>
-                    <textarea value={reviewNote} onChange={e => setReviewNote(e.target.value)} rows={2} className="w-full border rounded-lg px-3 py-2 text-sm" placeholder="승인/반려 사유" />
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => handleReview("APPROVED")} className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm font-medium">승인</button>
-                    <button onClick={() => handleReview("REJECTED")} className="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm font-medium">반려</button>
-                    <button onClick={() => setSelected(null)} className="flex-1 border py-2 rounded-lg text-sm">닫기</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLOR[selected.status]}`}>{STATUS_LABELS[selected.status]}</span>
-                  {selected.reviewNote && <p className="text-sm text-gray-600 mt-2">{selected.reviewNote}</p>}
-                  <button onClick={() => setSelected(null)} className="mt-3 w-full border py-2 rounded-lg text-sm">닫기</button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      <div className="flex gap-1 border-b border-[#E4E9F2]">
+        <a href="/admin/employees" className="px-4 py-2 text-sm font-medium border-b-2 border-[#4A6FA5] text-[#4A6FA5] -mb-px">레벨 심사</a>
+        <a href="/admin/literacy" className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-[var(--muted)] hover:text-[#18243D] -mb-px">교육 관리</a>
+      </div>
+
+      {uploadMsg && <div className="bg-blue-50 text-blue-800 rounded-lg p-3 text-sm">{uploadMsg}</div>}
+
+      <div className="grid grid-cols-4 gap-4">
+        {COLUMNS.map(col => (
+          <div key={col} className="bg-[#EBF1F9] rounded-xl p-3">
+            <h3 className="font-semibold text-sm mb-3 flex justify-between text-[#18243D]">
+              {STATUS_LABELS[col]}
+              <span className="bg-white rounded-full px-2 text-xs font-normal text-[var(--muted)]">
+                {data.applications.filter((a: any) => a.status === col).length}
+              </span>
+            </h3>
+            <div className="space-y-2">
+              {data.applications.filter((a: any) => a.status === col).map((app: any) => (
+                <div key={app.id} className="bg-white rounded-lg p-3 border border-[#E4E9F2] cursor-pointer hover:border-[#B8956A] hover:shadow-sm transition-all" onClick={() => { setSelected(app); setGrantLevel(app.requestedLevel) }}>
+                  <p className="font-medium text-sm text-[#18243D]">{app.employee?.name}</p>
+                  <p className="text-xs text-[var(--muted)]">{app.employee?.department}</p>
+                  <div className="flex justify-between items-center mt-2">
+                    <span className="text-xs font-bold text-[#4A6FA5]">{app.requestedLevel} 신청</span>
+                    <span className="text-xs text-[var(--muted)]">{new Date(app.createdAt).toLocaleDateString("ko-KR")}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {selected && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setSelected(null)}>
+          <div className="bg-white rounded-xl p-6 w-full max-w-lg shadow-2xl border border-[#E4E9F2]" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-bold mb-4 text-[#18243D]">{selected.employee?.name} — {selected.requestedLevel} 신청 심사</h2>
+            <div className="space-y-3 mb-4 text-sm text-[#18243D]">
+              <div><span className="font-medium">부서:</span> {selected.employee?.department}</div>
+              <div><span className="font-medium">현재 레벨:</span> {selected.currentLevel}</div>
+              <div><span className="font-medium">자기소개:</span><p className="bg-[#F7F9FC] border border-[#E4E9F2] rounded p-2 mt-1 text-[var(--muted)]">{selected.selfIntro || "—"}</p></div>
+              <div><span className="font-medium">교육 이수:</span><p className="bg-[#F7F9FC] border border-[#E4E9F2] rounded p-2 mt-1 text-[var(--muted)]">{selected.trainingCompleted || "—"}</p></div>
+              <div><span className="font-medium">활용 계획:</span><p className="bg-[#F7F9FC] border border-[#E4E9F2] rounded p-2 mt-1 text-[var(--muted)]">{selected.utilizationPlan || "—"}</p></div>
+            </div>
+            {selected.status === "PENDING" || selected.status === "REVIEWING" ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-[#18243D]">부여 레벨</label>
+                  <select value={grantLevel} onChange={e => setGrantLevel(e.target.value)} className="w-full border border-[#E4E9F2] rounded-lg px-3 py-2 text-sm bg-white text-[#18243D]">
+                    {["L1", "L2", "L3", "L4"].map(l => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-[#18243D]">심사 코멘트</label>
+                  <textarea value={reviewNote} onChange={e => setReviewNote(e.target.value)} rows={2} className="w-full border border-[#E4E9F2] rounded-lg px-3 py-2 text-sm bg-white text-[#18243D]" placeholder="승인/반려 사유" />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleReview("APPROVED")} className="flex-1 bg-[#4A6FA5] text-white py-2 rounded-lg text-sm font-medium hover:bg-[#1E3560]">승인</button>
+                  <button onClick={() => handleReview("REJECTED")} className="flex-1 bg-[#B94040] text-white py-2 rounded-lg text-sm font-medium hover:bg-red-700">반려</button>
+                  <button onClick={() => setSelected(null)} className="flex-1 border border-[#E4E9F2] py-2 rounded-lg text-sm text-[var(--muted)] hover:bg-[#F7F9FC]">닫기</button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLOR[selected.status]}`}>{STATUS_LABELS[selected.status]}</span>
+                {selected.reviewNote && <p className="text-sm text-[var(--muted)] mt-2">{selected.reviewNote}</p>}
+                <button onClick={() => setSelected(null)} className="mt-3 w-full border border-[#E4E9F2] py-2 rounded-lg text-sm text-[var(--muted)] hover:bg-[#F7F9FC]">닫기</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
