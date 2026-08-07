@@ -128,7 +128,7 @@ export default function AdminDocsPage() {
           <h1 className="text-xl font-bold text-gray-900">거버넌스 문서 관리</h1>
           <p className="text-xs text-[var(--muted)] mt-0.5">등록 {registered.length}개 · 미등록 {unregistered.length}개</p>
         </div>
-        <button onClick={resetForm} className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        <button onClick={resetForm} className="text-sm bg-[#4A6FA5] text-white px-4 py-2 rounded hover:bg-[#1E3560]">
           + 메타데이터 등록
         </button>
       </div>
@@ -247,7 +247,7 @@ export default function AdminDocsPage() {
           {msg && <p className={`text-sm ${msg.startsWith('오류') ? 'text-red-600' : 'text-green-600'}`}>{msg}</p>}
           <div className="flex gap-2">
             <button onClick={save} disabled={saving}
-              className="text-sm bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="text-sm bg-[#4A6FA5] text-white px-5 py-2 rounded hover:bg-[#1E3560] disabled:opacity-50">
               {saving ? '저장 중...' : editing ? '수정 저장' : '등록'}
             </button>
             {editing && <button onClick={resetForm} className="text-sm border border-gray-200 px-4 py-2 rounded-lg text-gray-600">취소</button>}

@@ -133,7 +133,7 @@ export default function MyDataPage() {
         </div>
         <a
           href="/data/catalog"
-          className="shrink-0 text-sm bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition"
+          className="shrink-0 text-sm bg-[#4A6FA5] text-white px-4 py-2 rounded font-semibold hover:bg-[#1E3560] transition"
         >
           + 데이터 신청
         </a>
@@ -203,7 +203,7 @@ export default function MyDataPage() {
                   <div className="pt-1">
                     <button
                       onClick={() => router.push('/data/catalog')}
-                      className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                      className="text-xs px-3 py-1.5 rounded bg-[#4A6FA5] text-white font-semibold hover:bg-[#1E3560] transition-colors"
                     >
                       재신청
                     </button>

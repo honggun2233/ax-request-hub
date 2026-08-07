@@ -62,8 +62,8 @@ export function ToolRequestForm({ activeTypes }: { activeTypes: string[] }) {
               key={t.toolType}
               className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                 selected === t.toolType
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-[#4A6FA5] bg-[#EBF1F9]'
+                  : 'border-[#E4E9F2] hover:border-[#4A6FA5]'
               }`}
             >
               <input
@@ -94,7 +94,7 @@ export function ToolRequestForm({ activeTypes }: { activeTypes: string[] }) {
           required
           minLength={20}
           placeholder="업무에서 어떻게 활용할 계획인지 구체적으로 입력하세요."
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full border border-[#E4E9F2] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4A6FA5] resize-none"
         />
         <p className={`text-xs mt-1 ${reason.length < 20 ? 'text-[var(--muted)]' : 'text-green-600'}`}>
           {reason.length} / 20자 이상
@@ -108,7 +108,7 @@ export function ToolRequestForm({ activeTypes }: { activeTypes: string[] }) {
       <button
         type="submit"
         disabled={!selected || reason.length < 20 || submitting}
-        className="w-full bg-blue-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full bg-[#4A6FA5] text-white rounded py-2 text-sm font-semibold hover:bg-[#1E3560] transition disabled:opacity-40 disabled:cursor-not-allowed"
       >
         {submitting ? '신청 중…' : 'AI 도구 신청'}
       </button>

@@ -69,14 +69,14 @@ function AssetCard({ asset, onRequest }: { asset: DataAsset; onRequest: (asset: 
         <button
           onClick={() => onRequest(asset, 'ACCESS')}
           title="이 데이터 자산에 대한 접근 권한을 신청합니다"
-          className="flex-1 py-1.5 bg-blue-600 text-white text-sm rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          className="flex-1 py-1.5 bg-[#4A6FA5] text-white text-sm rounded font-semibold hover:bg-[#1E3560] transition-colors"
         >
           이용 신청
         </button>
         <button
           onClick={() => onRequest(asset, 'NEW')}
           title="현재 카탈로그에 없는 추가 데이터 수집을 요청합니다 (예: 더 넓은 범위, 다른 형태)"
-          className="flex-1 py-1.5 border border-gray-300 text-gray-600 text-sm rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          className="flex-1 py-1.5 border border-[#E4E9F2] text-[var(--muted)] text-sm rounded font-medium hover:bg-[#F7F9FC] transition-colors"
         >
           추가 수집 요청
         </button>
@@ -238,8 +238,8 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
                     onClick={() => setTrackType(t)}
                     className={`flex-1 py-2 text-sm rounded-lg border font-medium transition-colors ${
                       trackType === t
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                        ? 'bg-[#4A6FA5] text-white border-[#4A6FA5]'
+                        : 'bg-white text-[var(--muted)] border-[#E4E9F2] hover:border-[#4A6FA5] hover:text-[#4A6FA5]'
                     }`}
                   >
                     Track {t} — {t === 'A' ? '데이터 활용' : 'AI 연계'}
@@ -319,7 +319,7 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
             <button
               type="submit"
               disabled={submitting || !purpose.trim()}
-              className="w-full py-2.5 bg-blue-600 text-white text-sm rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="w-full py-2.5 bg-[#4A6FA5] text-white text-sm rounded font-semibold hover:bg-[#1E3560] disabled:opacity-50 transition-colors"
             >
               {submitting ? '제출 중...' : '신청하기'}
             </button>
@@ -421,8 +421,8 @@ export default function DataCatalogPage() {
               onClick={() => setClassFilter(c)}
               className={`text-sm px-3 py-1.5 rounded-full border font-medium transition-colors ${
                 classFilter === c
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                  ? 'bg-[#4A6FA5] text-white border-[#4A6FA5]'
+                  : 'bg-white border-[#E4E9F2] text-[var(--muted)] hover:bg-[#F7F9FC]'
               }`}
             >
               {c === '' ? '전체' : CONF_LABEL[c]}

@@ -70,21 +70,27 @@ export async function POST(req: NextRequest) {
 
     // dataRequirements를 DRAFT 상태로 미리 생성 (승인 시 PENDING으로 전환)
     if (dataRequirements && dataRequirements.length > 0) {
-      await prisma.dataRequest.createMany({
-        data: dataRequirements.map((req: any) => ({
-          projectId: project.id,
-          employeeId: projectData.requesterEmail, // FK 대신 email 임시 사용
-          type: req.trackType ?? 'ACCESS',
-          classification: req.classification ?? 'G2',
-          purpose: req.purpose ?? projectData.description ?? '',
-          periodMonths: req.periodMonths ?? 12,
-          includesPII: req.includesPII ?? false,
-          isAnonymized: false,
-          forProduction: false,
-          status: 'DRAFT', // 과제 승인 전까지 DRAFT
-          requestedSpec: req.assetDescription ?? '',
-        })),
+      const requester = await prisma.employee.findUnique({
+        where: { email: projectData.requesterEmail },
+        select: { id: true },
       })
+      if (requester) {
+        await prisma.dataRequest.createMany({
+          data: dataRequirements.map((req: any) => ({
+            projectId: project.id,
+            requesterId: requester.id,
+            type: req.trackType ?? 'ACCESS',
+            classification: req.classification ?? 'G2',
+            purpose: req.purpose ?? projectData.description ?? '',
+            periodMonths: req.periodMonths ?? 12,
+            includesPII: req.includesPII ?? false,
+            isAnonymized: false,
+            forProduction: false,
+            status: 'DRAFT',
+            requestedSpec: req.assetDescription ?? '',
+          })),
+        })
+      }
     }
 
     return NextResponse.json(project, { status: 201 })

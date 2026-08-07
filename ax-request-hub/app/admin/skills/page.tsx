@@ -106,7 +106,7 @@ export default function AdminSkillsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900">AI 스킬 관리</h1>
-        <button onClick={resetForm} className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        <button onClick={resetForm} className="text-sm bg-[#4A6FA5] text-white px-4 py-2 rounded hover:bg-[#1E3560]">
           + 새 스킬 등록
         </button>
       </div>
@@ -194,7 +194,7 @@ export default function AdminSkillsPage() {
         {msg && <p className={`text-sm ${msg.startsWith('오류') ? 'text-red-600' : 'text-green-600'}`}>{msg}</p>}
         <div className="flex gap-2">
           <button onClick={save} disabled={saving}
-            className="text-sm bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+            className="text-sm bg-[#4A6FA5] text-white px-5 py-2 rounded hover:bg-[#1E3560] disabled:opacity-50">
             {saving ? '저장 중...' : editing ? '수정 저장' : '등록'}
           </button>
           {editing && <button onClick={resetForm} className="text-sm border border-gray-200 px-4 py-2 rounded-lg text-gray-600">취소</button>}
@@ -209,7 +209,7 @@ export default function AdminSkillsPage() {
             {['all', 'active', 'draft', 'deprecated'].map(s => (
               <button key={s} onClick={() => setFilterStatus(s)}
                 className={`text-xs px-3 py-1 rounded-full border transition ${
-                  filterStatus === s ? 'bg-[var(--surface)] text-white border-[var(--line)]' : 'border-gray-200 text-gray-600'
+                  filterStatus === s ? 'bg-[#4A6FA5] text-white border-[#4A6FA5]' : 'border-[#E4E9F2] text-[var(--muted)]'
                 }`}>
                 {s === 'all' ? '전체' : s === 'active' ? '승인' : s === 'draft' ? '초안' : '폐기'}
               </button>
