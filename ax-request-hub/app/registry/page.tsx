@@ -293,9 +293,16 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
         </div>
 
         {/* 액션 버튼 */}
-        {(nextStage || agent.lifecycleStage === 'GATE3') && (
+        {(nextStage || agent.lifecycleStage === 'GATE3' || agent.lifecycleStage === 'DEGRADED') && (
           <div style={{ padding: '14px 20px', borderTop: `1px solid ${BDR}`, background: SB, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {nextStage && nextStage !== 'ACTIVE' && (
+            {agent.lifecycleStage === 'DEGRADED' && (
+              <button disabled={saving} onClick={() => advanceStage('ACTIVE')} style={{
+                padding: '10px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}>
+                {saving ? '저장 중...' : '✓ ACTIVE 복구 (성능저하 해소)'}
+              </button>
+            )}
+            {nextStage && nextStage !== 'ACTIVE' && agent.lifecycleStage !== 'DEGRADED' && (
               <button disabled={saving} onClick={() => advanceStage(nextStage)} style={{
                 padding: '10px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
               }}>
