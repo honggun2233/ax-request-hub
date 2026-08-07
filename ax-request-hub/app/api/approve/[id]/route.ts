@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const statusMap = { approve: 'pilot', hold: 'evaluated', reject: 'closed' } as const
   await db.project.update({
     where: { id },
-    data: { status: statusMap[action], approvedBy: '홍인표 팀장', decisionNote: note ?? null },
+    data: { status: statusMap[action], approvedBy: (session.user as any)?.name ?? session.user?.email ?? 'unknown', decisionNote: note ?? null },
   })
 
   if (action === 'approve') {
