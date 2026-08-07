@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { db } from '@/src/lib/db'
-import { RevokeButton, DeptAssignForm, AdminActionButtons } from './DeptToolActions'
+import { RevokeButton, DeptAssignForm, AdminActionButtons, SuspendButton } from './DeptToolActions'
 
 const TOOL_LABEL: Record<string, string> = {
   GPT_CHAT: 'ChatGPT (Chat)',
@@ -255,7 +255,10 @@ export default async function DeptToolsPage() {
                                   <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.color}`}>{s.text}</span>
                                 </td>
                                 <td className="p-4 text-gray-400">{new Date(acc.createdAt).toLocaleDateString('ko-KR')}</td>
-                                <td className="p-4">
+                                <td className="p-4 flex gap-2">
+                                  {isAdmin && (acc.status === 'ACTIVE' || acc.status === 'SUSPENDED') && (
+                                    <SuspendButton accountId={acc.id} currentStatus={acc.status} name={acc.employee.name} />
+                                  )}
                                   <RevokeButton accountId={acc.id} name={acc.employee.name} />
                                 </td>
                               </tr>

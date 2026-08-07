@@ -59,6 +59,29 @@ export function RevokeButton({ accountId, name }: { accountId: string; name: str
   )
 }
 
+export function SuspendButton({ accountId, currentStatus, name }: { accountId: string; currentStatus: string; name: string }) {
+  const isSuspended = currentStatus === 'SUSPENDED'
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        const newStatus = isSuspended ? 'ACTIVE' : 'SUSPENDED'
+        const action = isSuspended ? '재개' : '일시정지'
+        if (!confirm(`${name} 계정을 ${action}하시겠습니까?`)) return
+        await fetch(`/api/admin/tools/${accountId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
+        })
+        window.location.reload()
+      }}
+      className={isSuspended ? 'text-xs text-green-600 hover:underline' : 'text-xs text-orange-500 hover:underline'}
+    >
+      {isSuspended ? '재개' : '일시정지'}
+    </button>
+  )
+}
+
 export function DeptAssignForm({
   quotas,
 }: {
