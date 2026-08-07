@@ -1,6 +1,6 @@
 import { db } from '@/src/lib/db'
 import { ProjectForm } from '@/src/components/ProjectForm'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 export default async function SubmitPage({
   searchParams,
@@ -8,7 +8,7 @@ export default async function SubmitPage({
   searchParams: Promise<{ projectId?: string }>
 }) {
   const { projectId } = await searchParams
-  if (!projectId) notFound()
+  if (!projectId) redirect('/projects/new')
   const project = await db.project.findUnique({ where: { id: projectId } })
   if (!project) notFound()
   return (
