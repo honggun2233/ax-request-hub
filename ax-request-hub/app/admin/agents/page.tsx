@@ -35,6 +35,10 @@ export default function AgentsPage() {
   const [showDeprecate, setShowDeprecate] = useState<string | null>(null)
   const [form, setForm] = useState(EMPTY_FORM)
   const [reason, setReason] = useState('')
+  const [showRetireModal, setShowRetireModal] = useState<string | null>(null)
+  const [knowledgeForm, setKnowledgeForm] = useState({ useCaseSummary: '', lessonsLearned: '', promptPatterns: '', failureCases: '' })
+  const [retiring, setRetiring] = useState(false)
+  const [retireError, setRetireError] = useState<string | null>(null)
 
   const load = () =>
     fetch('/api/admin/agents')
@@ -68,6 +72,25 @@ export default function AgentsPage() {
     setShowDeprecate(null)
     setReason('')
     load()
+  }
+
+  const retire = async (id: string) => {
+    if (!knowledgeForm.useCaseSummary.trim() || !knowledgeForm.lessonsLearned.trim()) return
+    setRetiring(true)
+    setRetireError(null)
+    try {
+      const kRes = await fetch(`/api/agents/${id}/knowledge`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(knowledgeForm),
+      })
+      if (!kRes.ok) throw new Error('지식 추출 저장 실패')
+      const rRes = await fetch(`/api/agents/${id}/retire`, { method: 'POST' })
+      if (!rRes.ok) { const err = await rRes.json(); throw new Error(err.error ?? 'RETIRE 처리 실패') }
+      setShowRetireModal(null)
+      setKnowledgeForm({ useCaseSummary: '', lessonsLearned: '', promptPatterns: '', failureCases: '' })
+      load()
+    } catch (e: any) { setRetireError(e.message) }
+    finally { setRetiring(false) }
   }
 
   const active = agents.filter(a => a.status === 'ACTIVE')
@@ -299,8 +322,8 @@ export default function AgentsPage() {
                   </div>
                   {canRetire && (
                     <button
-                      className="text-xs text-gray-600 border px-3 py-1.5 rounded hover:bg-gray-50"
-                      disabled
+                      onClick={() => { setShowRetireModal(a.id); setRetireError(null) }}
+                      className="text-xs text-red-600 border border-red-200 px-3 py-1.5 rounded hover:bg-red-50"
                     >
                       지식 추출 후 RETIRE
                     </button>
@@ -308,6 +331,39 @@ export default function AgentsPage() {
                 </div>
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {showRetireModal && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 space-y-4">
+            <h2 className="font-semibold">지식 추출 후 RETIRED 처리</h2>
+            <p className="text-xs text-gray-500">필수 항목 입력 후 지식이 저장되고 에이전트가 RETIRED로 전환됩니다.</p>
+            <div className="space-y-2">
+              <textarea placeholder="활용 사례 요약 *" value={knowledgeForm.useCaseSummary}
+                onChange={e => setKnowledgeForm(p => ({ ...p, useCaseSummary: e.target.value }))}
+                className="w-full border rounded px-3 py-2 text-sm resize-none" rows={2} />
+              <textarea placeholder="교훈 및 인사이트 *" value={knowledgeForm.lessonsLearned}
+                onChange={e => setKnowledgeForm(p => ({ ...p, lessonsLearned: e.target.value }))}
+                className="w-full border rounded px-3 py-2 text-sm resize-none" rows={2} />
+              <textarea placeholder="주요 프롬프트 패턴 (선택)" value={knowledgeForm.promptPatterns}
+                onChange={e => setKnowledgeForm(p => ({ ...p, promptPatterns: e.target.value }))}
+                className="w-full border rounded px-3 py-2 text-sm resize-none" rows={2} />
+              <textarea placeholder="실패 사례 (선택)" value={knowledgeForm.failureCases}
+                onChange={e => setKnowledgeForm(p => ({ ...p, failureCases: e.target.value }))}
+                className="w-full border rounded px-3 py-2 text-sm resize-none" rows={2} />
+            </div>
+            {retireError && <p className="text-xs text-red-500">{retireError}</p>}
+            <div className="flex gap-2">
+              <button onClick={() => retire(showRetireModal)}
+                disabled={retiring || !knowledgeForm.useCaseSummary.trim() || !knowledgeForm.lessonsLearned.trim()}
+                className="flex-1 bg-red-500 text-white py-2 rounded text-sm disabled:opacity-50">
+                {retiring ? '처리 중...' : '지식 저장 후 RETIRE'}
+              </button>
+              <button onClick={() => { setShowRetireModal(null); setRetireError(null) }}
+                className="flex-1 border py-2 rounded text-sm">취소</button>
+            </div>
           </div>
         </div>
       )}
