@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useState } from 'react'
 
 type KPI = {
@@ -121,7 +121,7 @@ export default function ExecutiveDashboard() {
   if (error) return <div className="text-red-500 p-8">데이터 로드 실패: {error}</div>
   if (!data) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
+      <div className="flex items-center justify-center h-64 text-[var(--muted)] text-sm">
         <div className="flex flex-col items-center gap-3">
           <div className="w-6 h-6 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           <span>경영진 대시보드 로딩 중...</span>
@@ -164,7 +164,7 @@ export default function ExecutiveDashboard() {
         {/* Gate 퍼널 */}
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <SectionTitle>에이전트 Gate 파이프라인</SectionTitle>
-          <p className="text-xs text-gray-400 mb-4">
+          <p className="text-xs text-[var(--muted)] mb-4">
             활성화율 <span className="font-semibold text-blue-600">{kpi.activationRate}%</span>
             &nbsp;— 전체 {kpi.totalAgents}개 에이전트 중 {kpi.activeAgents}개 실운용
           </p>
@@ -189,7 +189,7 @@ export default function ExecutiveDashboard() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-4 pt-3 border-t">
+          <p className="text-xs text-[var(--muted)] mt-4 pt-3 border-t">
             Gate2 통과 시 운용역 리뷰 · Gate3 통과 시 경영진 승인 후 실운용
           </p>
         </div>
@@ -218,7 +218,7 @@ export default function ExecutiveDashboard() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-4 pt-3 border-t">
+          <p className="text-xs text-[var(--muted)] mt-4 pt-3 border-t">
             파일럿+운영 = 실제 현업 적용 중인 AI 활용
           </p>
         </div>
@@ -230,7 +230,7 @@ export default function ExecutiveDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-xs text-gray-400 uppercase border-b">
+              <tr className="text-xs text-[var(--muted)] uppercase border-b">
                 <th className="text-left py-2 font-medium">프로젝트</th>
                 <th className="text-center py-2 font-medium w-20">운영</th>
                 <th className="text-center py-2 font-medium w-20">Gate3</th>
@@ -251,23 +251,23 @@ export default function ExecutiveDashboard() {
                         {p.activeAgents}
                       </span>
                     ) : (
-                      <span className="text-gray-300">—</span>
+                      <span className="text-[var(--text2)]">—</span>
                     )}
                   </td>
                   <td className="py-3 text-center">
                     {p.gate3Agents > 0 ? (
                       <span className="text-purple-600 font-medium">{p.gate3Agents}</span>
-                    ) : <span className="text-gray-300">—</span>}
+                    ) : <span className="text-[var(--text2)]">—</span>}
                   </td>
                   <td className="py-3 text-center">
                     {p.gate2Agents > 0 ? (
                       <span className="text-blue-600 font-medium">{p.gate2Agents}</span>
-                    ) : <span className="text-gray-300">—</span>}
+                    ) : <span className="text-[var(--text2)]">—</span>}
                   </td>
                   <td className="py-3 text-center">
                     {p.gate1Agents > 0 ? (
                       <span className="text-yellow-600 font-medium">{p.gate1Agents}</span>
-                    ) : <span className="text-gray-300">—</span>}
+                    ) : <span className="text-[var(--text2)]">—</span>}
                   </td>
                   <td className="py-3 text-center font-semibold text-gray-700">{p.totalAgents}</td>
                 </tr>
@@ -283,7 +283,7 @@ export default function ExecutiveDashboard() {
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <SectionTitle>거버넌스 최근 활동</SectionTitle>
           {auditLogs.length === 0 ? (
-            <p className="text-sm text-gray-400">최근 감사 활동 없음</p>
+            <p className="text-sm text-[var(--muted)]">최근 감사 활동 없음</p>
           ) : (
             <ul className="space-y-2">
               {auditLogs.map((log) => (
@@ -292,13 +292,13 @@ export default function ExecutiveDashboard() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-800">
                       {AUDIT_LABEL[log.action] ?? log.action}
-                      <span className="ml-2 text-xs text-gray-400">({log.entityType})</span>
+                      <span className="ml-2 text-xs text-[var(--muted)]">({log.entityType})</span>
                     </p>
                     {log.detail && (
-                      <p className="text-xs text-gray-500 truncate">{log.detail}</p>
+                      <p className="text-xs text-[var(--muted)] truncate">{log.detail}</p>
                     )}
                   </div>
-                  <span className="text-xs text-gray-400 flex-shrink-0">
+                  <span className="text-xs text-[var(--muted)] flex-shrink-0">
                     {new Date(log.createdAt).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
                   </span>
                 </li>
@@ -310,7 +310,7 @@ export default function ExecutiveDashboard() {
         {/* 직원 AI 역량 */}
         <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
           <SectionTitle>임직원 AI 역량 (레벨 분포)</SectionTitle>
-          <p className="text-xs text-gray-400 mb-4">총 {totalEmployees}명 기준</p>
+          <p className="text-xs text-[var(--muted)] mb-4">총 {totalEmployees}명 기준</p>
           <div className="space-y-2">
             {levelDistribution.filter(l => l.level !== 'L0' || l.count > 0).map((l) => (
               <div key={l.level} className="flex items-center gap-3">
@@ -318,7 +318,7 @@ export default function ExecutiveDashboard() {
                   l.level === 'L4' ? 'text-purple-600' :
                   l.level === 'L3' ? 'text-orange-600' :
                   l.level === 'L2' ? 'text-green-600' :
-                  l.level === 'L1' ? 'text-blue-600' : 'text-gray-400'
+                  l.level === 'L1' ? 'text-blue-600' : 'text-[var(--muted)]'
                 }`}>{l.level}</span>
                 <div className="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden">
                   <div
@@ -335,7 +335,7 @@ export default function ExecutiveDashboard() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-4 pt-3 border-t">
+          <p className="text-xs text-[var(--muted)] mt-4 pt-3 border-t">
             L1=AI 리터러시 · L2=AI 활용 · L3=AI 개발 · L4=AI 리더
           </p>
         </div>
@@ -348,18 +348,18 @@ export default function ExecutiveDashboard() {
           <div className="flex items-end gap-2 h-28 mt-2">
             {monthlyCost.map((m, i) => (
               <div key={`${m.month}-${i}`} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-xs text-gray-500 font-medium">
+                <span className="text-xs text-[var(--muted)] font-medium">
                   ₩{m.cost >= 1000 ? `${(m.cost / 1000).toFixed(0)}k` : m.cost.toLocaleString()}
                 </span>
                 <div
                   className="w-full bg-blue-400 rounded-t-sm transition-all"
                   style={{ height: `${Math.max((m.cost / maxCost) * 80, 4)}px` }}
                 />
-                <span className="text-xs text-gray-400">{m.month.slice(5)}</span>
+                <span className="text-xs text-[var(--muted)]">{m.month.slice(5)}</span>
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 mt-3 pt-3 border-t">
+          <p className="text-xs text-[var(--muted)] mt-3 pt-3 border-t">
             누적 총 ₩{kpi.totalCostKrw.toLocaleString()} · {(kpi.totalTokens / 10000).toFixed(0)}만 토큰 소비
           </p>
         </div>

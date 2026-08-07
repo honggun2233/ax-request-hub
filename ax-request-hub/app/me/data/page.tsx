@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -44,8 +44,8 @@ const STATUS_COLOR: Record<string, string> = {
   REJECTED: 'bg-red-100 text-red-700',
   COLLECTING: 'bg-purple-100 text-purple-700',
   PROVISIONED: 'bg-gray-100 text-gray-600',
-  EXPIRED: 'bg-gray-100 text-gray-400',
-  REVOKED: 'bg-gray-100 text-gray-400',
+  EXPIRED: 'bg-gray-100 text-[var(--muted)]',
+  REVOKED: 'bg-gray-100 text-[var(--muted)]',
 }
 
 const CLASS_COLOR: Record<string, string> = {
@@ -129,7 +129,7 @@ export default function MyDataPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">내 데이터 신청·제공 현황</h1>
-          <p className="text-sm text-gray-500 mt-0.5">데이터 이용 신청 내역 및 제공받은 데이터 목록</p>
+          <p className="text-sm text-[var(--muted)] mt-0.5">데이터 이용 신청 내역 및 제공받은 데이터 목록</p>
         </div>
         <a
           href="/data/catalog"
@@ -144,7 +144,7 @@ export default function MyDataPage() {
         <h2 className="text-base font-semibold text-gray-800 mb-3">
           내가 신청한 데이터
           {!loading && (
-            <span className="ml-2 text-sm font-normal text-gray-400">{requests.length}건</span>
+            <span className="ml-2 text-sm font-normal text-[var(--muted)]">{requests.length}건</span>
           )}
         </h2>
 
@@ -154,7 +154,7 @@ export default function MyDataPage() {
           </div>
         ) : requests.length === 0 ? (
           <div className="text-center py-10 bg-gray-50 rounded-xl">
-            <p className="text-gray-400 text-sm mb-3">신청 내역이 없습니다</p>
+            <p className="text-[var(--muted)] text-sm mb-3">신청 내역이 없습니다</p>
             <a href="/data/catalog" className="text-sm text-blue-600 hover:underline font-medium">
               데이터 카탈로그에서 신청하기 →
             </a>
@@ -187,8 +187,8 @@ export default function MyDataPage() {
                   <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">
                     {req.type}
                   </span>
-                  <span className="text-xs text-gray-400">{req.periodMonths}개월</span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-[var(--muted)]">{req.periodMonths}개월</span>
+                  <span className="text-xs text-[var(--muted)]">
                     {new Date(req.createdAt).toLocaleDateString('ko-KR')} 신청
                   </span>
                 </div>
@@ -220,7 +220,7 @@ export default function MyDataPage() {
         <h2 className="text-base font-semibold text-gray-800 mb-3">
           제공받은 데이터
           {!loading && (
-            <span className="ml-2 text-sm font-normal text-gray-400">{provisions.length}건</span>
+            <span className="ml-2 text-sm font-normal text-[var(--muted)]">{provisions.length}건</span>
           )}
         </h2>
 
@@ -229,7 +229,7 @@ export default function MyDataPage() {
             {[1, 2].map((i) => <SkeletonCard key={i} />)}
           </div>
         ) : provisions.length === 0 ? (
-          <div className="text-center py-10 text-gray-400 text-sm bg-gray-50 rounded-xl">
+          <div className="text-center py-10 text-[var(--muted)] text-sm bg-gray-50 rounded-xl">
             제공받은 데이터가 없습니다
           </div>
         ) : (
@@ -248,7 +248,7 @@ export default function MyDataPage() {
                   <div className="flex items-start justify-between gap-2">
                     <p
                       className={`font-semibold leading-tight ${
-                        dday.expired ? 'text-gray-400' : 'text-gray-900'
+                        dday.expired ? 'text-[var(--muted)]' : 'text-gray-900'
                       }`}
                     >
                       {req.asset?.name ?? '(자산명 없음)'}
@@ -256,10 +256,10 @@ export default function MyDataPage() {
                     <span
                       className={`text-xs font-semibold whitespace-nowrap ${
                         dday.expired
-                          ? 'text-gray-400'
+                          ? 'text-[var(--muted)]'
                           : dday.urgent
                           ? 'text-orange-500'
-                          : 'text-gray-500'
+                          : 'text-[var(--muted)]'
                       }`}
                     >
                       {dday.label}
@@ -270,18 +270,18 @@ export default function MyDataPage() {
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         dday.expired
-                          ? 'bg-gray-100 text-gray-400'
+                          ? 'bg-gray-100 text-[var(--muted)]'
                           : 'bg-blue-50 text-blue-700'
                       }`}
                     >
                       {prov.deliveryMode}
                     </span>
-                    <span className={`text-xs ${dday.expired ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <span className={`text-xs ${dday.expired ? 'text-[var(--muted)]' : 'text-[var(--muted)]'}`}>
                       제공일 {new Date(prov.providedAt).toLocaleDateString('ko-KR')}
                     </span>
                     <span
                       className={`text-xs ${
-                        dday.expired ? 'text-gray-400' : dday.urgent ? 'text-orange-500 font-medium' : 'text-gray-500'
+                        dday.expired ? 'text-[var(--muted)]' : dday.urgent ? 'text-orange-500 font-medium' : 'text-[var(--muted)]'
                       }`}
                     >
                       만료일 {new Date(prov.expiresAt).toLocaleDateString('ko-KR')}
@@ -289,7 +289,7 @@ export default function MyDataPage() {
                   </div>
 
                   {prov.revokedAt && (
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-[var(--muted)]">
                       폐기일: {new Date(prov.revokedAt).toLocaleDateString('ko-KR')}
                     </p>
                   )}

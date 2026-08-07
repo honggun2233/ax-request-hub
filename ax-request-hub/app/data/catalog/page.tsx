@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -43,11 +43,11 @@ function AssetCard({ asset, onRequest }: { asset: DataAsset; onRequest: (asset: 
       </div>
 
       {/* Dept */}
-      <p className="text-sm text-gray-500">{asset.ownerDept}</p>
+      <p className="text-sm text-[var(--muted)]">{asset.ownerDept}</p>
 
       {/* Update cycle */}
       {asset.updateCycle && (
-        <p className="text-xs text-gray-400">갱신주기: {asset.updateCycle}</p>
+        <p className="text-xs text-[var(--muted)]">갱신주기: {asset.updateCycle}</p>
       )}
 
       {/* Delivery mode chips */}
@@ -154,11 +154,11 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
         <div className="flex items-start justify-between p-5 border-b">
           <div>
             <h2 className="font-semibold text-gray-900">{asset.name}</h2>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-[var(--muted)] mt-0.5">
               {type === 'ACCESS' ? '이용신청' : '신규 수집 요청'}
             </p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none ml-4">×</button>
+          <button onClick={onClose} className="text-[var(--muted)] hover:text-gray-600 text-2xl leading-none ml-4">×</button>
         </div>
 
         {success ? (
@@ -166,7 +166,7 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
             <div>
               <p className="text-2xl mb-2">✓</p>
               <p className="font-semibold text-gray-900">신청이 접수되었습니다</p>
-              <p className="text-sm text-gray-500 mt-1">데이터플랫폼팀이 검토 후 처리합니다.</p>
+              <p className="text-sm text-[var(--muted)] mt-1">데이터플랫폼팀이 검토 후 처리합니다.</p>
               <a href="/me/data" className="inline-block mt-3 text-sm text-blue-600 hover:underline">내 신청 내역 보기 →</a>
             </div>
           </div>
@@ -220,7 +220,7 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
               <label className="text-xs font-medium text-gray-700 block mb-1">기밀등급</label>
               <div className={`w-full text-sm border border-gray-200 rounded-lg p-2.5 bg-gray-50 ${CONF_COLOR[classification] ?? ''}`}>
                 {CONF_LABEL[classification] ?? classification}
-                <span className="ml-2 text-xs text-gray-400">(데이터 오너 지정, 변경 불가)</span>
+                <span className="ml-2 text-xs text-[var(--muted)]">(데이터 오너 지정, 변경 불가)</span>
               </div>
             </div>
 
@@ -228,7 +228,7 @@ function RequestModal({ modal, onClose }: { modal: ModalState; onClose: () => vo
             <div>
               <label className="text-xs font-medium text-gray-700 block mb-1">
                 이용 트랙 <span className="text-red-500">*</span>
-                <span className="ml-1 text-gray-400 font-normal">(데이터취급지침 제25조)</span>
+                <span className="ml-1 text-[var(--muted)] font-normal">(데이터취급지침 제25조)</span>
               </label>
               <div className="flex gap-2">
                 {(['A', 'B'] as const).map(t => (
@@ -395,8 +395,8 @@ export default function DataCatalogPage() {
       {/* Page header */}
       <div>
         <h1 className="text-xl font-bold text-gray-900">데이터 카탈로그</h1>
-        <p className="text-sm text-gray-500 mt-0.5">데이터플랫폼 자산 목록</p>
-        <div className="mt-2 flex flex-wrap gap-4 text-xs text-gray-500">
+        <p className="text-sm text-[var(--muted)] mt-0.5">데이터플랫폼 자산 목록</p>
+        <div className="mt-2 flex flex-wrap gap-4 text-xs text-[var(--muted)]">
           <span><span className="font-semibold text-blue-600">이용 신청</span> — 카탈로그에 등록된 데이터 자산의 접근 권한 요청</span>
           <span><span className="font-semibold text-amber-600">추가 수집 요청</span> — 해당 자산 기반으로 현재 없는 데이터 신규 수집 요청 (범위 확대, 형태 변경 등)</span>
         </div>
@@ -449,7 +449,7 @@ export default function DataCatalogPage() {
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
       ) : assets.length === 0 ? (
-        <div className="text-center py-20 text-gray-400 text-sm">검색 결과가 없습니다</div>
+        <div className="text-center py-20 text-[var(--muted)] text-sm">검색 결과가 없습니다</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {assets.map(asset => (

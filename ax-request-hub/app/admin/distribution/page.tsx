@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -37,7 +37,7 @@ export default function AdminDistributionPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="mb-6"><a href="/admin" className="text-sm text-gray-500 hover:underline">← 관리 포털</a></div>
+        <div className="mb-6"><a href="/admin" className="text-sm text-[var(--muted)] hover:underline">← 관리 포털</a></div>
         <h1 className="text-2xl font-bold mb-6">서비스 배분 정책</h1>
         {msg && <div className="bg-blue-50 text-blue-800 rounded-lg p-3 mb-4 text-sm">{msg}</div>}
 
@@ -58,13 +58,13 @@ export default function AdminDistributionPage() {
             <div key={level} className="bg-white rounded-xl shadow-sm p-4">
               <h3 className="font-bold text-blue-600 mb-3">{level}</h3>
               {grouped[level].length === 0 ? (
-                <p className="text-sm text-gray-400">서비스 없음</p>
+                <p className="text-sm text-[var(--muted)]">서비스 없음</p>
               ) : (
                 <div className="space-y-2">
                   {grouped[level].map((p: any) => (
                     <div key={p.id} className="flex justify-between items-center text-sm">
-                      <span className={p.isActive ? "" : "text-gray-400 line-through"}>{p.serviceName}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${p.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`}>{p.isActive ? "활성" : "비활성"}</span>
+                      <span className={p.isActive ? "" : "text-[var(--muted)] line-through"}>{p.serviceName}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${p.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-[var(--muted)]"}`}>{p.isActive ? "활성" : "비활성"}</span>
                     </div>
                   ))}
                 </div>
@@ -76,17 +76,17 @@ export default function AdminDistributionPage() {
         <div className="bg-white rounded-xl shadow-sm">
           <h2 className="font-semibold p-4 border-b">최근 발급 이력</h2>
           {data.allocations.length === 0 ? (
-            <p className="text-sm text-gray-400 p-4">발급 이력 없음</p>
+            <p className="text-sm text-[var(--muted)] p-4">발급 이력 없음</p>
           ) : (
             <div className="divide-y">
               {data.allocations.map((a: any) => (
                 <div key={a.id} className="p-4 flex justify-between items-center text-sm">
                   <div>
                     <span className="font-medium">{a.employee?.name}</span>
-                    <span className="text-gray-500 ml-2">({a.employee?.department})</span>
+                    <span className="text-[var(--muted)] ml-2">({a.employee?.department})</span>
                     <span className="ml-2 text-blue-600">{a.policy?.serviceName}</span>
                   </div>
-                  <div className="text-right text-xs text-gray-400">
+                  <div className="text-right text-xs text-[var(--muted)]">
                     <p>{a.policy?.level}</p>
                     <p>{new Date(a.grantedAt).toLocaleDateString("ko-KR")}</p>
                   </div>

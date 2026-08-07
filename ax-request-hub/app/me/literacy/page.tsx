@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useCallback } from 'react'
 
 type Enrollment = { status: string; completedAt?: string | null; score?: number | null }
@@ -49,9 +49,9 @@ function CourseCard({ course, onAction }: { course: Course; onAction: (id: strin
               <span className="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded font-medium">수강 중</span>
             )}
           </div>
-          <p className="text-xs text-gray-400 mt-1">소요시간 {course.durationMin}분</p>
+          <p className="text-xs text-[var(--muted)] mt-1">소요시간 {course.durationMin}분</p>
         </div>
-        <span className="text-gray-400 text-sm mt-0.5 flex-shrink-0">{open ? '▲' : '▼'}</span>
+        <span className="text-[var(--muted)] text-sm mt-0.5 flex-shrink-0">{open ? '▲' : '▼'}</span>
       </button>
 
       {/* Expanded detail */}
@@ -62,7 +62,7 @@ function CourseCard({ course, onAction }: { course: Course; onAction: (id: strin
 
           {/* Enrollment status */}
           <div className="bg-gray-50 rounded-lg px-3 py-2.5 text-sm">
-            <span className="text-gray-500">수강 상태: </span>
+            <span className="text-[var(--muted)]">수강 상태: </span>
             {isCompleted ? (
               <span className="text-green-600 font-medium">
                 수료 완료{enrollment?.completedAt ? ` (${new Date(enrollment.completedAt).toLocaleDateString('ko-KR')})` : ''}
@@ -71,7 +71,7 @@ function CourseCard({ course, onAction }: { course: Course; onAction: (id: strin
             ) : isInProgress ? (
               <span className="text-blue-600 font-medium">수강 진행 중</span>
             ) : (
-              <span className="text-gray-400">미수강</span>
+              <span className="text-[var(--muted)]">미수강</span>
             )}
           </div>
 
@@ -96,7 +96,7 @@ function CourseCard({ course, onAction }: { course: Course; onAction: (id: strin
               </button>
             )}
             {isCompleted && (
-              <span className="text-sm text-gray-400 px-1">이미 수료한 과정입니다</span>
+              <span className="text-sm text-[var(--muted)] px-1">이미 수료한 과정입니다</span>
             )}
           </div>
         </div>
@@ -149,7 +149,7 @@ export default function LiteracyPage() {
         <div className="bg-gray-100 rounded-full h-2.5">
           <div className="bg-blue-500 h-2.5 rounded-full transition-all" style={{ width: `${pct}%` }} />
         </div>
-        <p className="text-xs text-gray-500 mt-1">{completed} / {total} 필수과정 수료 · 클릭하면 과정 상세 및 수강 등록</p>
+        <p className="text-xs text-[var(--muted)] mt-1">{completed} / {total} 필수과정 수료 · 클릭하면 과정 상세 및 수강 등록</p>
       </div>
 
       {/* Level tabs */}
@@ -159,7 +159,7 @@ export default function LiteracyPage() {
             key={t}
             onClick={() => setTab(t)}
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
-              tab === t ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              tab === t ? 'border-blue-500 text-blue-600' : 'border-transparent text-[var(--muted)] hover:text-gray-700'
             }`}
           >
             {LEVEL_LABEL[t] ?? t}
@@ -173,7 +173,7 @@ export default function LiteracyPage() {
           {[1, 2, 3].map((i) => <div key={i} className="animate-pulse h-16 bg-gray-100 rounded-xl" />)}
         </div>
       ) : filtered.length === 0 ? (
-        <p className="text-gray-400 text-sm text-center py-8">이 레벨의 과정이 없습니다</p>
+        <p className="text-[var(--muted)] text-sm text-center py-8">이 레벨의 과정이 없습니다</p>
       ) : (
         <div className="space-y-3">
           {filtered.map((c) => (

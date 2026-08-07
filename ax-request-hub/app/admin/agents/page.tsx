@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose,
@@ -131,7 +131,7 @@ export default function AgentsPage() {
 
           {/* 기본 정보 */}
           <div className="space-y-2">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">기본 정보</p>
+            <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">기본 정보</p>
             <input
               placeholder="에이전트명 *"
               value={form.name}
@@ -154,7 +154,7 @@ export default function AgentsPage() {
 
           {/* KPI 섹션 */}
           <div className="space-y-2 border-t pt-3">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">KPI 정의</p>
+            <p className="text-xs font-medium text-[var(--muted)] uppercase tracking-wide">KPI 정의</p>
             <input
               placeholder="KPI 지표명 (예: 공시 분류 정확도)"
               value={form.kpiName}
@@ -221,14 +221,14 @@ export default function AgentsPage() {
           <thead className="bg-gray-50">
             <tr>
               {['이름', '부서', '설명', '최근 KPI 달성률', '미달 연속', '상태 플래그', '생성일', '액션'].map(h => (
-                <th key={h} className="px-4 py-2 text-left text-xs text-gray-500 whitespace-nowrap">{h}</th>
+                <th key={h} className="px-4 py-2 text-left text-xs text-[var(--muted)] whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {active.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-gray-400">등록된 에이전트 없음</td>
+                <td colSpan={8} className="px-4 py-8 text-center text-[var(--muted)]">등록된 에이전트 없음</td>
               </tr>
             )}
             {active.map(a => {
@@ -236,22 +236,22 @@ export default function AgentsPage() {
               return (
                 <tr key={a.id} className="border-t hover:bg-gray-50">
                   <td className="px-4 py-2 font-medium whitespace-nowrap">{a.name}</td>
-                  <td className="px-4 py-2 text-gray-500 whitespace-nowrap">{a.department}</td>
-                  <td className="px-4 py-2 text-gray-500 truncate max-w-[160px]">{a.description || '-'}</td>
+                  <td className="px-4 py-2 text-[var(--muted)] whitespace-nowrap">{a.department}</td>
+                  <td className="px-4 py-2 text-[var(--muted)] truncate max-w-[160px]">{a.description || '-'}</td>
                   <td className="px-4 py-2 text-center whitespace-nowrap">
                     {a.kpiLastScore != null ? (
                       <span className={`font-semibold ${a.kpiLastScore >= 60 ? 'text-green-600' : 'text-red-500'}`}>
                         {a.kpiLastScore.toFixed(1)}%
                       </span>
                     ) : (
-                      <span className="text-gray-300">-</span>
+                      <span className="text-[var(--text2)]">-</span>
                     )}
                   </td>
                   <td className="px-4 py-2 text-center whitespace-nowrap">
                     {a.kpiMissCount > 0 ? (
                       <span className="text-orange-500 font-medium">{a.kpiMissCount}회</span>
                     ) : (
-                      <span className="text-gray-300">0회</span>
+                      <span className="text-[var(--text2)]">0회</span>
                     )}
                   </td>
                   <td className="px-4 py-2 whitespace-nowrap">
@@ -260,10 +260,10 @@ export default function AgentsPage() {
                         {flag.label}
                       </span>
                     ) : (
-                      <span className="text-gray-300 text-xs">-</span>
+                      <span className="text-[var(--text2)] text-xs">-</span>
                     )}
                   </td>
-                  <td className="px-4 py-2 text-gray-400 whitespace-nowrap">
+                  <td className="px-4 py-2 text-[var(--muted)] whitespace-nowrap">
                     {new Date(a.createdAt).toLocaleDateString('ko-KR')}
                   </td>
                   <td className="px-4 py-2">
@@ -328,7 +328,7 @@ export default function AgentsPage() {
                 <div key={a.id} className="px-4 py-3 flex items-center justify-between">
                   <div>
                     <p className="font-medium text-sm">{a.name}</p>
-                    <p className="text-xs text-gray-500">{a.deprecationReason} · 폐기 {days}일 경과</p>
+                    <p className="text-xs text-[var(--muted)]">{a.deprecationReason} · 폐기 {days}일 경과</p>
                     {!canRetire && (
                       <p className="text-xs text-orange-500">RETIRE까지 {30 - days}일 남음</p>
                     )}

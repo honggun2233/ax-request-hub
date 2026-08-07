@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 
 const DEPRECATION_REASONS = ['DUPLICATE', 'PERFORMANCE', 'POLICY_CHANGE', 'SCOPE_CHANGE', 'OTHER']
@@ -160,7 +160,7 @@ export default function RetiredAgentsPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      <a href="/registry" className="text-sm text-gray-500 hover:underline">← 에이전트 현황</a>
+      <a href="/registry" className="text-sm text-[var(--muted)] hover:underline">← 에이전트 현황</a>
       <h1 className="text-xl font-bold">폐기 에이전트 거버넌스</h1>
 
       {msg && (
@@ -178,7 +178,7 @@ export default function RetiredAgentsPage() {
             className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
               tab === t.id
                 ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-[var(--muted)] hover:text-gray-700'
             }`}
           >
             {t.label}
@@ -196,7 +196,7 @@ export default function RetiredAgentsPage() {
           />
           <div className="grid gap-3">
             {filtered.length === 0 && (
-              <p className="text-gray-400 text-sm text-center py-8">폐기된 에이전트 없음</p>
+              <p className="text-[var(--muted)] text-sm text-center py-8">폐기된 에이전트 없음</p>
             )}
             {filtered.map(a => {
               const expiry = a.retiredAt
@@ -218,13 +218,13 @@ export default function RetiredAgentsPage() {
                       {a.status}
                     </span>
                   </div>
-                  <div className="text-sm text-gray-500 grid grid-cols-3 gap-2">
+                  <div className="text-sm text-[var(--muted)] grid grid-cols-3 gap-2">
                     <span>부서: {a.department}</span>
                     <span>폐기사유: {a.deprecationReason ?? '-'}</span>
                     <span>보존만료: {expiry}</span>
                   </div>
                   {a.retirementNote && (
-                    <p className="text-xs text-gray-400">{a.retirementNote}</p>
+                    <p className="text-xs text-[var(--muted)]">{a.retirementNote}</p>
                   )}
                 </div>
               )
@@ -336,7 +336,7 @@ export default function RetiredAgentsPage() {
               <tbody>
                 {artifacts.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                    <td colSpan={4} className="px-4 py-8 text-center text-[var(--muted)]">
                       산출물 없음
                     </td>
                   </tr>
@@ -344,8 +344,8 @@ export default function RetiredAgentsPage() {
                   artifacts.map(a => (
                     <tr key={a.id} className="border-t hover:bg-gray-50">
                       <td className="px-4 py-2">{a.title}</td>
-                      <td className="px-4 py-2 text-gray-500">{a.artifactType}</td>
-                      <td className="px-4 py-2 text-gray-500">
+                      <td className="px-4 py-2 text-[var(--muted)]">{a.artifactType}</td>
+                      <td className="px-4 py-2 text-[var(--muted)]">
                         {new Date(a.retainUntil).toLocaleDateString('ko-KR')}
                       </td>
                       <td className="px-4 py-2">
@@ -383,7 +383,7 @@ export default function RetiredAgentsPage() {
             <div className="bg-gray-50 rounded p-4 text-sm space-y-2">
               <p className="font-medium">기존 추출 ({knowledge.length}건)</p>
               {knowledge.map((k, i) => (
-                <p key={i} className="text-gray-500">
+                <p key={i} className="text-[var(--muted)]">
                   · {new Date(k.extractedAt).toLocaleDateString('ko-KR')} — {k.extractedBy}
                 </p>
               ))}

@@ -1,9 +1,9 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 
 const STATUS_LABEL: Record<string, { text: string; color: string }> = {
-  NOT_STARTED: { text: '미시작',   color: 'text-gray-500 bg-gray-100' },
+  NOT_STARTED: { text: '미시작',   color: 'text-[var(--muted)] bg-gray-100' },
   IN_PROGRESS: { text: '수강 중',  color: 'text-blue-600 bg-blue-50' },
   COMPLETED:   { text: '수료',     color: 'text-green-600 bg-green-50' },
 }
@@ -35,7 +35,7 @@ export default function AdminLiteracyPage() {
   return (
     <div className="space-y-6">
       <div className="flex gap-1 border-b border-gray-200">
-        <a href="/admin/employees" className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 -mb-px">레벨 심사</a>
+        <a href="/admin/employees" className="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-[var(--muted)] hover:text-gray-700 -mb-px">레벨 심사</a>
         <a href="/admin/literacy" className="px-4 py-2 text-sm font-medium border-b-2 border-blue-500 text-blue-600 -mb-px">교육 관리</a>
       </div>
       <div className="flex items-center justify-between">
@@ -96,19 +96,19 @@ export default function AdminLiteracyPage() {
       <div className="bg-white rounded-lg border">
         <div className="px-4 py-3 border-b">
           <h3 className="text-sm font-medium">과정 목록 ({courses.length}개)</h3>
-          <p className="text-xs text-gray-400 mt-0.5">과정을 클릭하면 상세 내용과 수강 현황을 볼 수 있습니다.</p>
+          <p className="text-xs text-[var(--muted)] mt-0.5">과정을 클릭하면 상세 내용과 수강 현황을 볼 수 있습니다.</p>
         </div>
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
               {['과정명', '레벨', '소요시간', '필수', '수강인원', '수료율'].map(h => (
-                <th key={h} className="px-4 py-2 text-left text-xs text-gray-500">{h}</th>
+                <th key={h} className="px-4 py-2 text-left text-xs text-[var(--muted)]">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {courses.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">과정 없음</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-[var(--muted)]">과정 없음</td></tr>
             )}
             {courses.map(c => {
               const total = c.enrollments?.length ?? 0
@@ -120,12 +120,12 @@ export default function AdminLiteracyPage() {
                   onClick={() => setSelected(c)}
                 >
                   <td className="px-4 py-2 font-medium text-blue-700 hover:underline">{c.title}</td>
-                  <td className="px-4 py-2 text-gray-500">{c.level}</td>
+                  <td className="px-4 py-2 text-[var(--muted)]">{c.level}</td>
                   <td className="px-4 py-2">{c.durationMin}분</td>
                   <td className="px-4 py-2">
                     {c.isRequired
                       ? <span className="text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded">필수</span>
-                      : <span className="text-xs text-gray-400">선택</span>}
+                      : <span className="text-xs text-[var(--muted)]">선택</span>}
                   </td>
                   <td className="px-4 py-2">{total}명</td>
                   <td className="px-4 py-2">{total > 0 ? `${Math.round((done / total) * 100)}%` : '-'}</td>
@@ -148,23 +148,23 @@ export default function AdminLiteracyPage() {
               <div>
                 <h2 className="text-base font-bold">{selected.title}</h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-gray-500">{selected.level}</span>
-                  <span className="text-gray-300">·</span>
-                  <span className="text-xs text-gray-500">{selected.durationMin}분</span>
+                  <span className="text-xs text-[var(--muted)]">{selected.level}</span>
+                  <span className="text-[var(--text2)]">·</span>
+                  <span className="text-xs text-[var(--muted)]">{selected.durationMin}분</span>
                   {selected.isRequired && (
                     <span className="text-xs bg-red-50 text-red-600 px-1.5 py-0.5 rounded">필수</span>
                   )}
                 </div>
               </div>
               <button onClick={() => setSelected(null)} className="p-1 hover:bg-gray-100 rounded">
-                <X className="w-4 h-4 text-gray-500" />
+                <X className="w-4 h-4 text-[var(--muted)]" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-4 space-y-6">
               {/* 과정 설명 */}
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">과정 설명</h3>
+                <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide mb-2">과정 설명</h3>
                 <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
                   {selected.description || '설명이 없습니다.'}
                 </p>
@@ -172,25 +172,25 @@ export default function AdminLiteracyPage() {
 
               {/* 수강 현황 */}
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <h3 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wide mb-2">
                   수강 현황 ({selected.enrollments?.length ?? 0}명)
                 </h3>
                 {!selected.enrollments || selected.enrollments.length === 0 ? (
-                  <p className="text-sm text-gray-400">수강자가 없습니다.</p>
+                  <p className="text-sm text-[var(--muted)]">수강자가 없습니다.</p>
                 ) : (
                   <div className="space-y-1">
                     {selected.enrollments.map((e: any) => {
-                      const s = STATUS_LABEL[e.status] ?? { text: e.status, color: 'text-gray-500 bg-gray-100' }
+                      const s = STATUS_LABEL[e.status] ?? { text: e.status, color: 'text-[var(--muted)] bg-gray-100' }
                       return (
                         <div key={e.id} className="flex items-center justify-between py-2 border-b border-gray-50">
                           <div>
                             <p className="text-sm font-medium">{e.employee?.name ?? e.employeeId}</p>
-                            <p className="text-xs text-gray-400">{e.employee?.email}</p>
+                            <p className="text-xs text-[var(--muted)]">{e.employee?.email}</p>
                           </div>
                           <div className="text-right">
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${s.color}`}>{s.text}</span>
                             {e.completedAt && (
-                              <p className="text-xs text-gray-400 mt-0.5">
+                              <p className="text-xs text-[var(--muted)] mt-0.5">
                                 {new Date(e.completedAt).toLocaleDateString('ko-KR')} 수료
                               </p>
                             )}

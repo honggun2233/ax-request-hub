@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import cytoscape, { type Core, type NodeSingular, type ElementDefinition } from 'cytoscape'
@@ -340,7 +340,7 @@ export default function GraphView() {
         <div>
           <h1 className="text-xl font-bold text-gray-900">지식 그래프</h1>
           {overview && (
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-[var(--muted)] mt-0.5">
               총 {overview.totalNodes}개 노드
             </p>
           )}
@@ -376,15 +376,15 @@ export default function GraphView() {
         {Object.entries(NODE_COLORS).map(([type, color]) => (
           <div key={type} className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs text-gray-500">{type}</span>
+            <span className="text-xs text-[var(--muted)]">{type}</span>
           </div>
         ))}
         <div className="w-px h-4 bg-gray-200 mx-1" />
-        <span className="text-xs text-gray-400">DataAsset 기밀등급:</span>
+        <span className="text-xs text-[var(--muted)]">DataAsset 기밀등급:</span>
         {Object.entries(SECRET_LEVEL_COLORS).map(([lvl, color]) => (
           <div key={lvl} className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs text-gray-500">{lvl}</span>
+            <span className="text-xs text-[var(--muted)]">{lvl}</span>
           </div>
         ))}
       </div>
@@ -397,7 +397,7 @@ export default function GraphView() {
             <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm text-gray-500">그래프 로딩 중...</span>
+                <span className="text-sm text-[var(--muted)]">그래프 로딩 중...</span>
               </div>
             </div>
           )}
@@ -405,7 +405,7 @@ export default function GraphView() {
             <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
               <div className="text-center">
                 <p className="text-red-500 font-medium">{error}</p>
-                <p className="text-sm text-gray-400 mt-1">Mock 데이터로 시도합니다.</p>
+                <p className="text-sm text-[var(--muted)] mt-1">Mock 데이터로 시도합니다.</p>
               </div>
             </div>
           )}
@@ -430,26 +430,26 @@ export default function GraphView() {
 
               {/* 이름 */}
               <div>
-                <p className="text-xs text-gray-400 mb-0.5">이름</p>
+                <p className="text-xs text-[var(--muted)] mb-0.5">이름</p>
                 <p className="text-sm font-semibold text-gray-900">{selectedNode.name}</p>
               </div>
 
               {/* 타입별 추가 정보 */}
               {selectedNode.status && (
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">상태</p>
+                  <p className="text-xs text-[var(--muted)] mb-0.5">상태</p>
                   <p className="text-sm text-gray-700">{selectedNode.status}</p>
                 </div>
               )}
               {selectedNode.lifecycleStage && (
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">라이프사이클</p>
+                  <p className="text-xs text-[var(--muted)] mb-0.5">라이프사이클</p>
                   <p className="text-sm text-gray-700">{selectedNode.lifecycleStage}</p>
                 </div>
               )}
               {selectedNode.secretLevel && (
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">기밀등급</p>
+                  <p className="text-xs text-[var(--muted)] mb-0.5">기밀등급</p>
                   <span
                     className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-white"
                     style={{ backgroundColor: SECRET_LEVEL_COLORS[selectedNode.secretLevel] }}
@@ -460,25 +460,25 @@ export default function GraphView() {
               )}
               {selectedNode.dept && (
                 <div>
-                  <p className="text-xs text-gray-400 mb-0.5">부서</p>
+                  <p className="text-xs text-[var(--muted)] mb-0.5">부서</p>
                   <p className="text-sm text-gray-700">{selectedNode.dept}</p>
                 </div>
               )}
 
               {/* 연결 수 */}
               <div>
-                <p className="text-xs text-gray-400 mb-0.5">연결</p>
+                <p className="text-xs text-[var(--muted)] mb-0.5">연결</p>
                 <p className="text-sm text-gray-700">{connectedCount}개</p>
               </div>
 
               {/* 더블클릭 안내 */}
-              <p className="text-xs text-gray-400 italic">
+              <p className="text-xs text-[var(--muted)] italic">
                 더블클릭으로 이 노드를 중심으로 탐색
               </p>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-xs text-gray-400 text-center px-4">
+              <p className="text-xs text-[var(--muted)] text-center px-4">
                 노드를 클릭하면<br />상세 정보가 표시됩니다
               </p>
             </div>

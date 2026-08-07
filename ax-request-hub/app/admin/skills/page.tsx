@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 
@@ -99,7 +99,7 @@ export default function AdminSkillsPage() {
   const STATUS_COLOR: Record<string, string> = {
     active: 'bg-green-100 text-green-700',
     draft: 'bg-yellow-100 text-yellow-700',
-    deprecated: 'bg-gray-100 text-gray-500',
+    deprecated: 'bg-gray-100 text-[var(--muted)]',
   }
 
   return (
@@ -116,38 +116,38 @@ export default function AdminSkillsPage() {
         <h2 className="text-sm font-semibold text-gray-700">{editing ? '스킬 편집' : '신규 스킬 등록'}</h2>
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className="text-xs text-gray-500 block mb-1">Skill ID <span className="text-red-500">*</span></label>
+            <label className="text-xs text-[var(--muted)] block mb-1">Skill ID <span className="text-red-500">*</span></label>
             <input value={form.skillId} onChange={e => setForm(f => ({ ...f, skillId: e.target.value }))}
               placeholder="skill-etf-nav-check"
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">이름 <span className="text-red-500">*</span></label>
+            <label className="text-xs text-[var(--muted)] block mb-1">이름 <span className="text-red-500">*</span></label>
             <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
               placeholder="ETF NAV 점검"
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">버전</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">버전</label>
             <input value={form.version} onChange={e => setForm(f => ({ ...f, version: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">카테고리</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">카테고리</label>
             <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
               {CATEGORIES.map(c => <option key={c}>{c}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">보안 등급</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">보안 등급</label>
             <select value={form.securityLevel} onChange={e => setForm(f => ({ ...f, securityLevel: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
               {SEC_LEVELS.map(l => <option key={l}>{l}</option>)}
             </select>
           </div>
           <div>
-            <label className="text-xs text-gray-500 block mb-1">상태</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">상태</label>
             <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
               <option value="draft">초안</option>
@@ -155,37 +155,37 @@ export default function AdminSkillsPage() {
             </select>
           </div>
           <div className="col-span-3">
-            <label className="text-xs text-gray-500 block mb-1">작성자</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">작성자</label>
             <input value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))}
               placeholder="AX팀 홍길동"
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
           </div>
           <div className="col-span-3">
-            <label className="text-xs text-gray-500 block mb-1">목적</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">목적</label>
             <textarea value={form.purpose} onChange={e => setForm(f => ({ ...f, purpose: e.target.value }))}
               rows={2} placeholder="이 스킬의 목적 및 활용 대상"
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm resize-none" />
           </div>
           <div className="col-span-3">
-            <label className="text-xs text-gray-500 block mb-1">사용 방법</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">사용 방법</label>
             <textarea value={form.instructions} onChange={e => setForm(f => ({ ...f, instructions: e.target.value }))}
               rows={2} placeholder="단계별 사용 방법 설명"
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm resize-none" />
           </div>
           <div className="col-span-3">
-            <label className="text-xs text-gray-500 block mb-1">프롬프트 <span className="text-red-500">*</span></label>
+            <label className="text-xs text-[var(--muted)] block mb-1">프롬프트 <span className="text-red-500">*</span></label>
             <textarea value={form.promptText} onChange={e => setForm(f => ({ ...f, promptText: e.target.value }))}
               rows={6} placeholder="Claude에게 붙여넣을 프롬프트 전문"
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm resize-none font-mono" />
           </div>
           <div className="col-span-3">
-            <label className="text-xs text-gray-500 block mb-1">예시 입출력</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">예시 입출력</label>
             <textarea value={form.examples} onChange={e => setForm(f => ({ ...f, examples: e.target.value }))}
               rows={3} placeholder="입력: ... / 출력: ..."
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm resize-none" />
           </div>
           <div className="col-span-3">
-            <label className="text-xs text-gray-500 block mb-1">주의사항</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">주의사항</label>
             <textarea value={form.cautions} onChange={e => setForm(f => ({ ...f, cautions: e.target.value }))}
               rows={2} placeholder="민감 정보 입력 금지, 결과 검토 필수 등"
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm resize-none" />
@@ -209,16 +209,16 @@ export default function AdminSkillsPage() {
             {['all', 'active', 'draft', 'deprecated'].map(s => (
               <button key={s} onClick={() => setFilterStatus(s)}
                 className={`text-xs px-3 py-1 rounded-full border transition ${
-                  filterStatus === s ? 'bg-gray-800 text-white border-gray-800' : 'border-gray-200 text-gray-600'
+                  filterStatus === s ? 'bg-[var(--surface)] text-white border-[var(--line)]' : 'border-gray-200 text-gray-600'
                 }`}>
                 {s === 'all' ? '전체' : s === 'active' ? '승인' : s === 'draft' ? '초안' : '폐기'}
               </button>
             ))}
           </div>
         </div>
-        {loading && <p className="text-sm text-gray-400 text-center py-8">로딩 중...</p>}
+        {loading && <p className="text-sm text-[var(--muted)] text-center py-8">로딩 중...</p>}
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-xs text-gray-500">
+          <thead className="bg-gray-50 text-xs text-[var(--muted)]">
             <tr>
               <th className="text-left px-4 py-2 font-medium">이름</th>
               <th className="text-left px-4 py-2 font-medium">카테고리</th>
@@ -233,7 +233,7 @@ export default function AdminSkillsPage() {
               <tr key={skill.id} className="hover:bg-gray-50">
                 <td className="px-4 py-2.5">
                   <div className="font-medium text-gray-900">{skill.name}</div>
-                  <div className="text-xs text-gray-400 font-mono">{skill.skillId}</div>
+                  <div className="text-xs text-[var(--muted)] font-mono">{skill.skillId}</div>
                 </td>
                 <td className="px-4 py-2.5 text-gray-600">{skill.category}</td>
                 <td className="px-4 py-2.5">
@@ -247,7 +247,7 @@ export default function AdminSkillsPage() {
                     {skill.status === 'active' ? '✅ 승인' : skill.status === 'draft' ? '🔧 초안' : '📦 폐기'}
                   </span>
                 </td>
-                <td className="px-4 py-2.5 text-gray-500">{skill.usageCount}회</td>
+                <td className="px-4 py-2.5 text-[var(--muted)]">{skill.usageCount}회</td>
                 <td className="px-4 py-2.5">
                   <div className="flex gap-1.5">
                     <button onClick={() => startEdit(skill)}
@@ -258,7 +258,7 @@ export default function AdminSkillsPage() {
                     )}
                     {skill.status === 'active' && (
                       <button onClick={() => deprecate(skill.id)}
-                        className="text-xs text-gray-400 hover:underline">폐기</button>
+                        className="text-xs text-[var(--muted)] hover:underline">폐기</button>
                     )}
                   </div>
                 </td>

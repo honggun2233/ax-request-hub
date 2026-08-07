@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -52,13 +52,13 @@ export default function MyLevelPage() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-2xl mx-auto">
         <div className="mb-6">
-          <a href="/me" className="text-sm text-gray-500 hover:underline">← 내 현황</a>
+          <a href="/me" className="text-sm text-[var(--muted)] hover:underline">← 내 현황</a>
         </div>
         <h1 className="text-2xl font-bold mb-2">AI 레벨 관리</h1>
         <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
-          <p className="text-sm text-gray-500 mb-1">현재 레벨</p>
+          <p className="text-sm text-[var(--muted)] mb-1">현재 레벨</p>
           <p className="text-4xl font-bold text-blue-600">{currentLevel}</p>
-          {currentLevel !== "L0" && <p className="text-sm text-gray-500 mt-1">{LEVEL_DESC[currentLevel]}</p>}
+          {currentLevel !== "L0" && <p className="text-sm text-[var(--muted)] mt-1">{LEVEL_DESC[currentLevel]}</p>}
         </div>
 
         {msg && <div className="bg-blue-50 text-blue-800 rounded-lg p-3 mb-4 text-sm">{msg}</div>}
@@ -102,7 +102,7 @@ export default function MyLevelPage() {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <h2 className="font-semibold p-4 border-b">신청 이력</h2>
           {!data?.applications?.length ? (
-            <p className="text-gray-500 text-sm p-4">신청 이력이 없습니다.</p>
+            <p className="text-[var(--muted)] text-sm p-4">신청 이력이 없습니다.</p>
           ) : (
             <div className="divide-y">
               {data.applications.map((app: any) => (
@@ -111,7 +111,7 @@ export default function MyLevelPage() {
                     <span className="font-medium">{app.requestedLevel} 신청</span>
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColor[app.status]}`}>{app.status}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">{new Date(app.createdAt).toLocaleDateString("ko-KR")}</p>
+                  <p className="text-xs text-[var(--muted)] mt-1">{new Date(app.createdAt).toLocaleDateString("ko-KR")}</p>
                   {app.reviewNote && <p className="text-sm text-gray-600 mt-1 bg-gray-50 rounded p-2">{app.reviewNote}</p>}
                 </div>
               ))}

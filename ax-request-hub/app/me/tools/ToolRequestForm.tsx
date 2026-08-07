@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 
 const TOOLS = [
@@ -17,7 +17,7 @@ export function ToolRequestForm({ activeTypes }: { activeTypes: string[] }) {
 
   if (available.length === 0) {
     return (
-      <p className="text-sm text-gray-400 text-center py-4">
+      <p className="text-sm text-[var(--muted)] text-center py-4">
         모든 AI 도구를 이미 사용 중입니다.
       </p>
     )
@@ -76,7 +76,7 @@ export function ToolRequestForm({ activeTypes }: { activeTypes: string[] }) {
               />
               <div>
                 <div className="text-sm font-medium text-gray-900">{t.label}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{t.desc}</div>
+                <div className="text-xs text-[var(--muted)] mt-0.5">{t.desc}</div>
               </div>
             </label>
           ))}
@@ -85,7 +85,7 @@ export function ToolRequestForm({ activeTypes }: { activeTypes: string[] }) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          신청 사유 <span className="text-gray-400 font-normal">(최소 20자)</span>
+          신청 사유 <span className="text-[var(--muted)] font-normal">(최소 20자)</span>
         </label>
         <textarea
           value={reason}
@@ -96,7 +96,7 @@ export function ToolRequestForm({ activeTypes }: { activeTypes: string[] }) {
           placeholder="업무에서 어떻게 활용할 계획인지 구체적으로 입력하세요."
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
-        <p className={`text-xs mt-1 ${reason.length < 20 ? 'text-gray-400' : 'text-green-600'}`}>
+        <p className={`text-xs mt-1 ${reason.length < 20 ? 'text-[var(--muted)]' : 'text-green-600'}`}>
           {reason.length} / 20자 이상
         </p>
       </div>

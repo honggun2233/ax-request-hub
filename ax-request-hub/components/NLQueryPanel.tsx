@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 
@@ -50,7 +50,7 @@ export function NLQueryPanel() {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-gray-800 mb-1">🔍 자연어 쿼리</h2>
-        <p className="text-sm text-gray-500">한국어로 질문하면 Claude가 DB를 조회합니다.</p>
+        <p className="text-sm text-[var(--muted)]">한국어로 질문하면 Claude가 DB를 조회합니다.</p>
       </div>
 
       {/* 예시 버튼 */}
@@ -93,17 +93,17 @@ export function NLQueryPanel() {
             <div>
               <button
                 onClick={() => setShowSql(!showSql)}
-                className="text-xs text-gray-400 hover:text-gray-600 underline"
+                className="text-xs text-[var(--muted)] hover:text-gray-600 underline"
               >
                 {showSql ? '▲ SQL 숨기기' : '▼ 생성된 SQL 보기'}
               </button>
               {showSql && (
-                <pre className="mt-2 p-3 bg-gray-900 text-green-400 text-xs rounded-lg overflow-x-auto whitespace-pre-wrap">
+                <pre className="mt-2 p-3 bg-[var(--bg)] text-green-400 text-xs rounded-lg overflow-x-auto whitespace-pre-wrap">
                   {result.sql}
                 </pre>
               )}
               {result.explanation && (
-                <p className="mt-1 text-xs text-gray-500 italic">{result.explanation}</p>
+                <p className="mt-1 text-xs text-[var(--muted)] italic">{result.explanation}</p>
               )}
             </div>
           )}
@@ -117,17 +117,17 @@ export function NLQueryPanel() {
 
           {/* 테이블 */}
           {!result.error && result.rows.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-4">조회 결과가 없습니다.</p>
+            <p className="text-sm text-[var(--muted)] text-center py-4">조회 결과가 없습니다.</p>
           )}
           {!result.error && result.rows.length > 0 && (
             <div>
-              <p className="text-xs text-gray-400 mb-2">{result.rows.length}건 조회됨</p>
+              <p className="text-xs text-[var(--muted)] mb-2">{result.rows.length}건 조회됨</p>
               <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50">
                     <tr>
                       {columns.map((col) => (
-                        <th key={col} className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                        <th key={col} className="px-4 py-2 text-left text-xs font-medium text-[var(--muted)] uppercase tracking-wider whitespace-nowrap">
                           {col}
                         </th>
                       ))}

@@ -1,4 +1,4 @@
-import { db } from '@/src/lib/db'
+﻿import { db } from '@/src/lib/db'
 import { ProjectForm } from '@/src/components/ProjectForm'
 import { notFound, redirect } from 'next/navigation'
 
@@ -15,7 +15,7 @@ export default async function SubmitPage({
     <main className="min-h-screen bg-white">
       <div className="max-w-xl mx-auto pt-8 pb-12 px-4">
         <h1 className="text-xl font-bold text-gray-900 mb-1">신청서 확인</h1>
-        <p className="text-sm text-gray-500 mb-6">AI가 정리한 내용을 확인하고 수정한 뒤 제출하세요.</p>
+        <p className="text-sm text-[var(--muted)] mb-6">AI가 정리한 내용을 확인하고 수정한 뒤 제출하세요.</p>
         <ProjectForm
           initialData={{
             id: project.id,

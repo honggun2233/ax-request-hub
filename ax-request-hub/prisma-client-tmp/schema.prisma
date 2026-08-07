@@ -1,0 +1,707 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../prisma-client-tmp"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id                        String   @id @default(cuid())
+  title                     String
+  department                String
+  requesterName             String
+  requesterEmail            String
+  source                    String   @default("user_request")
+  status                    String   @default("submitted")
+  description               String
+  asIs                      String
+  expectedBenefit           String
+  confidentialityLevel      String   @default("G2")
+  championName              String?
+  estimatedUsers            Int      @default(0)
+  totalScore                Float?
+  autoApproved              Boolean  @default(false)
+  approvedBy                String?
+  decisionNote              String?
+  // Gate 2: 기술 ?��? 체크리스??(ai-agent-standards 기�?)
+  techHasApiSpec            Boolean  @default(false)
+  techHasDataClassification Boolean  @default(false)
+  techHasAuditLogging       Boolean  @default(false)
+  techHasTestCoverage       Boolean  @default(false)
+  techStandardsPassed       Boolean  @default(false)
+  techStandardsFailedItems  String   @default("[]")
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  // PI 효과 실현 추적 (v3.2)
+  expectedBenefitValue Float? // 정량 예상 효과 (연간 환산)
+  expectedBenefitUnit  String? // "HOURS_YEAR" | "KRW_10K_YEAR"
+
+  // 데이터 거버넌스 정합성 (Phase 2 — 데이터취급지침 제5조)
+  isEssentialBusiness Boolean @default(false) // 본질적 업무 여부 (G3 데이터 사용 선결 조건)
+
+  scoreCard       ScoreCard?
+  chatSession     ChatSession?
+  dataRequests    DataRequest[]
+  agentRegistries AgentRegistry[]
+  appeals         ProjectAppeal[]
+  benefitRecords  BenefitRecord[]
+}
+
+model ScoreCard {
+  id                   String   @id @default(cuid())
+  projectId            String   @unique
+  project              Project  @relation(fields: [projectId], references: [id])
+  impactScore          Float
+  roiScore             Float
+  confidentialityScore Float
+  difficultyScore      Float
+  readinessScore       Float
+  strategyScore        Float
+  totalScore           Float
+  evaluationRationale  String
+  evaluatedAt          DateTime @default(now())
+}
+
+model ChatSession {
+  id          String    @id @default(cuid())
+  projectId   String?   @unique
+  project     Project?  @relation(fields: [projectId], references: [id])
+  messages    String
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+}
+
+// ?�?�?� AI Hub ?�규 모델 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+
+// Employee.role ?�용�?(P3-3a: EXECUTIVE, v3: DATA_PLATFORM 추�?)
+// EMPLOYEE      ???�반 직원 (기본�?
+// DEPT_HEAD     ??부?�장: 부??AI ?�구 배분 권한
+// AX_TEAM       ??AX?�(ADMIN): ?�체 관�?권한
+// C_LEVEL       ??C?�벨 경영�? ?�체 조회 + ?�인 권한
+// EXECUTIVE     ???�원: /executive ?�?�보???�용 ?�근 (C_LEVEL ?�위 집합)
+// DATA_PLATFORM ???�이?�플?�폼?�: ?�이???�산 관�?�??�이???�청 ?�사 권한
+
+model Employee {
+  id             String    @id @default(cuid())
+  employeeId     String    @unique
+  name           String
+  email          String    @unique
+  department     String
+  jobTitle       String    @default("")
+  role           String    @default("EMPLOYEE")
+  currentLevel   String    @default("L0")
+  levelGrantedAt DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  levelApplications    LevelApplication[]   @relation("ApplicantApplications")
+  reviewedApplications LevelApplication[]   @relation("ReviewerApplications")
+  levelHistories       LevelHistory[]       @relation("EmployeeHistory")
+  grantedHistories     LevelHistory[]       @relation("GranterHistory")
+  allocations          ServiceAllocation[]  @relation("EmployeeAllocations")
+  grantedAllocations   ServiceAllocation[]  @relation("GranterAllocations")
+  usageRecords         UsageRecord[]        @relation("EmployeeUsage")
+  inputUsageRecords    UsageRecord[]        @relation("InputterUsage")
+  usageAlerts          UsageAlert[]
+  toolAccounts         ToolAccount[]
+  agentLinks           EmployeeAgentLink[]
+  ownedAssets          DataAsset[]
+  literacyEnrollments  LiteracyEnrollment[]
+}
+
+model DepartmentQuota {
+  id         String   @id @default(cuid())
+  department String
+  toolType   String // "GPT_CHAT" | "GPT_EXCEL" | "GEMINI"
+  totalQuota Int      @default(0)
+  aiDensity  String   @default("STANDARD") // "HIGH" | "MEDIUM" | "STANDARD"
+  managedBy  String // 부?�장 ?�메??
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  toolAccounts ToolAccount[]
+
+  @@unique([department, toolType])
+}
+
+model ToolAccount {
+  id              String           @id @default(cuid())
+  employeeId      String
+  employee        Employee         @relation(fields: [employeeId], references: [id])
+  quotaId         String?
+  quota           DepartmentQuota? @relation(fields: [quotaId], references: [id])
+  toolType        String // "GPT_CHAT" | "GPT_EXCEL" | "GEMINI"
+  toolTier        String // "CHAT" | "EXCEL" | "ENTERPRISE"
+  status          String           @default("PENDING") // "PENDING" | "APPROVED" | "ACTIVE" | "SUSPENDED" | "RETURNED"
+  requestReason   String           @default("")
+  assignedByEmail String? // 배정??부?�장 ?�메??
+  approvedBy      String?
+  approvedAt      DateTime?
+  activatedAt     DateTime?
+  lastUsedAt      DateTime?
+  returnedAt      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model LevelApplication {
+  id                 String    @id @default(cuid())
+  employeeId         String
+  employee           Employee  @relation("ApplicantApplications", fields: [employeeId], references: [id])
+  requestedLevel     String
+  currentLevel       String    @default("L0")
+  selfIntro          String    @default("")
+  trainingCompleted  String    @default("")
+  utilizationPlan    String    @default("")
+  recommendationNote String    @default("")
+  status             String    @default("PENDING")
+  reviewNote         String    @default("")
+  reviewedById       String?
+  reviewedBy         Employee? @relation("ReviewerApplications", fields: [reviewedById], references: [id])
+  reviewedAt         DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model LevelHistory {
+  id          String   @id @default(cuid())
+  employeeId  String
+  employee    Employee @relation("EmployeeHistory", fields: [employeeId], references: [id])
+  fromLevel   String
+  toLevel     String
+  reason      String   @default("")
+  changedById String
+  changedBy   Employee @relation("GranterHistory", fields: [changedById], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model DistributionPolicy {
+  id                 String   @id @default(cuid())
+  level              String
+  serviceName        String
+  serviceDescription String   @default("")
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  allocations ServiceAllocation[]
+
+  @@unique([level, serviceName])
+}
+
+model ServiceAllocation {
+  id          String             @id @default(cuid())
+  employeeId  String
+  employee    Employee           @relation("EmployeeAllocations", fields: [employeeId], references: [id])
+  policyId    String
+  policy      DistributionPolicy @relation(fields: [policyId], references: [id])
+  status      String             @default("ACTIVE")
+  accountInfo String             @default("")
+  grantedAt   DateTime           @default(now())
+  revokedAt   DateTime?
+  expiresAt   DateTime?
+  grantedById String
+  grantedBy   Employee           @relation("GranterAllocations", fields: [grantedById], references: [id])
+  createdAt   DateTime           @default(now())
+}
+
+model TokenPolicy {
+  id               String   @id @default(cuid())
+  scope            String
+  level            String?
+  employeeId       String?
+  service          String
+  monthlyLimit     Int
+  singleCallLimit  Int      @default(0)
+  warningThreshold Int      @default(80)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model UsageRecord {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation("EmployeeUsage", fields: [employeeId], references: [id])
+  service    String
+  yearMonth  String
+  tokenUsed  Int      @default(0)
+  costKrw    Float    @default(0)
+  inputById  String
+  inputBy    Employee @relation("InputterUsage", fields: [inputById], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([employeeId, service, yearMonth])
+}
+
+model UsageAlert {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id])
+  service      String
+  yearMonth    String
+  alertType    String
+  acknowledged Boolean  @default(false)
+  sentAt       DateTime @default(now())
+  createdAt    DateTime @default(now())
+}
+
+// ?�?�?� Module 8: ?�기 ?�이?�트 거버?�스 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+
+// Agent.status: ACTIVE | DEPRECATED | RETIRED
+// Agent.deprecationReason: DUPLICATE | PERFORMANCE | POLICY_CHANGE | SCOPE_CHANGE | OTHER
+// Agent.kpiType: ACCURACY | COMPLETION | TIME_SAVING | SATISFACTION
+// Agent.kpiMeasureCycle: MONTHLY | QUARTERLY
+// Agent.performanceFlag: null | WARNING | RETIRE_CANDIDATE
+model Agent {
+  id                 String    @id @default(cuid())
+  name               String
+  department         String
+  description        String    @default("")
+  status             String    @default("ACTIVE")
+  deprecatedAt       DateTime?
+  retiredAt          DateTime?
+  deprecationReason  String?
+  retirementNote     String?
+  successorAgentId   String?
+  dataRetentionYears Int       @default(3)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // KPI ?�의 (?�규)
+  kpiName          String?
+  kpiTarget        Float?
+  kpiType          String?
+  kpiMeasureMethod String?
+  kpiMeasureCycle  String? @default("MONTHLY")
+
+  // ?�과 추적 (?�규)
+  lastUsedAt      DateTime?
+  kpiMissCount    Int       @default(0)
+  kpiLastScore    Float?
+  performanceFlag String?
+
+  artifacts         AgentArtifact[]
+  knowledgeExtracts AgentKnowledgeExtract[]
+  kpiRecords        AgentKpiRecord[]
+}
+
+model AgentKpiRecord {
+  id            String   @id @default(cuid())
+  agentId       String
+  agent         Agent    @relation(fields: [agentId], references: [id])
+  recordMonth   String
+  actualValue   Float
+  targetValue   Float
+  achieveRate   Float
+  tokenCost     Float?
+  performMatrix String?
+  note          String?
+  recordedBy    String
+  createdAt     DateTime @default(now())
+}
+
+model AgentArtifact {
+  id            String   @id @default(cuid())
+  agentId       String
+  agent         Agent    @relation(fields: [agentId], references: [id])
+  artifactType  String
+  title         String
+  contentPath   String
+  createdAt     DateTime @default(now())
+  retainUntil   DateTime
+  transferredTo String?
+  archived      Boolean  @default(false)
+}
+
+model AgentKnowledgeExtract {
+  id             String   @id @default(cuid())
+  agentId        String
+  agent          Agent    @relation(fields: [agentId], references: [id])
+  promptPatterns String?
+  failureCases   String?
+  useCaseSummary String?
+  lessonsLearned String?
+  extractedBy    String
+  extractedAt    DateTime @default(now())
+}
+
+// ?�?�?� AI Hub 리터?�시 + 거버?�스 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+
+model LiteracyCourse {
+  id          String               @id @default(cuid())
+  title       String
+  level       String
+  description String
+  durationMin Int
+  isRequired  Boolean              @default(false)
+  isActive    Boolean              @default(true)
+  createdAt   DateTime             @default(now())
+  enrollments LiteracyEnrollment[]
+}
+
+model LiteracyEnrollment {
+  id          String         @id @default(cuid())
+  employeeId  String
+  courseId    String
+  course      LiteracyCourse @relation(fields: [courseId], references: [id])
+  employee    Employee       @relation(fields: [employeeId], references: [id])
+  status      String         @default("IN_PROGRESS")
+  completedAt DateTime?
+  score       Int?
+  createdAt   DateTime       @default(now())
+
+  @@unique([employeeId, courseId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  actorEmail String
+  detail     String   @default("")
+  createdAt  DateTime @default(now())
+}
+
+model AgentRegistry {
+  id                 String    @id @default(cuid())
+  agentName          String    @unique
+  agentKey           String    @unique
+  version            String    @default("1.0.0")
+  purpose            String
+  dataSource         String
+  owner              String    @default("CTO")
+  status             String    @default("active")
+  realDataConnected  Boolean   @default(false)
+  fallbackRate       Float     @default(1.0)
+  gate1Passed        Boolean   @default(false)
+  gate2Passed        Boolean   @default(false)
+  gate3Passed        Boolean   @default(false)
+  lifecycleStage     String    @default("GATE1")
+  gate1PassedAt      DateTime?
+  gate2PassedAt      DateTime?
+  gate3PassedAt      DateTime?
+  operatorTrustScore Int?
+  operatorComment    String?
+  sam30dAccuracy     Float?
+  degradedSince      DateTime?
+  retiredAt          DateTime?
+  retireReason       String?
+  lastEvaluatedAt    DateTime?
+  nextReviewAt       DateTime?
+  notes              String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // v3 추�? ?�드: ?�중 ?�이?�사?�클 �??�이???�랫???�동
+  name           String? // Agent.name 매칭??(?��? ???�수)
+  projectId      String? // ?�계 Project (?��? ???�수)
+  phase          String    @default("DEVELOPMENT") // AgentPhase: DEVELOPMENT|PRODUCTION|CLOSED
+  devStage       String? // DevStage ??phase=DEVELOPMENT ?�용
+  prodStatus     String? // ProdStatus ??phase=PRODUCTION ?�용
+  trustScore     Int? // (operatorTrustScore 별칭)
+  pilotKpiTarget String? // JSON 4?�드 ???�환 근거
+  prodKpiTarget  String? // JSON 4?�드 ???�의???�인 ???�정
+  retireFlag     Boolean   @default(false)
+  lastUsedAt     DateTime?
+  productionAt   DateTime? // ?�의???�인 ???�용 ?�환 ?�시
+
+  scores        AgentScore[]
+  projects      AgentProjectLink[]
+  councilItems  CouncilAgendaItem[]
+  project       Project?            @relation(fields: [projectId], references: [id])
+  dataLinks     AgentDataLink[]
+  employeeLinks EmployeeAgentLink[]
+}
+
+// ?�?�?� ?�로?�트-?�이?�트 M:N 관�??�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+
+model AXProject {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  name        String
+  domain      String
+  description String   @default("")
+  owner       String
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agents AgentProjectLink[]
+}
+
+model AgentProjectLink {
+  id        String        @id @default(cuid())
+  agentId   String
+  agent     AgentRegistry @relation(fields: [agentId], references: [id])
+  projectId String
+  project   AXProject     @relation(fields: [projectId], references: [id])
+  role      String        @default("PRIMARY")
+  addedAt   DateTime      @default(now())
+
+  @@unique([agentId, projectId])
+}
+
+model AgentScore {
+  id          String        @id @default(cuid())
+  agentId     String
+  agent       AgentRegistry @relation(fields: [agentId], references: [id])
+  // 기존 Gate ?��? ?�수 ?�드 (ETF ?�메??
+  ticker      String?
+  score       Float?
+  rationale   String?
+  dataType    String        @default("mock")
+  recordedAt  DateTime      @default(now())
+  // v3 추�? ?�드: KPI ?�별 ?�적 (phase=DEVELOPMENT ???�일??/ phase=PRODUCTION ???�용)
+  phase       String? // AgentPhase: DEVELOPMENT|PRODUCTION|CLOSED
+  month       String? // "2026-07"
+  kpiActual   String? // JSON 4?�드
+  achieveRate Int? // ?�성�?%
+
+  @@unique([agentId, phase, month])
+}
+
+// ?�?� AI ?�킬 카탈로그 (AX_?�사AI?�영체계_?�안 §1) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+model Skill {
+  id            String    @id @default(cuid())
+  skillId       String    @unique // e.g. "skill-etf-nav-check"
+  name          String
+  version       String    @default("1.0.0")
+  category      String // ?�무?�동??| ETF?�용 | 리서�?| 문서?�성 | ?�이?�분??| 기�?
+  author        String
+  approvedBy    String    @default("")
+  approvedAt    DateTime?
+  status        String    @default("draft") // active | draft | deprecated
+  targetUsers   String    @default("[]") // JSON array of roles
+  securityLevel String    @default("G1") // G1(?�반) | G2(?��?) | G3(기�?)
+  purpose       String    @default("")
+  instructions  String    @default("")
+  promptText    String    @default("")
+  examples      String    @default("")
+  cautions      String    @default("")
+  usageCount    Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  ratings SkillRating[]
+}
+
+model SkillRating {
+  id            String   @id @default(cuid())
+  skillId       String
+  skill         Skill    @relation(fields: [skillId], references: [id])
+  employeeEmail String
+  score         Int // 1~5
+  comment       String   @default("")
+  createdAt     DateTime @default(now())
+
+  @@unique([skillId, employeeEmail])
+}
+
+// ?�?�?� v3: SQLite??enum 미�?????String ?�드 + 코드 ?�벨 ?�약 ?�?�?�?�?�?�?�?�?�?�
+// DataClassification: G1(공개) | G2(?��?) | G3(기�?)
+// DataRequestType:    ACCESS(기존 ?�산 ?�용) | NEW(?�규 ?�집 ?�청)
+// DataRequestStatus:  REQUESTED | REVIEWING | SEC_REVIEW | APPROVED | COLLECTING | REJECTED | PROVISIONED | EXPIRED | REVOKED
+// AgentPhase:         DEVELOPMENT | PRODUCTION | CLOSED
+// DevStage:           SUBMITTED | EVALUATED | GATE1 | GATE2 | GATE3 | PILOT_PROVEN | COUNCIL_PENDING | COND_APPROVED | DEV_REJECTED
+// ProdStatus:         ACTIVE | SUSPENDED | DEPRECATED | RETIRED
+// CouncilDecision:    APPROVED | CONDITIONAL | REMANDED | REJECTED | DEFERRED
+
+// ?�?�?� v3: ?�의??모델 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+
+model CouncilMeeting {
+  id        String              @id @default(cuid())
+  meetingNo Int                 @unique
+  heldAt    DateTime
+  notes     String?
+  items     CouncilAgendaItem[]
+}
+
+model CouncilAgendaItem {
+  id           String         @id @default(cuid())
+  meetingId    String
+  meeting      CouncilMeeting @relation(fields: [meetingId], references: [id])
+  agentId      String
+  agent        AgentRegistry  @relation(fields: [agentId], references: [id])
+  itemType     String // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE | DATA_REQUEST
+  packageMeta  String // 의회 패키지 스냅샷 (JSON)
+  decision     String? // CouncilDecision: APPROVED|CONDITIONAL|REMANDED|REJECTED|DEFERRED
+  decisionNote String?
+  conditions   String? // JSON: [{condition, done, checkedBy}]
+  decidedAt    DateTime?
+
+  // 데이터 거버넌스 정합성 (Phase 2 — 데이터신청 안건 연결)
+  dataRequestId String? // DataRequest와 연결 (DATA_REQUEST 안건 유형 시)
+}
+
+// ?�?�?� v3: ?�이???�랫??모델 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+
+model DataAsset {
+  id             String          @id @default(cuid())
+  name           String
+  description    String
+  ownerDept      String
+  classification String // DataClassification: G1|G2|G3
+  schemaMeta     String?
+  deliveryModes  String // "API,FILE,DB"
+  updateCycle    String?
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  requests       DataRequest[]
+  agentLinks     AgentDataLink[]
+
+  // 외부 데이터 소스 연동 (WS-A)
+  sourceSystem    String    @default("INTERNAL") // INTERNAL | SNOWFLAKE | AWS_GLUE
+  externalId      String?   @unique // Snowflake: DB.SCHEMA.TABLE
+  syncedAt        DateTime?
+  snowflakeDb     String?
+  snowflakeSchema String?
+
+  // 데이터 거버넌스 정합성 (Phase 2 — 데이터관리규정 v1.2: 데이터 오너 = 현업 부서장)
+  dataOwnerId String? // FK to Employee (데이터 오너)
+  dataOwner   Employee? @relation(fields: [dataOwnerId], references: [id])
+}
+
+model DataRequest {
+  id             String         @id @default(cuid())
+  type           String // DataRequestType: ACCESS|NEW
+  status         String         @default("REQUESTED") // DataRequestStatus
+  projectId      String?
+  project        Project?       @relation(fields: [projectId], references: [id])
+  agentId        String?
+  assetId        String?
+  asset          DataAsset?     @relation(fields: [assetId], references: [id])
+  requesterId    String
+  purpose        String
+  requestedSpec  String?
+  classification String // DataClassification: G1|G2|G3
+  periodMonths   Int
+  forProduction  Boolean        @default(false)
+  rejectReason   String?
+  reviewerId     String?
+  prevRequestId  String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  provision      DataProvision?
+
+  // 데이터 거버넌스 정합성 (Phase 2 — 데이터취급지침 제25조)
+  trackType    String  @default("A") // Track A(데이터 활용) | Track B(AI 연계)
+  accessType   String? // 조회 | 추출 | 반출
+  isAnonymized Boolean @default(false) // 비식별 처리 여부
+  anonNote     String? // 비식별 처리 방법·범위
+}
+
+model DataProvision {
+  id            String      @id @default(cuid())
+  requestId     String      @unique
+  request       DataRequest @relation(fields: [requestId], references: [id])
+  deliveryMode  String // API | FILE | DB
+  connectionRef String // ?�크�??�?�소 ??
+  providedAt    DateTime    @default(now())
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  revokeReason  String?
+}
+
+// ?�?� ?�의?�기 (P1-3: ?�청???�심 ?�청 ?�차) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+model ProjectAppeal {
+  id             String    @id @default(cuid())
+  projectId      String
+  project        Project   @relation(fields: [projectId], references: [id])
+  requesterEmail String // ?�청???�메??
+  reason         String // ?�의 ?�유
+  evidenceNote   String    @default("") // 근거 ?�료·보충 ?�명
+  status         String    @default("PENDING") // PENDING | UNDER_REVIEW | ACCEPTED | REJECTED
+  reviewedBy     String? // AX?� 검?�자 ?�메??
+  reviewNote     String    @default("") // AX?� 검???�견
+  resolvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+// ?�?� 거버?�스 문서 메�??�이??(AX_?�사AI?�영체계_?�안 §2) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+// docId 체계: AX-{TYPE}-{YYYY}-{NNN}
+//   REG=규정 | OPS=?�영방안 | GUI=지�?| GDL=가?�드?�인 | MAN=매뉴??| DEV=개발?��? | TEC=기술문서
+model GovernanceDoc {
+  id            String    @id @default(cuid())
+  docId         String    @unique // e.g. "AX-REG-2026-001"
+  fileName      String    @unique // docs/ ?�위 ?�일�?e.g. "AX-GUIDELINE-2026-001_AI거버?�스기본지�?md"
+  type          String // 규정|?�영방안|지�?가?�드?�인|매뉴??개발?��?|기술문서
+  level         String    @default("L2") // L1|L2|L3|L4
+  title         String
+  version       String    @default("v1.0")
+  author        String    @default("")
+  approvedBy    String    @default("")
+  approvedAt    DateTime?
+  securityLevel String    @default("G2") // G1|G2|G3
+  status        String    @default("active") // active|draft|deprecated
+  description   String    @default("")
+  relatedDocs   String    @default("[]") // JSON: 관??문서 docId 배열
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// v3.1 ???�앱 ?�림 (Telegram ?��?1?�계)
+model Notification {
+  id             String    @id @default(cuid())
+  recipientEmail String
+  title          String
+  body           String
+  link           String?
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([recipientEmail, readAt])
+}
+
+// ?�?�?� PI ?�과 ?�현 추적 (v3.2) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
+model BenefitRecord {
+  id            String   @id @default(cuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id])
+  agentId       String?
+  period        String // "2026-Q3"
+  realizedValue Float
+  unit          String
+  note          String   @default("")
+  recordedBy    String
+  createdAt     DateTime @default(now())
+
+  @@unique([projectId, period])
+}
+
+// ════════ Knowledge Graph Phase ① ════════
+
+model AgentDataLink {
+  id          String   @id @default(cuid())
+  agentId     String
+  dataAssetId String
+  purpose     String?
+  accessLevel String   @default("READ")
+  createdAt   DateTime @default(now())
+
+  agent     AgentRegistry @relation(fields: [agentId], references: [id])
+  dataAsset DataAsset     @relation(fields: [dataAssetId], references: [id])
+
+  @@unique([agentId, dataAssetId])
+}
+
+model EmployeeAgentLink {
+  id         String   @id @default(cuid())
+  employeeId String
+  agentId    String
+  role       String   @default("MANAGER")
+  since      DateTime @default(now())
+
+  employee Employee      @relation(fields: [employeeId], references: [id])
+  agent    AgentRegistry @relation(fields: [agentId], references: [id])
+
+  @@unique([employeeId, agentId])
+}

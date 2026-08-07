@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
@@ -52,7 +52,7 @@ export default function AdminTokensPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-6"><a href="/admin" className="text-sm text-gray-500 hover:underline">← 관리 포털</a></div>
+        <div className="mb-6"><a href="/admin" className="text-sm text-[var(--muted)] hover:underline">← 관리 포털</a></div>
         <h1 className="text-2xl font-bold mb-6">토큰·비용 관리</h1>
         {msg && <div className="bg-blue-50 text-blue-800 rounded-lg p-3 mb-4 text-sm">{msg}</div>}
 
@@ -144,11 +144,11 @@ export default function AdminTokensPage() {
             </div>
           </div>
           {data.usageRecords?.length === 0 ? (
-            <p className="text-sm text-gray-400 p-4">이번 달 입력된 사용량이 없습니다</p>
+            <p className="text-sm text-[var(--muted)] p-4">이번 달 입력된 사용량이 없습니다</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-xs text-gray-500">
+                <thead className="bg-gray-50 text-xs text-[var(--muted)]">
                   <tr>
                     <th className="text-left px-4 py-3">직원</th>
                     <th className="text-left px-4 py-3">부서</th>
@@ -162,11 +162,11 @@ export default function AdminTokensPage() {
                   {data.usageRecords.map((r: any) => (
                     <tr key={r.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium">{r.employee?.name}</td>
-                      <td className="px-4 py-3 text-gray-500">{r.employee?.department}</td>
+                      <td className="px-4 py-3 text-[var(--muted)]">{r.employee?.department}</td>
                       <td className="px-4 py-3 text-blue-600 font-medium">{r.employee?.currentLevel}</td>
                       <td className="px-4 py-3 capitalize">{r.service}</td>
                       <td className="px-4 py-3 text-right">{r.tokenUsed.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right text-gray-500">{r.costKrw > 0 ? `₩${r.costKrw.toLocaleString()}` : "—"}</td>
+                      <td className="px-4 py-3 text-right text-[var(--muted)]">{r.costKrw > 0 ? `₩${r.costKrw.toLocaleString()}` : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

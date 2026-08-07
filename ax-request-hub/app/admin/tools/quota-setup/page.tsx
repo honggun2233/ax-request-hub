@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 
@@ -92,10 +92,10 @@ export default function QuotaSetupPage() {
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-3 mb-1">
-          <a href="/admin/tools" className="text-sm text-gray-400 hover:text-gray-600">← AI 도구 관리</a>
+          <a href="/admin/tools" className="text-sm text-[var(--muted)] hover:text-gray-600">← AI 도구 관리</a>
         </div>
         <h1 className="text-2xl font-bold mb-1">부서별 쿼터 설정</h1>
-        <p className="text-sm text-gray-500 mb-8">
+        <p className="text-sm text-[var(--muted)] mb-8">
           AI 도구 계정 쿼터를 부서별로 설정하고 부서장(관리 위임자)을 지정합니다.
           총 배분: <strong>{totalAllocated}석</strong> / 계약 한도: 200석
         </p>
@@ -132,7 +132,7 @@ export default function QuotaSetupPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading && (
-                <tr><td colSpan={7} className="p-8 text-center text-gray-400">로딩 중...</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-[var(--muted)]">로딩 중...</td></tr>
               )}
               {!loading && quotas.map(q => (
                 <tr key={q.id}>
@@ -149,7 +149,7 @@ export default function QuotaSetupPage() {
                       />
                     ) : `${q.totalQuota}석`}
                   </td>
-                  <td className="p-4 text-gray-500">{q.usedCount}석</td>
+                  <td className="p-4 text-[var(--muted)]">{q.usedCount}석</td>
                   <td className="p-4">
                     {editing === q.id ? (
                       <select
@@ -162,7 +162,7 @@ export default function QuotaSetupPage() {
                         ))}
                       </select>
                     ) : (
-                      <span className="text-xs text-gray-500">{AI_DENSITY_LABEL[q.aiDensity] ?? q.aiDensity}</span>
+                      <span className="text-xs text-[var(--muted)]">{AI_DENSITY_LABEL[q.aiDensity] ?? q.aiDensity}</span>
                     )}
                   </td>
                   <td className="p-4">
@@ -175,7 +175,7 @@ export default function QuotaSetupPage() {
                         placeholder="dept-head@samsung.com"
                       />
                     ) : (
-                      <span className="text-xs text-gray-500">{q.managedBy || '미지정'}</span>
+                      <span className="text-xs text-[var(--muted)]">{q.managedBy || '미지정'}</span>
                     )}
                   </td>
                   <td className="p-4">
@@ -187,7 +187,7 @@ export default function QuotaSetupPage() {
                         >저장</button>
                         <button
                           onClick={() => setEditing(null)}
-                          className="text-xs text-gray-500 hover:underline"
+                          className="text-xs text-[var(--muted)] hover:underline"
                         >취소</button>
                       </div>
                     ) : (
@@ -200,7 +200,7 @@ export default function QuotaSetupPage() {
                 </tr>
               ))}
               {!loading && quotas.length === 0 && (
-                <tr><td colSpan={7} className="p-8 text-center text-gray-400">등록된 쿼터가 없습니다.</td></tr>
+                <tr><td colSpan={7} className="p-8 text-center text-[var(--muted)]">등록된 쿼터가 없습니다.</td></tr>
               )}
             </tbody>
           </table>

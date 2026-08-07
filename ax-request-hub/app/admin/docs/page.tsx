@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 
@@ -126,7 +126,7 @@ export default function AdminDocsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">거버넌스 문서 관리</h1>
-          <p className="text-xs text-gray-400 mt-0.5">등록 {registered.length}개 · 미등록 {unregistered.length}개</p>
+          <p className="text-xs text-[var(--muted)] mt-0.5">등록 {registered.length}개 · 미등록 {unregistered.length}개</p>
         </div>
         <button onClick={resetForm} className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
           + 메타데이터 등록
@@ -140,7 +140,7 @@ export default function AdminDocsPage() {
 
           {/* 파일 선택 */}
           <div>
-            <label className="text-xs text-gray-500 block mb-1">대상 파일 <span className="text-red-500">*</span></label>
+            <label className="text-xs text-[var(--muted)] block mb-1">대상 파일 <span className="text-red-500">*</span></label>
             <select value={form.fileName} onChange={e => setForm(f => ({ ...f, fileName: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
               <option value="">-- 파일 선택 --</option>
@@ -155,7 +155,7 @@ export default function AdminDocsPage() {
           <div className="grid grid-cols-2 gap-2">
             {/* 유형 */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">문서 유형 <span className="text-red-500">*</span></label>
+              <label className="text-xs text-[var(--muted)] block mb-1">문서 유형 <span className="text-red-500">*</span></label>
               <select value={form.type} onChange={e => onTypeChange(e.target.value)}
                 className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
                 {DOC_TYPES.map(t => <option key={t}>{t}</option>)}
@@ -163,7 +163,7 @@ export default function AdminDocsPage() {
             </div>
             {/* 레벨 */}
             <div>
-              <label className="text-xs text-gray-500 block mb-1">문서 레벨</label>
+              <label className="text-xs text-[var(--muted)] block mb-1">문서 레벨</label>
               <select value={form.level} onChange={e => setForm(f => ({ ...f, level: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
                 {LEVELS.map(l => <option key={l}>{l}</option>)}
@@ -173,9 +173,9 @@ export default function AdminDocsPage() {
 
           {/* 고유번호 */}
           <div>
-            <label className="text-xs text-gray-500 block mb-1">
+            <label className="text-xs text-[var(--muted)] block mb-1">
               고유번호 <span className="text-red-500">*</span>
-              <span className="ml-2 text-gray-400 normal-case">형식: AX-{TYPE_CODE[form.type] ?? 'REG'}-YYYY-NNN</span>
+              <span className="ml-2 text-[var(--muted)] normal-case">형식: AX-{TYPE_CODE[form.type] ?? 'REG'}-YYYY-NNN</span>
             </label>
             <div className="flex gap-2">
               <input value={form.docId} onChange={e => setForm(f => ({ ...f, docId: e.target.value }))}
@@ -193,41 +193,41 @@ export default function AdminDocsPage() {
 
           {/* 제목 */}
           <div>
-            <label className="text-xs text-gray-500 block mb-1">제목 <span className="text-red-500">*</span></label>
+            <label className="text-xs text-[var(--muted)] block mb-1">제목 <span className="text-red-500">*</span></label>
             <input value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs text-gray-500 block mb-1">버전</label>
+              <label className="text-xs text-[var(--muted)] block mb-1">버전</label>
               <input value={form.version} onChange={e => setForm(f => ({ ...f, version: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
             </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">보안 등급</label>
+              <label className="text-xs text-[var(--muted)] block mb-1">보안 등급</label>
               <select value={form.securityLevel} onChange={e => setForm(f => ({ ...f, securityLevel: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
                 {SEC_LEVELS.map(s => <option key={s}>{s}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">작성자</label>
+              <label className="text-xs text-[var(--muted)] block mb-1">작성자</label>
               <input value={form.author} onChange={e => setForm(f => ({ ...f, author: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
             </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">승인자</label>
+              <label className="text-xs text-[var(--muted)] block mb-1">승인자</label>
               <input value={form.approvedBy} onChange={e => setForm(f => ({ ...f, approvedBy: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
             </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">승인일</label>
+              <label className="text-xs text-[var(--muted)] block mb-1">승인일</label>
               <input type="date" value={form.approvedAt} onChange={e => setForm(f => ({ ...f, approvedAt: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
             </div>
             <div>
-              <label className="text-xs text-gray-500 block mb-1">상태</label>
+              <label className="text-xs text-[var(--muted)] block mb-1">상태</label>
               <select value={form.status} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm">
                 <option value="active">현행</option>
@@ -238,7 +238,7 @@ export default function AdminDocsPage() {
           </div>
 
           <div>
-            <label className="text-xs text-gray-500 block mb-1">설명 (한 줄 요약)</label>
+            <label className="text-xs text-[var(--muted)] block mb-1">설명 (한 줄 요약)</label>
             <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
               placeholder="이 문서의 목적과 적용 대상"
               className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" />
@@ -265,7 +265,7 @@ export default function AdminDocsPage() {
                   <div key={f.file} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-orange-100">
                     <div>
                       <div className="text-xs text-gray-700 font-medium truncate max-w-[200px]">{f.title}</div>
-                      <div className="text-xs text-gray-400 font-mono truncate max-w-[200px]">{f.file}</div>
+                      <div className="text-xs text-[var(--muted)] font-mono truncate max-w-[200px]">{f.file}</div>
                     </div>
                     <button onClick={() => startRegister(f)}
                       className="text-xs bg-orange-500 text-white px-2.5 py-1 rounded-lg hover:bg-orange-600 shrink-0">
@@ -283,7 +283,7 @@ export default function AdminDocsPage() {
               <span className="text-sm font-semibold text-gray-700">등록 완료 ({registered.length}개)</span>
             </div>
             <div className="divide-y divide-gray-50">
-              {loading && <p className="text-sm text-gray-400 text-center py-6">로딩 중...</p>}
+              {loading && <p className="text-sm text-[var(--muted)] text-center py-6">로딩 중...</p>}
               {metas.map(meta => (
                 <div key={meta.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50">
                   <div className="flex-1 min-w-0">
@@ -294,13 +294,13 @@ export default function AdminDocsPage() {
                           {meta.type}
                         </span>
                       )}
-                      <span className="text-xs text-gray-400">{meta.level}</span>
+                      <span className="text-xs text-[var(--muted)]">{meta.level}</span>
                     </div>
                     <div className="text-sm text-gray-800 truncate">{meta.title}</div>
-                    <div className="text-xs text-gray-400 font-mono truncate">{meta.fileName}</div>
+                    <div className="text-xs text-[var(--muted)] font-mono truncate">{meta.fileName}</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-gray-400">{meta.version}</span>
+                    <span className="text-xs text-[var(--muted)]">{meta.version}</span>
                     <button onClick={() => startEdit(meta)}
                       className="text-xs text-blue-600 hover:underline">편집</button>
                   </div>

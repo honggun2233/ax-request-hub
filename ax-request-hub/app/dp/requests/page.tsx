@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -79,7 +79,7 @@ function ClassBadge({ cls }: { cls: string }) {
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="text-gray-400 text-xs min-w-[72px] shrink-0 pt-0.5">{label}</span>
+      <span className="text-[var(--muted)] text-xs min-w-[72px] shrink-0 pt-0.5">{label}</span>
       <span className="text-gray-800 text-sm">{value}</span>
     </div>
   )
@@ -160,11 +160,11 @@ function RequestSheet({
             <h2 className="font-semibold text-gray-900">
               {req.asset?.name ?? '(자산 없음)'}
             </h2>
-            <p className="text-xs text-gray-400 mt-0.5">ID: {req.id.slice(0, 12)}…</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">ID: {req.id.slice(0, 12)}…</p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-700 text-2xl leading-none ml-4 mt-0.5"
+            className="text-[var(--muted)] hover:text-gray-700 text-2xl leading-none ml-4 mt-0.5"
           >
             ×
           </button>
@@ -206,7 +206,7 @@ function RequestSheet({
                 value={
                   req.isAnonymized
                     ? <span className="text-xs text-green-700 font-medium">적용 {req.anonNote ? `(${req.anonNote})` : ''}</span>
-                    : <span className="text-xs text-gray-500">미적용</span>
+                    : <span className="text-xs text-[var(--muted)]">미적용</span>
                 }
               />
             )}
@@ -218,13 +218,13 @@ function RequestSheet({
           </div>
 
           <div className="space-y-1">
-            <p className="text-xs text-gray-400">이용 목적</p>
+            <p className="text-xs text-[var(--muted)]">이용 목적</p>
             <p className="text-sm text-gray-800 leading-relaxed">{req.purpose}</p>
           </div>
 
           {req.requestedSpec && (
             <div className="space-y-1">
-              <p className="text-xs text-gray-400">요청 명세</p>
+              <p className="text-xs text-[var(--muted)]">요청 명세</p>
               <p className="text-sm text-gray-800 leading-relaxed">{req.requestedSpec}</p>
             </div>
           )}
@@ -387,7 +387,7 @@ export default function DPRequestsPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl font-bold text-gray-900">데이터 요청 검토</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
+        <p className="text-sm text-[var(--muted)] mt-0.5">
           데이터 이용 신청 및 신규 수집 요청을 검토합니다
         </p>
       </div>
@@ -401,7 +401,7 @@ export default function DPRequestsPage() {
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
               tab === t
                 ? 'border-blue-600 text-blue-700'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
+                : 'border-transparent text-[var(--muted)] hover:text-gray-700'
             }`}
           >
             {TAB_LABELS[t]}
@@ -417,18 +417,18 @@ export default function DPRequestsPage() {
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 text-sm">해당 탭에 건이 없습니다</div>
+        <div className="text-center py-16 text-[var(--muted)] text-sm">해당 탭에 건이 없습니다</div>
       ) : (
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b">
-                <th className="text-left px-4 py-3 font-medium text-gray-500">자산명</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">신청자</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">신청유형</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">기밀등급</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">신청일</th>
-                <th className="text-left px-4 py-3 font-medium text-gray-500">상태</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--muted)]">자산명</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--muted)]">신청자</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--muted)]">신청유형</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--muted)]">기밀등급</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--muted)]">신청일</th>
+                <th className="text-left px-4 py-3 font-medium text-[var(--muted)]">상태</th>
               </tr>
             </thead>
             <tbody>
@@ -441,7 +441,7 @@ export default function DPRequestsPage() {
                   <td className="px-4 py-3 font-medium text-gray-900">
                     {req.asset?.name ?? '(자산 없음)'}
                   </td>
-                  <td className="px-4 py-3 text-gray-500 font-mono text-xs">
+                  <td className="px-4 py-3 text-[var(--muted)] font-mono text-xs">
                     {req.requesterId.slice(0, 8)}…
                   </td>
                   <td className="px-4 py-3">
@@ -452,7 +452,7 @@ export default function DPRequestsPage() {
                   <td className="px-4 py-3">
                     <ClassBadge cls={req.classification} />
                   </td>
-                  <td className="px-4 py-3 text-gray-500">
+                  <td className="px-4 py-3 text-[var(--muted)]">
                     {new Date(req.createdAt).toLocaleDateString('ko-KR')}
                   </td>
                   <td className="px-4 py-3">

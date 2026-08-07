@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState, useEffect } from 'react'
 
@@ -24,8 +24,8 @@ const SEC_STYLE: Record<string, string> = {
 const STATUS_STYLE: Record<string, string> = {
   active:       'bg-green-100 text-green-700',
   draft:        'bg-yellow-100 text-yellow-700',
-  deprecated:   'bg-gray-100 text-gray-500',
-  unregistered: 'bg-gray-50 text-gray-400',
+  deprecated:   'bg-gray-100 text-[var(--muted)]',
+  unregistered: 'bg-gray-50 text-[var(--muted)]',
 }
 
 interface DocEntry {
@@ -69,7 +69,7 @@ function MarkdownRenderer({ content }: { content: string }) {
       i++
       while (i < lines.length && !lines[i].startsWith('```')) { codeLines.push(lines[i]); i++ }
       elements.push(
-        <pre key={elements.length} className="bg-gray-900 text-gray-100 rounded-lg p-4 text-xs overflow-x-auto my-3">
+        <pre key={elements.length} className="bg-[var(--bg)] text-[var(--text)] rounded-lg p-4 text-xs overflow-x-auto my-3">
           <code>{codeLines.join('\n')}</code>
         </pre>
       )
@@ -185,7 +185,7 @@ export default function DocsPage() {
       <div className="w-72 shrink-0 flex flex-col gap-3">
         <div>
           <h1 className="text-lg font-bold text-gray-900">거버넌스 문서</h1>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-[var(--muted)] mt-0.5">
             {registeredCount}개 등록 · {unregisteredCount > 0 && <span className="text-orange-500">{unregisteredCount}개 미등록</span>}
           </p>
         </div>
@@ -198,7 +198,7 @@ export default function DocsPage() {
               <button key={t} onClick={() => setTypeFilter(t)}
                 className={`text-xs px-2 py-1 rounded-full border transition ${
                   typeFilter === t
-                    ? (style ? `${style.bg} ${style.text} border-transparent` : 'bg-gray-800 text-white border-gray-800')
+                    ? (style ? `${style.bg} ${style.text} border-transparent` : 'bg-[var(--surface)] text-white border-[var(--line)]')
                     : 'border-gray-200 text-gray-600 hover:border-gray-400'
                 }`}>
                 {t}
@@ -209,9 +209,9 @@ export default function DocsPage() {
 
         {/* 문서 목록 — 레벨별 그룹 */}
         <div className="flex-1 overflow-y-auto space-y-1">
-          {loading && <p className="text-sm text-gray-400 text-center pt-4">로딩 중...</p>}
+          {loading && <p className="text-sm text-[var(--muted)] text-center pt-4">로딩 중...</p>}
           {!loading && docs.length === 0 && (
-            <p className="text-sm text-gray-400 text-center pt-4">문서가 없습니다</p>
+            <p className="text-sm text-[var(--muted)] text-center pt-4">문서가 없습니다</p>
           )}
           {!loading && (() => {
             const LEVEL_LABELS: Record<string, string> = {
@@ -230,7 +230,7 @@ export default function DocsPage() {
                 const label = LEVEL_LABELS[lv] ?? (lv === 'unregistered' ? '미등록' : lv)
                 elements.push(
                   <div key={`hdr-${lv}`} className="pt-3 pb-0.5 px-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--muted)]">{label}</span>
                     <div className="h-px bg-gray-100 mt-1" />
                   </div>
                 )
@@ -261,8 +261,8 @@ export default function DocsPage() {
                   <div className="text-sm font-medium text-gray-900 truncate">{displayTitle}</div>
                   {/* 버전 + 날짜 */}
                   <div className="flex items-center gap-2 mt-0.5">
-                    {doc.version && <span className="text-xs text-gray-500">{doc.version}</span>}
-                    <span className="text-xs text-gray-400">{new Date(doc.updatedAt).toLocaleDateString('ko-KR')}</span>
+                    {doc.version && <span className="text-xs text-[var(--muted)]">{doc.version}</span>}
+                    <span className="text-xs text-[var(--muted)]">{new Date(doc.updatedAt).toLocaleDateString('ko-KR')}</span>
                   </div>
                 </button>
               )
@@ -275,14 +275,14 @@ export default function DocsPage() {
       {/* 우: 문서 내용 */}
       <div className="flex-1 overflow-y-auto">
         {!selected ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-400">
+          <div className="h-full flex flex-col items-center justify-center text-[var(--muted)]">
             <div className="text-5xl mb-3">📄</div>
             <p className="text-sm">문서를 선택하면 내용이 표시됩니다</p>
-            <p className="text-xs mt-1 text-gray-300">미등록 문서는 /admin/docs에서 메타데이터를 등록할 수 있습니다</p>
+            <p className="text-xs mt-1 text-[var(--text2)]">미등록 문서는 /admin/docs에서 메타데이터를 등록할 수 있습니다</p>
           </div>
         ) : contentLoading ? (
           <div className="h-full flex items-center justify-center">
-            <p className="text-sm text-gray-400">불러오는 중...</p>
+            <p className="text-sm text-[var(--muted)]">불러오는 중...</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -292,7 +292,7 @@ export default function DocsPage() {
                 <div className="flex-1">
                   {selected.docId && (
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{selected.docId}</span>
+                      <span className="text-xs font-mono font-bold text-[var(--muted)] bg-gray-100 px-2 py-0.5 rounded">{selected.docId}</span>
                       {selected.type && (() => {
                         const ts = TYPE_STYLE[selected.type]
                         return ts ? <span className={`text-xs px-2 py-0.5 rounded-full ${ts.bg} ${ts.text}`}>{selected.type} ({selected.level})</span> : null
@@ -309,10 +309,10 @@ export default function DocsPage() {
                   )}
                   <h2 className="text-lg font-bold text-gray-900">{selected.title}</h2>
                   {selected.description && (
-                    <p className="text-sm text-gray-500 mt-1">{selected.description}</p>
+                    <p className="text-sm text-[var(--muted)] mt-1">{selected.description}</p>
                   )}
                 </div>
-                <div className="text-right shrink-0 text-xs text-gray-400 space-y-0.5">
+                <div className="text-right shrink-0 text-xs text-[var(--muted)] space-y-0.5">
                   {selected.version && <div>버전: <span className="font-medium text-gray-600">{selected.version}</span></div>}
                   {selected.author && <div>작성: {selected.author}</div>}
                   {selected.approvedBy && <div>승인: {selected.approvedBy}</div>}

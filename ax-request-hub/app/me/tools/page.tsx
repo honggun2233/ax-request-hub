@@ -1,4 +1,4 @@
-import { getServerSession } from 'next-auth'
+﻿import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { db } from '@/src/lib/db'
@@ -47,12 +47,12 @@ export default async function MyToolsPage() {
         {/* 현재 사용 중인 도구 */}
         <section>
           <h1 className="text-2xl font-bold mb-1">내 AI 도구 현황</h1>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-[var(--muted)] mb-6">
             신청 → AX팀 검토 → 부서장 최종 배정 순으로 진행됩니다.
           </p>
 
           {active.length === 0 ? (
-            <div className="bg-white rounded-xl p-6 text-center text-gray-400 shadow-sm">
+            <div className="bg-white rounded-xl p-6 text-center text-[var(--muted)] shadow-sm">
               아직 배정된 AI 도구가 없습니다.
               <br />
               <span className="text-sm">아래에서 바로 신청하세요.</span>
@@ -66,9 +66,9 @@ export default async function MyToolsPage() {
                     <div>
                       <div className="font-semibold">{TOOL_LABEL[account.toolType] ?? account.toolType}</div>
                       {account.requestReason && (
-                        <div className="text-sm text-gray-500 mt-1 line-clamp-1">{account.requestReason}</div>
+                        <div className="text-sm text-[var(--muted)] mt-1 line-clamp-1">{account.requestReason}</div>
                       )}
-                      <div className="text-xs text-gray-400 mt-1">
+                      <div className="text-xs text-[var(--muted)] mt-1">
                         신청일: {new Date(account.createdAt).toLocaleDateString('ko-KR')}
                       </div>
                     </div>
@@ -88,7 +88,7 @@ export default async function MyToolsPage() {
         {/* AI 도구 신청 */}
         <section className="bg-white rounded-xl p-6 shadow-sm">
           <h2 className="text-base font-semibold mb-1">AI 도구 신청</h2>
-          <p className="text-sm text-gray-500 mb-5">
+          <p className="text-sm text-[var(--muted)] mb-5">
             신청 후 AX팀 검토 → 부서장 배정 완료 시 사용 가능합니다.
           </p>
           <ToolRequestForm activeTypes={activeTypes} />
@@ -98,12 +98,12 @@ export default async function MyToolsPage() {
         {returned.length > 0 && (
           <section>
             <details>
-              <summary className="text-sm text-gray-400 cursor-pointer select-none">
+              <summary className="text-sm text-[var(--muted)] cursor-pointer select-none">
                 반납 이력 ({returned.length}건)
               </summary>
               <div className="mt-3 space-y-2">
                 {returned.map(account => (
-                  <div key={account.id} className="bg-gray-50 rounded-lg p-4 text-sm text-gray-500 flex justify-between">
+                  <div key={account.id} className="bg-gray-50 rounded-lg p-4 text-sm text-[var(--muted)] flex justify-between">
                     <span>{TOOL_LABEL[account.toolType] ?? account.toolType}</span>
                     <span>{account.returnedAt ? new Date(account.returnedAt).toLocaleDateString('ko-KR') : '-'}</span>
                   </div>
