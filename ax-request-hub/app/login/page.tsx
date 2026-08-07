@@ -12,7 +12,7 @@ const QUICK_ACCOUNTS = [
 ]
 
 const BADGE_COLOR: Record<string, string> = {
-  AX_TEAM:       "bg-[#C8A84B]/10 text-[#C8A84B] border border-[#C8A84B]/30",
+  AX_TEAM:       "bg-[#B8956A]/10 text-[#B8956A] border border-[#B8956A]/30",
   DEPT_HEAD:     "bg-blue-500/10 text-blue-300 border border-blue-400/30",
   EXECUTIVE:     "bg-purple-500/10 text-purple-300 border border-purple-400/30",
   DATA_PLATFORM: "bg-teal-500/10 text-teal-300 border border-teal-400/30",
@@ -49,16 +49,16 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* ── Left panel: navy branding ── */}
-      <div className="hidden lg:flex w-[55%] flex-col justify-between bg-[#0B1F3A] px-14 py-12 relative overflow-hidden">
+      <div className="hidden lg:flex w-[55%] flex-col justify-between bg-[#1E3560] px-14 py-12 relative overflow-hidden">
         {/* Background geometric accent */}
-        <div className="absolute top-0 right-0 w-[480px] h-[480px] rounded-full bg-[#1E3A5F] opacity-40 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[320px] h-[320px] rounded-full bg-[#0D2848] opacity-60 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
-        <div className="absolute bottom-[120px] right-[80px] w-[180px] h-[180px] rounded-full bg-[#C8A84B]/5 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[480px] h-[480px] rounded-full bg-[#2A4576] opacity-40 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[320px] h-[320px] rounded-full bg-[#162c55] opacity-60 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+        <div className="absolute bottom-[120px] right-[80px] w-[180px] h-[180px] rounded-full bg-[#B8956A]/5 pointer-events-none" />
 
         {/* Logo */}
         <div className="relative z-10">
           <div className="flex items-center gap-3">
-            <span className="w-8 h-8 rounded-lg bg-[#C8A84B] flex items-center justify-center">
+            <span className="w-8 h-8 rounded-lg bg-[#B8956A] flex items-center justify-center">
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
                 <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" />
                 <path d="M2 17l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" />
@@ -67,7 +67,7 @@ export default function LoginPage() {
             </span>
             <div>
               <p className="text-white font-semibold text-sm leading-tight">삼성자산운용</p>
-              <p className="text-[#C8A84B] text-xs font-medium tracking-wide">AX Request Hub</p>
+              <p className="text-[#B8956A] text-xs font-medium tracking-wide">AX Request Hub</p>
             </div>
           </div>
         </div>
@@ -77,7 +77,7 @@ export default function LoginPage() {
           <div>
             <h1 className="text-4xl font-bold text-white leading-tight">
               AI 거버넌스를<br />
-              <span className="text-[#C8A84B]">하나의 플랫폼</span>으로
+              <span className="text-[#B8956A]">하나의 플랫폼</span>으로
             </h1>
             <p className="text-white/50 mt-4 text-sm leading-relaxed max-w-sm">
               AI 활용 신청부터 에이전트 배포, 위원회 심의까지.<br />
@@ -90,7 +90,7 @@ export default function LoginPage() {
             {["신청", "평가", "Gate 1", "Gate 2", "Gate 3", "위원회", "운영"].map((step, i) => (
               <span key={step} className="flex items-center gap-1">
                 <span className={`px-2 py-1 rounded text-[10px] font-medium whitespace-nowrap
-                  ${i < 3 ? 'bg-[#C8A84B]/20 text-[#C8A84B]' : 'bg-white/10 text-white/40'}`}>
+                  ${i < 3 ? 'bg-[#B8956A]/20 text-[#B8956A]' : 'bg-white/10 text-white/40'}`}>
                   {step}
                 </span>
                 {i < 6 && <span className="text-white/20">→</span>}
@@ -118,15 +118,15 @@ export default function LoginPage() {
       </div>
 
       {/* ── Right panel: login form ── */}
-      <div className="flex-1 flex flex-col justify-center items-center bg-[#F7F6F3] px-8">
+      <div className="flex-1 flex flex-col justify-center items-center bg-[#F7F9FC] px-8">
         {/* Mobile logo */}
         <div className="lg:hidden mb-8 text-center">
-          <p className="text-[#0B1F3A] font-bold text-lg">삼성자산운용 AX Hub</p>
+          <p className="text-[#1E3560] font-bold text-lg">삼성자산운용 AX Hub</p>
         </div>
 
         <div className="w-full max-w-[360px] space-y-6">
           <div>
-            <h2 className="text-[#0B1F3A] text-2xl font-bold">시작하기</h2>
+            <h2 className="text-[#1E3560] text-2xl font-bold">시작하기</h2>
             <p className="text-[#94A3B8] text-sm mt-1">역할을 선택하거나 사내 계정으로 로그인하세요.</p>
           </div>
 
@@ -139,7 +139,7 @@ export default function LoginPage() {
                   key={a.email}
                   onClick={() => doLogin(a.email, a.email)}
                   disabled={loading !== null}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white hover:bg-[#0B1F3A] hover:text-white border border-[#E2E8F0] hover:border-[#0B1F3A] text-sm transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-white hover:bg-[#1E3560] hover:text-white border border-[#E2E8F0] hover:border-[#1E3560] text-sm transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-medium text-[#334155] group-hover:text-white transition-colors">{a.label}</span>
@@ -150,7 +150,7 @@ export default function LoginPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-[#94A3B8] group-hover:text-white/50 transition-colors">{a.level}</span>
                     {loading === a.email ? (
-                      <span className="w-3.5 h-3.5 border-2 border-[#C8A84B] border-t-transparent rounded-full animate-spin" />
+                      <span className="w-3.5 h-3.5 border-2 border-[#B8956A] border-t-transparent rounded-full animate-spin" />
                     ) : (
                       <svg className="w-3.5 h-3.5 text-[#CBD5E1] group-hover:text-white/40 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -176,7 +176,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@samsungam.com"
-              className="w-full border border-[#E2E8F0] bg-white rounded-xl px-4 py-3 text-sm text-[#334155] placeholder-[#CBD5E1] focus:outline-none focus:ring-2 focus:ring-[#0B1F3A]/20 focus:border-[#0B1F3A] transition-all"
+              className="w-full border border-[#E2E8F0] bg-white rounded-xl px-4 py-3 text-sm text-[#334155] placeholder-[#CBD5E1] focus:outline-none focus:ring-2 focus:ring-[#1E3560]/20 focus:border-[#1E3560] transition-all"
             />
             {error && (
               <p className="text-red-500 text-xs flex items-center gap-1.5">
@@ -189,7 +189,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading !== null || !email}
-              className="w-full bg-[#0B1F3A] text-white py-3 rounded-xl text-sm font-semibold hover:bg-[#1E3A5F] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-[#1E3560] text-white py-3 rounded-xl text-sm font-semibold hover:bg-[#2A4576] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {loading === "manual" ? (
                 <span className="flex items-center justify-center gap-2">
