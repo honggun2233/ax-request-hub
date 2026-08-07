@@ -30,6 +30,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (!project) return NextResponse.json({ error: "과제를 찾을 수 없습니다" }, { status: 404 });
   if (project.requesterEmail !== auth.user.email)
     return NextResponse.json({ error: "본인 과제만 이의제기할 수 있습니다" }, { status: 403 });
+  const APPEAL_LIMIT = 3;
+  const totalAppeals = await prisma.projectAppeal.count({ where: { projectId: id } });
+  if (totalAppeals >= APPEAL_LIMIT)
+    return NextResponse.json({ error: `이의제기는 최대 ${APPEAL_LIMIT}회까지 가능합니다` }, { status: 422 });
   const pending = await prisma.projectAppeal.findFirst({
     where: { projectId: id, status: { in: ["PENDING", "UNDER_REVIEW"] } },
   });
