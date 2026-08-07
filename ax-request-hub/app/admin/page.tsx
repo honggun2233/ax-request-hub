@@ -45,10 +45,10 @@ export default function AdminConsolePage() {
       </div>
 
       {s.exceptions.length > 0 && (
-        <Card className="border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/30">
+        <Card className="border-red-200 bg-red-50/50">
           <CardContent className="space-y-1 p-4">
             {s.exceptions.map((e, i) => (
-              <Link key={i} href={e.link} className="flex items-center gap-2 text-sm text-red-700 hover:underline dark:text-red-400">
+              <Link key={i} href={e.link} className="flex items-center gap-2 text-sm text-red-700 hover:underline">
                 <AlertTriangle className="h-4 w-4 shrink-0" />{e.text}
               </Link>
             ))}

@@ -3,23 +3,23 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-const CARD   = '#1E293B'
-const CARD2  = '#243447'
-const BDR    = '#334155'
-const ACCENT = '#3B82F6'
-const TEXT   = '#F1F5F9'
-const MUTED  = '#94A3B8'
-const DIM    = '#64748B'
-const SB     = '#0F172A'
+const CARD   = '#FFFFFF'
+const CARD2  = '#F7F9FC'
+const BDR    = '#E4E9F2'
+const ACCENT = '#4A6FA5'
+const TEXT   = '#18243D'
+const MUTED  = '#8898BB'
+const DIM    = '#BEC8DC'
+const SB     = '#F7F9FC'
 
 const LIFECYCLE_STAGES = [
-  { key: 'DEVELOPING', label: '개발중',         color: 'rgba(148,163,184,.15)', text: MUTED,     border: BDR },
-  { key: 'GATE1',      label: 'Gate1 QA',       color: 'rgba(59,130,246,.12)', text: '#60A5FA',  border: 'rgba(59,130,246,.35)' },
-  { key: 'GATE2',      label: 'Gate2 도메인',   color: 'rgba(249,115,22,.12)', text: '#FB923C',  border: 'rgba(249,115,22,.35)' },
-  { key: 'GATE3',      label: 'Gate3 스트레스', color: 'rgba(139,92,246,.12)', text: '#A78BFA',  border: 'rgba(139,92,246,.35)' },
-  { key: 'ACTIVE',     label: '운영중',          color: 'rgba(16,185,129,.12)', text: '#34D399',  border: 'rgba(16,185,129,.35)' },
-  { key: 'DEGRADED',   label: '성능저하',        color: 'rgba(239,68,68,.12)',  text: '#F87171',  border: 'rgba(239,68,68,.35)' },
-  { key: 'RETIRED',    label: '폐기',            color: 'rgba(100,116,139,.1)', text: DIM,        border: BDR },
+  { key: 'DEVELOPING', label: '개발중',         color: 'rgba(136,152,187,.12)', text: '#5A6E8C',  border: 'rgba(136,152,187,.35)' },
+  { key: 'GATE1',      label: 'Gate1 QA',       color: 'rgba(74,111,165,.10)',  text: '#4A6FA5',  border: 'rgba(74,111,165,.35)' },
+  { key: 'GATE2',      label: 'Gate2 도메인',   color: 'rgba(217,119,6,.10)',   text: '#B45309',  border: 'rgba(217,119,6,.35)' },
+  { key: 'GATE3',      label: 'Gate3 스트레스', color: 'rgba(109,40,217,.10)',  text: '#7C3AED',  border: 'rgba(109,40,217,.30)' },
+  { key: 'ACTIVE',     label: '운영중',          color: 'rgba(5,150,105,.10)',   text: '#059669',  border: 'rgba(5,150,105,.35)' },
+  { key: 'DEGRADED',   label: '성능저하',        color: 'rgba(185,64,64,.10)',   text: '#B94040',  border: 'rgba(185,64,64,.35)' },
+  { key: 'RETIRED',    label: '폐기',            color: 'rgba(190,200,220,.15)', text: '#8898BB',  border: '#E4E9F2' },
 ]
 
 const STAGE_ACTIONS: Record<string, string> = {
@@ -54,8 +54,8 @@ function StageBadge({ stage }: { stage: string }) {
 function GateBar({ g1, g2, g3 }: { g1: boolean; g2: boolean; g3: boolean }) {
   const dot = (passed: boolean, label: string) => (
     <span key={label} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, fontWeight: 600,
-      background: passed ? 'rgba(16,185,129,.15)' : 'rgba(255,255,255,.05)',
-      color: passed ? '#34D399' : DIM, border: `1px solid ${passed ? 'rgba(16,185,129,.3)' : BDR}` }}>
+      background: passed ? 'rgba(5,150,105,.10)' : CARD2,
+      color: passed ? '#059669' : DIM, border: `1px solid ${passed ? 'rgba(5,150,105,.3)' : BDR}` }}>
       {passed ? '✓' : '–'} {label}
     </span>
   )
@@ -69,9 +69,9 @@ function FallbackBar({ rate }: { rate: number }) {
     <div style={{ marginTop: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: MUTED, marginBottom: 4 }}>
         <span>Fallback율</span>
-        <span style={{ color: pct > 70 ? '#F87171' : MUTED, fontWeight: pct > 70 ? 600 : 400 }}>{pct}%</span>
+        <span style={{ color: pct > 70 ? '#B94040' : MUTED, fontWeight: pct > 70 ? 600 : 400 }}>{pct}%</span>
       </div>
-      <div style={{ height: 3, background: 'rgba(255,255,255,.06)', borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ height: 3, background: '#E4E9F2', borderRadius: 2, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 2 }} />
       </div>
     </div>
@@ -79,7 +79,7 @@ function FallbackBar({ rate }: { rate: number }) {
 }
 
 const inputSt: React.CSSProperties = {
-  width: '100%', background: '#0B1525', border: `1px solid ${BDR}`, borderRadius: 6,
+  width: '100%', background: '#FFFFFF', border: `1px solid ${BDR}`, borderRadius: 6,
   padding: '7px 10px', fontSize: 13, color: TEXT, outline: 'none', boxSizing: 'border-box',
 }
 
@@ -139,7 +139,7 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex' }}>
-      <div style={{ flex: 1, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
+      <div style={{ flex: 1, background: 'rgba(30,53,96,.35)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
       <div style={{ width: 440, background: CARD, borderLeft: `1px solid ${BDR}`, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
 
         {/* 헤더 */}
@@ -159,7 +159,7 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', margin: 0 }}>소속 AI 활용</p>
               <button onClick={() => setAddingProject(!addingProject)}
-                style={{ fontSize: 11, color: '#60A5FA', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                style={{ fontSize: 11, color: '#4A6FA5', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
                 {addingProject ? '취소' : '+ 연결'}
               </button>
             </div>
@@ -209,8 +209,8 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
               ].map(g => (
                 <div key={g.label} style={{ borderRadius: 6, padding: '8px 12px', background: g.passed ? 'rgba(16,185,129,.08)' : 'rgba(255,255,255,.03)', border: `1px solid ${g.passed ? 'rgba(16,185,129,.25)' : BDR}` }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 12, color: g.passed ? '#34D399' : DIM }}>{g.passed ? '✓' : '○'}</span>
-                    <span style={{ fontSize: 12, color: g.passed ? '#D1FAE5' : MUTED, flex: 1 }}>{g.label}</span>
+                    <span style={{ fontSize: 12, color: g.passed ? '#059669' : DIM }}>{g.passed ? '✓' : '○'}</span>
+                    <span style={{ fontSize: 12, color: g.passed ? '#065F46' : MUTED, flex: 1 }}>{g.label}</span>
                     {g.at && <span style={{ fontSize: 10, color: DIM }}>{new Date(g.at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}</span>}
                   </div>
                   <p style={{ fontSize: 10, color: DIM, marginTop: 3, marginLeft: 20 }}>{g.criteria}</p>
@@ -232,7 +232,7 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
               ].map((row, i, arr) => (
                 <div key={row.label} style={{ ...rowSt, borderBottom: i < arr.length - 1 ? `1px solid ${BDR}` : 'none' }}>
                   <span style={{ color: MUTED }}>{row.label}</span>
-                  <span style={{ fontWeight: 500, color: 'warn' in row && row.warn ? '#F87171' : 'ok' in row ? (row.ok ? '#34D399' : MUTED) : TEXT }}>{row.value}</span>
+                  <span style={{ fontWeight: 500, color: 'warn' in row && row.warn ? '#B94040' : 'ok' in row ? (row.ok ? '#059669' : MUTED) : TEXT }}>{row.value}</span>
                 </div>
               ))}
             </div>
@@ -244,12 +244,12 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 <span style={{ color: '#F59E0B', marginTop: 1 }}>⚠</span>
                 <div>
-                  <p style={{ fontSize: 12, fontWeight: 700, color: '#FCD34D', margin: 0 }}>데이터 미승인 경고</p>
-                  <p style={{ fontSize: 11, color: '#FDE68A', marginTop: 4, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: '#92400E', margin: 0 }}>데이터 미승인 경고</p>
+                  <p style={{ fontSize: 11, color: '#78350F', marginTop: 4, lineHeight: 1.5 }}>
                     연결된 AI 활용 신청의 데이터 요건 {dataWarning.totalCount}건 중 <strong>{dataWarning.pendingCount}건이 미승인</strong> 상태입니다.
                     Gate2는 진행됐지만, 데이터 승인 전까지 실데이터를 사용할 수 없습니다.
                   </p>
-                  <p style={{ fontSize: 10, color: '#F59E0B', marginTop: 6 }}>DATA_PLATFORM팀 검토 완료 후 연결됩니다.</p>
+                  <p style={{ fontSize: 10, color: '#92400E', marginTop: 6 }}>DATA_PLATFORM팀 검토 완료 후 연결됩니다.</p>
                 </div>
               </div>
             </div>
@@ -266,9 +266,9 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
                     {[1, 2, 3, 4, 5].map(n => (
                       <button key={n} onClick={() => setTrustScore(n)} style={{
                         width: 36, height: 36, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                        background: trustScore === n ? '#FB923C' : 'transparent',
+                        background: trustScore === n ? '#B8956A' : '#FFFFFF',
                         color: trustScore === n ? '#fff' : MUTED,
-                        border: `1px solid ${trustScore === n ? '#FB923C' : BDR}`,
+                        border: `1px solid ${trustScore === n ? '#B8956A' : BDR}`,
                       }}>
                         {n}
                       </button>
@@ -318,7 +318,7 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
             )}
             {!['ACTIVE', 'RETIRED'].includes(agent.lifecycleStage) && (
               <button onClick={() => advanceStage('RETIRED')} style={{
-                padding: '8px', background: 'none', border: '1px solid rgba(239,68,68,.35)', color: '#F87171', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+                padding: '8px', background: 'none', border: '1px solid rgba(239,68,68,.35)', color: '#B94040', borderRadius: 6, fontSize: 11, cursor: 'pointer',
               }}>
                 폐기 처리 (RETIRED)
               </button>
@@ -370,13 +370,13 @@ function RegisterModal({ approvedProjects, defaultProjectId, onClose, onCreated 
         <form onSubmit={handleSubmit} style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, marginBottom: 5, letterSpacing: '.04em', textTransform: 'uppercase' }}>
-              연결 AI 활용 <span style={{ color: '#F87171' }}>*</span>
+              연결 AI 활용 <span style={{ color: '#B94040' }}>*</span>
               <span style={{ fontWeight: 400, color: DIM, marginLeft: 6, textTransform: 'none' }}>(승인된 것만 표시)</span>
             </label>
             {approvedProjects.length === 0 ? (
               <div style={{ background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 6, padding: '10px 12px', fontSize: 12, color: '#FCD34D' }}>
                 승인된 AI 활용이 없습니다.{' '}
-                <Link href="/me/projects" style={{ color: '#60A5FA', fontWeight: 600 }}>내 AI 활용</Link>에서 먼저 신청하세요.
+                <Link href="/me/projects" style={{ color: '#4A6FA5', fontWeight: 600 }}>내 AI 활용</Link>에서 먼저 신청하세요.
               </div>
             ) : (
               <select value={form.projectId} onChange={e => setForm({ ...form, projectId: e.target.value })} required style={inputSt}>
@@ -396,7 +396,7 @@ function RegisterModal({ approvedProjects, defaultProjectId, onClose, onCreated 
           ].map(f => (
             <div key={f.key}>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, marginBottom: 5, letterSpacing: '.04em', textTransform: 'uppercase' }}>
-                {f.label}{f.required && <span style={{ color: '#F87171', marginLeft: 3 }}>*</span>}
+                {f.label}{f.required && <span style={{ color: '#B94040', marginLeft: 3 }}>*</span>}
               </label>
               <input type="text" required={f.required} value={(form as any)[f.key]}
                 onChange={e => {
@@ -409,7 +409,7 @@ function RegisterModal({ approvedProjects, defaultProjectId, onClose, onCreated 
 
           <div>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, marginBottom: 5, letterSpacing: '.04em', textTransform: 'uppercase' }}>
-              목적·기능 설명 <span style={{ color: '#F87171' }}>*</span>
+              목적·기능 설명 <span style={{ color: '#B94040' }}>*</span>
             </label>
             <textarea required value={form.purpose} onChange={e => setForm({ ...form, purpose: e.target.value })}
               rows={2} placeholder="에이전트가 하는 일을 1~2문장으로 설명하세요"
@@ -431,7 +431,7 @@ function RegisterModal({ approvedProjects, defaultProjectId, onClose, onCreated 
           </div>
 
           {error && (
-            <div style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 6, padding: '8px 12px', fontSize: 12, color: '#F87171' }}>
+            <div style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 6, padding: '8px 12px', fontSize: 12, color: '#B94040' }}>
               {error}
             </div>
           )}
@@ -476,7 +476,7 @@ function ProjectView({ projects, onAgentClick }: { projects: any[]; onAgentClick
               padding: '14px 20px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 8, background: 'rgba(59,130,246,.12)', color: '#60A5FA', border: '1px solid rgba(59,130,246,.3)' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 8, background: 'rgba(59,130,246,.12)', color: '#4A6FA5', border: '1px solid rgba(59,130,246,.3)' }}>
                   {project.domain}
                 </span>
                 <div style={{ textAlign: 'left' }}>
@@ -573,7 +573,7 @@ export default function RegistryPage() {
 
   const btnTabSt = (active: boolean): React.CSSProperties => ({
     padding: '6px 12px', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-    background: active ? '#243447' : 'none', color: active ? TEXT : MUTED,
+    background: active ? CARD : 'none', color: active ? TEXT : MUTED,
     border: `1px solid ${active ? BDR : 'transparent'}`,
   })
 
@@ -582,12 +582,12 @@ export default function RegistryPage() {
       {/* 헤더 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#F8FAFC', margin: 0 }}>에이전트 레지스트리</h1>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: TEXT, margin: 0 }}>에이전트 레지스트리</h1>
           <p style={{ fontSize: 13, color: MUTED, marginTop: 4 }}>전사 AI 에이전트 라이프사이클 관리 — DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ textAlign: 'right', fontSize: 12, color: MUTED }}>
-            <div style={{ color: TEXT, fontWeight: 600 }}>총 {agentData.agents.length}개</div>
+            <div style={{ color: TEXT, fontWeight: 700 }}>총 {agentData.agents.length}개</div>
             <div>활성 {agentData.stageCounts['ACTIVE'] ?? 0}개</div>
           </div>
           <Link href="/admin/retired" style={{
@@ -600,7 +600,7 @@ export default function RegistryPage() {
           }}>
             + 에이전트 등록
           </button>
-          <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,.04)', borderRadius: 8, padding: 3, border: `1px solid ${BDR}` }}>
+          <div style={{ display: 'flex', gap: 4, background: CARD2, borderRadius: 8, padding: 3, border: `1px solid ${BDR}` }}>
             <button onClick={() => setViewMode('agent')} style={btnTabSt(viewMode === 'agent')}>에이전트 뷰</button>
             <button onClick={() => setViewMode('project')} style={btnTabSt(viewMode === 'project')}>AI 활용 뷰</button>
           </div>
@@ -627,7 +627,7 @@ export default function RegistryPage() {
                       style={{
                         display: 'flex', flexDirection: 'column', alignItems: 'center',
                         padding: '8px 14px', borderRadius: 6, minWidth: 72,
-                        background: count === 0 ? 'rgba(255,255,255,.02)' : isSelected ? s.color : 'rgba(255,255,255,.03)',
+                        background: count === 0 ? CARD2 : isSelected ? s.color : CARD,
                         border: `1px solid ${count === 0 ? BDR : isSelected ? s.border : BDR}`,
                         cursor: count === 0 ? 'default' : 'pointer',
                         outline: isSelected ? `2px solid ${s.border}` : 'none',
@@ -648,8 +648,8 @@ export default function RegistryPage() {
           {stageAction && (
             <div style={{
               borderRadius: 8, padding: '12px 16px',
-              background: selectedStage === 'DEGRADED' ? 'rgba(239,68,68,.08)' : selectedStage === 'GATE2' ? 'rgba(249,115,22,.08)' : 'rgba(59,130,246,.08)',
-              border: `1px solid ${selectedStage === 'DEGRADED' ? 'rgba(239,68,68,.3)' : selectedStage === 'GATE2' ? 'rgba(249,115,22,.3)' : 'rgba(59,130,246,.25)'}`,
+              background: selectedStage === 'DEGRADED' ? 'rgba(185,64,64,.07)' : selectedStage === 'GATE2' ? 'rgba(217,119,6,.07)' : 'rgba(74,111,165,.07)',
+              border: `1px solid ${selectedStage === 'DEGRADED' ? 'rgba(185,64,64,.3)' : selectedStage === 'GATE2' ? 'rgba(217,119,6,.3)' : 'rgba(74,111,165,.25)'}`,
             }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 4 }}>
                 {LIFECYCLE_STAGES.find(s => s.key === selectedStage)?.label} — {agentData.stageCounts[selectedStage ?? ''] ?? 0}개
@@ -663,9 +663,9 @@ export default function RegistryPage() {
             {filtered.map(agent => {
               const isRetired  = agent.lifecycleStage === 'RETIRED'
               const isDegraded = agent.lifecycleStage === 'DEGRADED'
-              const borderColor = isDegraded ? 'rgba(239,68,68,.35)' :
-                agent.lifecycleStage === 'ACTIVE' ? 'rgba(16,185,129,.3)' :
-                agent.lifecycleStage === 'GATE2'  ? 'rgba(249,115,22,.3)' : BDR
+              const borderColor = isDegraded ? 'rgba(185,64,64,.35)' :
+                agent.lifecycleStage === 'ACTIVE' ? 'rgba(5,150,105,.3)' :
+                agent.lifecycleStage === 'GATE2'  ? 'rgba(217,119,6,.3)' : BDR
               return (
                 <button key={agent.id} onClick={() => !isRetired && openAgent(agent)} disabled={isRetired}
                   style={{
@@ -684,7 +684,7 @@ export default function RegistryPage() {
                   {(agent.projects ?? []).length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
                       {(agent.projects ?? []).map((link: any) => (
-                        <span key={link.projectId} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(59,130,246,.1)', color: '#60A5FA', border: '1px solid rgba(59,130,246,.25)' }}>
+                        <span key={link.projectId} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(59,130,246,.1)', color: '#4A6FA5', border: '1px solid rgba(59,130,246,.25)' }}>
                           {link.project?.name ?? ''}
                         </span>
                       ))}
