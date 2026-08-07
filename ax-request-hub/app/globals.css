@@ -85,3 +85,65 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 .kpi-animate { animation: kpi-in 0.4s ease both; }
+
+/* ── Primary 버튼 ─────────────────────────────────── */
+.btn-primary {
+  background: var(--blue);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--navy); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ── 테이블 헤더 ─────────────────────────────────── */
+.tbl-head {
+  background: var(--navy);
+  color: rgba(255,255,255,.85);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.tbl-head th { padding: 9px 16px; text-align: left; }
+
+/* Tailwind utility — bg-navy/surface에서 직접 thead에 적용 가능하도록 */
+thead.bg-navy { background: var(--navy) !important; }
+thead.bg-navy th { color: rgba(255,255,255,.8) !important; }
+
+/* ── 상태 뱃지 (v6 스틸블루 계열) ───────────────── */
+.badge-blue   { background: rgba(74,111,165,.10);  color: #4A6FA5; border: 1px solid rgba(74,111,165,.25);  }
+.badge-gold   { background: rgba(184,149,106,.12); color: #B8956A; border: 1px solid rgba(184,149,106,.30); }
+.badge-green  { background: rgba(16,185,129,.10);  color: #059669; border: 1px solid rgba(16,185,129,.25);  }
+.badge-red    { background: rgba(185,64,64,.10);   color: #B94040; border: 1px solid rgba(185,64,64,.25);   }
+.badge-muted  { background: rgba(136,152,187,.10); color: #8898BB; border: 1px solid rgba(136,152,187,.25); }
+.badge-navy   { background: var(--navy);            color: var(--gold-md); border: 1px solid rgba(184,149,106,.25); }
+
+/* 공통 뱃지 모양 */
+.badge-blue, .badge-gold, .badge-green, .badge-red, .badge-muted, .badge-navy {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 10px;
+  font-size: 10px; font-weight: 600;
+}
+
+/* ── 히어로 섹션 (로그인 페이지 등) ──────────────── */
+.hero-navy {
+  background: linear-gradient(160deg, var(--navy) 0%, var(--navy-lt) 60%, #2d5090 100%);
+}
+
+/* ── 카드 호버 ───────────────────────────────────── */
+.card-v6 {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  transition: border-color 0.14s, box-shadow 0.14s;
+}
+.card-v6:hover {
+  border-color: rgba(184,149,106,.35);
+  box-shadow: 0 2px 12px rgba(30,53,96,.06);
+}

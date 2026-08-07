@@ -4,12 +4,13 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2 } from 'lucide-react'
 
-const CARD   = '#1E293B'
-const BDR    = '#334155'
-const ACCENT = '#3B82F6'
-const TEXT   = '#F1F5F9'
-const MUTED  = '#94A3B8'
-const DIM    = '#64748B'
+const SURFACE = '#FFFFFF'
+const LINE    = '#E4E9F2'
+const BLUE    = '#4A6FA5'
+const TEXT    = '#18243D'
+const MUTED   = '#8898BB'
+const DIM     = '#BEC8DC'
+const BG      = '#F7F9FC'
 
 const 대분류_OPTIONS = ['운용관리', '고객서비스', '내부행정', '리스크관리', '데이터분석', '상품개발', '컴플라이언스', '기타']
 const 중분류_OPTIONS = ['자동화', '분석/예측', '콘텐츠생성', '의사결정지원', '모니터링/알림', '보고서/문서화', '기타']
@@ -40,7 +41,7 @@ const EMPTY_REQ = (): DataRequirement => ({
 })
 
 const inputSt: React.CSSProperties = {
-  width: '100%', background: '#0F172A', border: `1px solid ${BDR}`, borderRadius: 6,
+  width: '100%', background: SURFACE, border: `1px solid ${LINE}`, borderRadius: 6,
   padding: '8px 12px', fontSize: 13, color: TEXT, outline: 'none', boxSizing: 'border-box',
 }
 
@@ -105,12 +106,12 @@ export default function NewProjectPage() {
     } catch (e: any) { setError(e.message); setSubmitting(false) }
   }
 
-  const card: React.CSSProperties = { background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }
+  const card: React.CSSProperties = { background: SURFACE, border: `1px solid ${LINE}`, borderRadius: 8, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }
 
   return (
-    <div style={{ color: TEXT, maxWidth: 680, margin: '0 auto', paddingBottom: 60 }}>
+    <div style={{ color: TEXT, background: BG, maxWidth: 680, margin: '0 auto', paddingBottom: 60 }}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, color: '#F8FAFC', margin: 0 }}>AI 활용 신청</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: TEXT, margin: 0 }}>AI 활용 신청</h1>
         <p style={{ fontSize: 13, color: MUTED, marginTop: 6 }}>AI를 활용하려는 업무를 등록하면 AX팀이 검토 후 승인합니다.</p>
       </div>
 
@@ -118,7 +119,7 @@ export default function NewProjectPage() {
 
         {/* 01 기본 정보 */}
         <div style={card}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: ACCENT, letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>01 / 기본 정보</p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: BLUE, letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>01 / 기본 정보</p>
           <Field label="AI 활용명" required>
             <input type="text" value={form.title} onChange={set('title')}
               placeholder="예: ETF 운용 리포트 자동 생성" style={inputSt} />
@@ -162,7 +163,7 @@ export default function NewProjectPage() {
 
         {/* 02 업무 기술 */}
         <div style={card}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: ACCENT, letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>02 / 업무 기술</p>
+          <p style={{ fontSize: 11, fontWeight: 700, color: BLUE, letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>02 / 업무 기술</p>
           <Field label="목적" required hint="이 AI 활용을 왜 하려는지 설명하세요. (20자 이상)">
             <textarea value={form.목적} onChange={set('목적')} rows={3}
               placeholder="예: 운용역이 매일 수작업으로 작성하는 리포트를 자동화하여 시간을 절약하고 오류를 줄이고자 함"
@@ -182,12 +183,12 @@ export default function NewProjectPage() {
         </div>
 
         {/* 03 데이터 요건 */}
-        <div style={{ ...card, borderLeft: `3px solid ${ACCENT}` }}>
+        <div style={{ ...card, borderLeft: `3px solid ${BLUE}` }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: ACCENT, letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: BLUE, letterSpacing: '.08em', textTransform: 'uppercase', margin: 0 }}>
               03 / 데이터 요건 <span style={{ color: '#F87171' }}>*</span>
             </p>
-            <span style={{ fontSize: 10, color: DIM, background: 'rgba(59,130,246,.08)', border: '1px solid rgba(59,130,246,.2)', padding: '2px 8px', borderRadius: 10 }}>
+            <span style={{ fontSize: 10, color: DIM, background: 'rgba(74,111,165,.08)', border: '1px solid rgba(74,111,165,.2)', padding: '2px 8px', borderRadius: 10 }}>
               승인 시 DATA_PLATFORM팀 검토로 전달
             </span>
           </div>
@@ -195,7 +196,7 @@ export default function NewProjectPage() {
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
             <input type="checkbox" checked={noDataRequired}
               onChange={e => { setNoDataRequired(e.target.checked); if (e.target.checked) setDataRequirements([]) }}
-              style={{ width: 15, height: 15, accentColor: ACCENT }} />
+              style={{ width: 15, height: 15, accentColor: BLUE }} />
             <div>
               <span style={{ fontSize: 13, color: TEXT, fontWeight: 500 }}>별도 데이터 불필요</span>
               <span style={{ fontSize: 11, color: DIM, marginLeft: 8 }}>공개 데이터·AI 모델 자체 지식만 사용</span>
@@ -205,7 +206,7 @@ export default function NewProjectPage() {
           {!noDataRequired && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {dataRequirements.map((req, idx) => (
-                <div key={idx} style={{ background: '#0F172A', border: `1px solid ${BDR}`, borderRadius: 6, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div key={idx} style={{ background: BG, border: `1px solid ${LINE}`, borderRadius: 6, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: 11, fontWeight: 700, color: MUTED, letterSpacing: '.04em' }}>데이터 {idx + 1}</span>
                     <button type="button" onClick={() => removeReq(idx)}
@@ -241,9 +242,9 @@ export default function NewProjectPage() {
                     <input type="checkbox" checked={req.includesPII}
                       onChange={e => setReq(idx, { includesPII: e.target.checked })}
                       style={{ width: 14, height: 14, accentColor: '#F59E0B' }} />
-                    <span style={{ fontSize: 12, color: req.includesPII ? '#FCD34D' : MUTED }}>개인식별정보(PII) 포함</span>
+                    <span style={{ fontSize: 12, color: req.includesPII ? '#B8956A' : MUTED }}>개인식별정보(PII) 포함</span>
                     {req.includesPII && (
-                      <span style={{ fontSize: 10, color: '#F59E0B', background: 'rgba(245,158,11,.12)', border: '1px solid rgba(245,158,11,.3)', padding: '1px 6px', borderRadius: 8 }}>
+                      <span style={{ fontSize: 10, color: '#B8956A', background: 'rgba(184,149,106,.12)', border: '1px solid rgba(184,149,106,.3)', padding: '1px 6px', borderRadius: 8 }}>
                         개인정보보호 검토 필요
                       </span>
                     )}
@@ -253,7 +254,7 @@ export default function NewProjectPage() {
 
               <button type="button" onClick={addReq} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                background: 'none', border: `1px dashed ${BDR}`, borderRadius: 6,
+                background: 'none', border: `1px dashed ${LINE}`, borderRadius: 6,
                 padding: '10px', fontSize: 13, color: MUTED, cursor: 'pointer', width: '100%',
               }}>
                 <Plus size={14} /> 데이터 요건 추가
@@ -269,7 +270,7 @@ export default function NewProjectPage() {
         </div>
 
         {/* 신청자 */}
-        <div style={{ background: 'rgba(255,255,255,.03)', border: `1px solid ${BDR}`, borderRadius: 6, padding: '10px 16px', fontSize: 12, color: DIM }}>
+        <div style={{ background: SURFACE, border: `1px solid ${LINE}`, borderRadius: 6, padding: '10px 16px', fontSize: 12, color: DIM }}>
           <span style={{ fontWeight: 600, color: MUTED }}>신청자:</span> {user?.name} ({user?.email})
         </div>
 
@@ -281,8 +282,8 @@ export default function NewProjectPage() {
 
         <div style={{ display: 'flex', gap: 10 }}>
           <button type="submit" disabled={!valid || submitting} style={{
-            flex: 1, background: (valid && !submitting) ? ACCENT : '#1A2535',
-            border: `1px solid ${(valid && !submitting) ? ACCENT : BDR}`,
+            flex: 1, background: (valid && !submitting) ? BLUE : LINE,
+            border: `1px solid ${(valid && !submitting) ? BLUE : LINE}`,
             color: (valid && !submitting) ? '#fff' : DIM,
             borderRadius: 6, padding: '10px 20px', fontSize: 13, fontWeight: 600,
             cursor: (valid && !submitting) ? 'pointer' : 'not-allowed',
@@ -290,7 +291,7 @@ export default function NewProjectPage() {
             {submitting ? '제출 중…' : 'AI 활용 신청'}
           </button>
           <button type="button" onClick={() => router.back()} style={{
-            background: 'none', border: `1px solid ${BDR}`, color: MUTED,
+            background: 'none', border: `1px solid ${LINE}`, color: MUTED,
             borderRadius: 6, padding: '10px 20px', fontSize: 13, cursor: 'pointer',
           }}>
             취소
