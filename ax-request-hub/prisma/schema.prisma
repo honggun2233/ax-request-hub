@@ -260,6 +260,12 @@ model UsageAlert {
 // Agent.kpiType: ACCURACY | COMPLETION | TIME_SAVING | SATISFACTION
 // Agent.kpiMeasureCycle: MONTHLY | QUARTERLY
 // Agent.performanceFlag: null | WARNING | RETIRE_CANDIDATE
+// ─── Agent: AX팀 내부 에이전트 관리 ───────────────────────────────────────────
+// 역할: AX팀이 직접 관리하는 에이전트의 identity·KPI·폐기 거버넌스를 추적한다.
+//   - 관리 경로: /admin/agents
+//   - 상태 흐름: ACTIVE → DEPRECATED(폐기 시작, 30일 유예) → RETIRED(지식추출 완료 후)
+//   - AgentRegistry와의 관계: AgentRegistry는 전사 라이프사이클(개발→운영 게이트),
+//     Agent는 AX팀 내부 관리(KPI·폐기). 중기적으로 agentRegistryId FK로 연결 예정.
 model Agent {
   id                  String    @id @default(cuid())
   name                String
@@ -370,6 +376,12 @@ model AuditLog {
   createdAt  DateTime @default(now())
 }
 
+// ─── AgentRegistry: 전사 AI 에이전트 라이프사이클 ──────────────────────────────
+// 역할: 전사 AI 에이전트의 개발-운영 단계 진행을 추적한다.
+//   - 관리 경로: /registry
+//   - 상태 흐름: DEVELOPING → GATE1 → GATE2 → GATE3 → ACTIVE → DEGRADED/RETIRED
+//   - Agent와의 관계: Agent 모델의 내부 관리 정보와 별개로 운영됨.
+//     중기적으로 Agent.agentRegistryId FK 추가 예정 (DB 마이그레이션 필요).
 model AgentRegistry {
   id                String       @id @default(cuid())
   agentName         String       @unique
