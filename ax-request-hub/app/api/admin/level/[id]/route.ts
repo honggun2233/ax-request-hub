@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/src/lib/db"
+import { notify } from "@/lib/notify"
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions)
@@ -24,9 +25,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     include: { employee: true },
   })
 
+  let toLevel: string | undefined
+
   if (body.status === "APPROVED") {
     const fromLevel = application.employee.currentLevel
-    const toLevel = body.grantLevel || application.requestedLevel
+    toLevel = body.grantLevel || application.requestedLevel
 
     await db.employee.update({
       where: { id: application.employeeId },
@@ -42,6 +45,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         changedById: reviewerId,
       },
     })
+  }
+
+  if (body.status === "APPROVED" && toLevel) {
+    await notify(
+      application.employee.email,
+      `L${toLevel} 승급 완료`,
+      `레벨 신청이 승인되었습니다. ${toLevel}로 승급되었습니다.`,
+      "/me/level"
+    )
+  } else if (body.status === "REJECTED") {
+    await notify(
+      application.employee.email,
+      "레벨 신청 반려",
+      body.reviewNote || "레벨 신청이 반려되었습니다.",
+      "/me/level"
+    )
   }
 
   return NextResponse.json(application)
