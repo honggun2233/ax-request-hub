@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -25,7 +25,7 @@ export async function POST(
     return NextResponse.json({ error: 'deprecationReason is required and must be valid' }, { status: 400 })
   }
 
-  const agent = await db.agent.update({
+  const agent = await prisma.agent.update({
     where: { id },
     data: {
       status: 'DEPRECATED',

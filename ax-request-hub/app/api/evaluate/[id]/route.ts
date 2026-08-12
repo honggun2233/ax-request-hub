@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { EvaluationAgent } from '@/src/lib/agents/evaluation'
 import { determineApproval, checkTechStandards } from '@/src/lib/scoring'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 import { sendApprovalEmail } from '@/src/lib/notifications/email'
 import { ExtractedProject } from '@/src/lib/agents/consultation'
 import { notify } from '@/lib/notify'
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: '권한 없음 — AX팀 또는 C레벨만 평가 실행 가능' }, { status: 403 })
   }
   const { id } = await params
-  const project = await db.project.findUnique({ where: { id } })
+  const project = await prisma.project.findUnique({ where: { id } })
   if (!project) return NextResponse.json({ error: '과제를 찾을 수 없습니다.' }, { status: 404 })
 
   if (project.status !== 'submitted') {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   // G3 기밀(극비) AI 활용은 Claude API 평가 생략 → 즉시 AX팀 수동 검토 에스컬레이션
   if (project.confidentialityLevel === 'G3') {
-    await db.project.update({
+    await prisma.project.update({
       where: { id: project.id },
       data: { status: 'evaluated', totalScore: null },
     })
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       totalScore: 0,
       isAutoApproved: false,
     })
-    const axTeamMembers = await db.employee.findMany({
+    const axTeamMembers = await prisma.employee.findMany({
       where: { role: 'AX_TEAM', isActive: true },
       select: { email: true },
     })
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       hasAuditLogging: project.techHasAuditLogging,
       hasTestCoverage: project.techHasTestCoverage,
     })
-    await db.project.update({
+    await prisma.project.update({
       where: { id: project.id },
       data: {
         techStandardsPassed: techResult.passed,
@@ -88,20 +88,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     })
 
-    await db.scoreCard.upsert({
+    await prisma.scoreCard.upsert({
       where: { projectId: project.id },
       update: { ...scoreCard },
       create: { projectId: project.id, ...scoreCard },
     })
 
     if (decision.autoApproved) {
-      await db.project.update({
+      await prisma.project.update({
         where: { id: project.id },
         data: { status: 'pilot', autoApproved: true, totalScore: scoreCard.totalScore },
       })
       await sendApprovalEmail({ to: project.requesterEmail, projectTitle: project.title, totalScore: scoreCard.totalScore, isAutoApproved: true })
     } else {
-      await db.project.update({
+      await prisma.project.update({
         where: { id: project.id },
         data: { status: 'evaluated', totalScore: scoreCard.totalScore },
       })

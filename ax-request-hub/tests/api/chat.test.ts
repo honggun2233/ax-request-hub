@@ -1,4 +1,4 @@
-import { POST } from '@/app/api/chat/route'
+﻿import { POST } from '@/app/api/chat/route'
 import { NextRequest } from 'next/server'
 
 jest.mock('@/src/lib/agents/consultation', () => ({

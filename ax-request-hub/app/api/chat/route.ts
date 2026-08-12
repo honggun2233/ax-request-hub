@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { ConsultationAgent } from '@/src/lib/agents/consultation'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     if (!sessionId) {
       // 새 세션 시작
       const agentResponse = await agent.start()
-      const session = await db.chatSession.create({
+      const session = await prisma.chatSession.create({
         data: {
           messages: JSON.stringify([
             { role: 'assistant', content: agentResponse.message },
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 기존 세션 이어가기
-    const session = await db.chatSession.findUnique({ where: { id: sessionId } })
+    const session = await prisma.chatSession.findUnique({ where: { id: sessionId } })
     if (!session) {
       return NextResponse.json({ error: '세션을 찾을 수 없습니다.' }, { status: 404 })
     }
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const agentResponse = await agent.continueChat(history)
     history.push({ role: 'assistant', content: agentResponse.message })
 
-    await db.chatSession.update({
+    await prisma.chatSession.update({
       where: { id: sessionId },
       data: {
         messages: JSON.stringify(history),

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -16,7 +16,7 @@ export async function POST(
     return NextResponse.json({ error: 'Forbidden: AX_TEAM or C_LEVEL required' }, { status: 403 })
   }
 
-  const agent = await db.agent.findUnique({
+  const agent = await prisma.agent.findUnique({
     where: { id },
     include: { knowledgeExtracts: true },
   })
@@ -41,7 +41,7 @@ export async function POST(
     return NextResponse.json({ error: '지식 추출 없이 RETIRED 불가' }, { status: 400 })
   }
 
-  const updated = await db.agent.update({
+  const updated = await prisma.agent.update({
     where: { id },
     data: { status: 'RETIRED', retiredAt: new Date() },
   })

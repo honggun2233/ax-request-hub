@@ -1,16 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const employee = await db.employee.findUnique({ where: { email: session.user.email } })
+  const employee = await prisma.employee.findUnique({ where: { email: session.user.email } })
   if (!employee) return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
 
-  const accounts = await db.toolAccount.findMany({
+  const accounts = await prisma.toolAccount.findMany({
     where: { employeeId: employee.id },
     orderBy: { createdAt: 'desc' },
   })
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const employee = await db.employee.findUnique({ where: { email: session.user.email } })
+  const employee = await prisma.employee.findUnique({ where: { email: session.user.email } })
   if (!employee) return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
 
   const body = await req.json()
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 중복 신청 방지 (PENDING/APPROVED/ACTIVE 상태인 같은 도구)
-  const existing = await db.toolAccount.findFirst({
+  const existing = await prisma.toolAccount.findFirst({
     where: {
       employeeId: employee.id,
       toolType,
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '이미 해당 도구 계정이 신청 중이거나 활성 상태입니다.' }, { status: 409 })
   }
 
-  const account = await db.toolAccount.create({
+  const account = await prisma.toolAccount.create({
     data: {
       employeeId: employee.id,
       toolType,
@@ -65,13 +65,13 @@ export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const employee = await db.employee.findUnique({ where: { email: session.user.email } })
+  const employee = await prisma.employee.findUnique({ where: { email: session.user.email } })
   if (!employee) return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
 
   const body = await req.json()
   const { id } = body
 
-  const account = await db.toolAccount.findUnique({ where: { id } })
+  const account = await prisma.toolAccount.findUnique({ where: { id } })
   if (!account || account.employeeId !== employee.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: '취소/반납 불가 상태입니다.' }, { status: 400 })
   }
 
-  const updated = await db.toolAccount.update({
+  const updated = await prisma.toolAccount.update({
     where: { id },
     data: { status: 'RETURNED', returnedAt: new Date() },
   })

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest) {
   const deptHead = session.user.email
   const { accountId } = await req.json()
 
-  const account = await db.toolAccount.findUnique({
+  const account = await prisma.toolAccount.findUnique({
     where: { id: accountId },
     include: { quota: true },
   })
@@ -23,7 +23,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: '이미 반납된 계정입니다.' }, { status: 400 })
   }
 
-  const updated = await db.toolAccount.update({
+  const updated = await prisma.toolAccount.update({
     where: { id: accountId },
     data: { status: 'RETURNED', returnedAt: new Date() },
   })

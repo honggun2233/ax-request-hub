@@ -1,4 +1,4 @@
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { AppealSection } from '@/components/appeal-section'
@@ -30,7 +30,7 @@ const STAGE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'GATE3', 'ACTIVE']
 
 export default async function StatusPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const project = await db.project.findUnique({
+  const project = await prisma.project.findUnique({
     where: { id },
     include: {
       scoreCard: true,
@@ -54,7 +54,7 @@ export default async function StatusPage({ params }: { params: Promise<{ id: str
   })
   if (!project) notFound()
 
-  const appeals = await db.projectAppeal.findMany({
+  const appeals = await prisma.projectAppeal.findMany({
     where: { projectId: id },
     orderBy: { createdAt: 'desc' },
   })

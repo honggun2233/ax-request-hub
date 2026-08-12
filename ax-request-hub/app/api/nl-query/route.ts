@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { anthropic, MODEL } from '@/src/lib/claude'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 const SCHEMA = `
 AX Hub 데이터베이스 주요 테이블 (Prisma/SQLite):
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
     // Act (SQL 실행)
     try {
-      const rows = await db.$queryRawUnsafe(sql)
+      const rows = await prisma.$queryRawUnsafe(sql)
       const serialized = JSON.parse(JSON.stringify(rows, (_k, v) =>
         typeof v === 'bigint' ? Number(v) : v
       ))

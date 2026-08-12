@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -13,7 +13,7 @@ export async function GET(
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { id } = await params
-  const extracts = await db.agentKnowledgeExtract.findMany({ where: { agentId: id } })
+  const extracts = await prisma.agentKnowledgeExtract.findMany({ where: { agentId: id } })
   return NextResponse.json(extracts)
 }
 
@@ -32,10 +32,10 @@ export async function POST(
   if (!body.useCaseSummary?.trim() || !body.lessonsLearned?.trim())
     return NextResponse.json({ error: 'useCaseSummary와 lessonsLearned는 필수 항목입니다' }, { status: 400 })
 
-  const agent = await db.agent.findUnique({ where: { id } })
+  const agent = await prisma.agent.findUnique({ where: { id } })
   if (!agent) return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
 
-  const extract = await db.agentKnowledgeExtract.create({
+  const extract = await prisma.agentKnowledgeExtract.create({
     data: {
       agentId: id,
       promptPatterns: body.promptPatterns || null,
@@ -63,7 +63,7 @@ export async function DELETE(
   if (!extractId) return NextResponse.json({ error: 'extractId required' }, { status: 400 })
 
   try {
-    await db.agentKnowledgeExtract.delete({ where: { id: extractId, agentId: id } })
+    await prisma.agentKnowledgeExtract.delete({ where: { id: extractId, agentId: id } })
   } catch (e: any) {
     if (e.code === 'P2025') return NextResponse.json({ error: 'Not found' }, { status: 404 })
     throw e

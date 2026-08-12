@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 // 지정 가능한 역할 — AX_TEAM만 DEPT_HEAD를 지정할 수 있음
 const ASSIGNABLE_ROLES = ['DEPT_HEAD', 'EMPLOYEE'] as const
@@ -29,7 +29,7 @@ export async function PATCH(
     )
   }
 
-  const target = await db.employee.findUnique({ where: { id } })
+  const target = await prisma.employee.findUnique({ where: { id } })
   if (!target) {
     return NextResponse.json({ error: '직원을 찾을 수 없습니다.' }, { status: 404 })
   }
@@ -41,13 +41,13 @@ export async function PATCH(
     )
   }
 
-  const updated = await db.employee.update({
+  const updated = await prisma.employee.update({
     where: { id },
     data: { role },
     select: { id: true, employeeId: true, name: true, department: true, role: true },
   })
 
-  await db.auditLog.create({
+  await prisma.auditLog.create({
     data: {
       entityType: 'Employee',
       entityId: id,
@@ -75,7 +75,7 @@ export async function GET(
   }
 
   const { id } = await params
-  const employee = await db.employee.findUnique({
+  const employee = await prisma.employee.findUnique({
     where: { id },
     select: { id: true, employeeId: true, name: true, department: true, role: true },
   })

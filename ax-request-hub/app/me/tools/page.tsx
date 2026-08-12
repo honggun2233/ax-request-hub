@@ -1,7 +1,7 @@
 ﻿import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 import { ReturnButton } from './ReturnButton'
 import { ToolRequestForm } from './ToolRequestForm'
 
@@ -23,7 +23,7 @@ export default async function MyToolsPage() {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) redirect('/login')
 
-  const employee = await db.employee.findUnique({
+  const employee = await prisma.employee.findUnique({
     where: { email: session.user.email },
     include: {
       toolAccounts: { orderBy: { createdAt: 'desc' } },
