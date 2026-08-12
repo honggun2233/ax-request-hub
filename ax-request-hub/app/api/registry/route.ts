@@ -50,17 +50,18 @@ export async function POST(req: NextRequest) {
   }
 
   // 허용된 필드만 명시적으로 추출 (Mass Assignment 방지 — gate*Passed, lifecycleStage 등 서버 전용 필드 차단)
-  const safeData = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const safeData: any = {
     agentName: data.agentName,
-    agentId: data.agentId ?? undefined,
-    agentType: data.agentType ?? undefined,
-    phase: data.phase ?? undefined,
-    devStage: data.devStage ?? undefined,
-    prodStatus: data.prodStatus ?? undefined,
     projectId: data.projectId,
-    description: data.description ?? undefined,
-    modelVersion: data.modelVersion ?? undefined,
-    department: data.department ?? undefined,
+    ...(data.agentId      !== undefined && { agentId: data.agentId }),
+    ...(data.agentType    !== undefined && { agentType: data.agentType }),
+    ...(data.phase        !== undefined && { phase: data.phase }),
+    ...(data.devStage     !== undefined && { devStage: data.devStage }),
+    ...(data.prodStatus   !== undefined && { prodStatus: data.prodStatus }),
+    ...(data.description  !== undefined && { description: data.description }),
+    ...(data.modelVersion !== undefined && { modelVersion: data.modelVersion }),
+    ...(data.department   !== undefined && { department: data.department }),
   }
   const agent = await prisma.agentRegistry.create({ data: safeData })
   return NextResponse.json(agent, { status: 201 })

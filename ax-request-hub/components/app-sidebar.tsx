@@ -5,7 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   Home, Plus, ListChecks, Database, FileText, Star, Book,
   User, Wrench, Users, BarChart3, Cpu, Gavel, Coins,
-  Shield, LogOut, LayoutDashboard, Scale,
+  Shield, LogOut, LayoutDashboard, Scale, GitFork,
   ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -91,6 +91,7 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/dashboard", label: "활용 현황",    icon: BarChart3 },
       { href: "/registry",  label: "에이전트 현황", icon: Cpu },
+      { href: "/graph",     label: "영향도 분석",   icon: GitFork },
       { href: "/council",   label: "AI 위원회",    icon: Gavel },
     ],
   },
