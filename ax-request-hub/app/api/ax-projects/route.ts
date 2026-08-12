@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireRole } from '@/lib/authz'
 
 export async function GET() {
+  const auth = await requireRole()
+  if ('error' in auth) return auth.error
+
   const projects = await prisma.aXProject.findMany({
     include: {
       agents: {
