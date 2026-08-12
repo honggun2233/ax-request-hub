@@ -1,490 +1,347 @@
-﻿'use client'
+'use client'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
-import cytoscape, { type Core, type NodeSingular, type ElementDefinition } from 'cytoscape'
+const BDR = '#E4E9F2'
+const TEXT = '#18243D'
+const MUTED = '#8898BB'
+const DIM = '#BEC8DC'
+const SB = '#F7F9FC'
+const ACCENT = '#4A6FA5'
 
-// ─── 타입 ───────────────────────────────────────────────────────────────────
-
-interface GraphNode {
-  id: string
-  type: 'Project' | 'Agent' | 'DataAsset' | 'Employee'
-  name: string
-  status?: string
-  secretLevel?: 'G1' | 'G2' | 'G3'
-  dept?: string
-  lifecycleStage?: string
+const SEVERITY_COLOR: Record<string, string> = {
+  critical: '#EF4444',
+  high: '#F97316',
+  medium: '#F59E0B',
+  low: '#3B82F6',
 }
 
-interface GraphEdge {
-  id: string
-  from: string
-  to: string
-  label: string
-}
-
-interface OverviewData {
-  totalNodes: number
-  byType: Record<string, number>
-}
-
-// ─── 색상 팔레트 ────────────────────────────────────────────────────────────
-
-const NODE_COLORS: Record<GraphNode['type'], string> = {
-  Project: '#4F46E5',
-  Agent: '#059669',
-  DataAsset: '#6B7280',
-  Employee: '#7C3AED',
-}
-
-const SECRET_LEVEL_COLORS: Record<string, string> = {
-  G1: '#6B7280',
-  G2: '#D97706',
-  G3: '#DC2626',
-}
-
-// ─── Mock 데이터 (API 미구현 시 폴백) ────────────────────────────────────────
-
-const MOCK_NODES: GraphNode[] = [
-  { id: 'p1', type: 'Project', name: '컴플라이언스 자동화', status: 'ACTIVE' },
-  { id: 'p2', type: 'Project', name: 'ETF 리포트 생성', status: 'PILOT' },
-  { id: 'a1', type: 'Agent', name: 'ComplianceAgent', lifecycleStage: 'PRODUCTION' },
-  { id: 'a2', type: 'Agent', name: 'ReportAgent', lifecycleStage: 'GATE2' },
-  { id: 'd1', type: 'DataAsset', name: '규정집 DB', secretLevel: 'G1' },
-  { id: 'd2', type: 'DataAsset', name: '펀드 마스터', secretLevel: 'G2' },
-  { id: 'd3', type: 'DataAsset', name: '임직원 개인정보', secretLevel: 'G3' },
-  { id: 'e1', type: 'Employee', name: '홍인표', dept: 'AX팀' },
-  { id: 'e2', type: 'Employee', name: '김지훈', dept: '준법팀' },
+const TYPE_OPTIONS = [
+  { value: 'agent',     label: '에이전트' },
+  { value: 'project',   label: 'AI 활용 (과제)' },
 ]
 
-const MOCK_EDGES: GraphEdge[] = [
-  { id: 'r1', from: 'a1', to: 'p1', label: 'BELONGS_TO' },
-  { id: 'r2', from: 'a2', to: 'p2', label: 'BELONGS_TO' },
-  { id: 'r3', from: 'a1', to: 'd1', label: 'CONSUMES' },
-  { id: 'r4', from: 'a2', to: 'd2', label: 'CONSUMES' },
-  { id: 'r5', from: 'e1', to: 'a1', label: 'MANAGES' },
-  { id: 'r6', from: 'e2', to: 'p1', label: 'MANAGES' },
-  { id: 'r7', from: 'd3', to: 'p1', label: 'REFERENCED_BY' },
-]
-
-// ─── 유틸 ───────────────────────────────────────────────────────────────────
-
-function nodeColor(node: GraphNode): string {
-  if (node.type === 'DataAsset' && node.secretLevel) {
-    return SECRET_LEVEL_COLORS[node.secretLevel] ?? NODE_COLORS.DataAsset
-  }
-  return NODE_COLORS[node.type]
-}
-
-function buildElements(nodes: GraphNode[], edges: GraphEdge[]): ElementDefinition[] {
-  const nodeIds = new Set(nodes.map((n) => n.id))
-  const nodeEls: ElementDefinition[] = nodes.map((n) => ({
-    data: {
-      id: n.id,
-      label: n.name,
-      color: nodeColor(n),
-      nodeData: n,
-    },
-  }))
-  const edgeEls: ElementDefinition[] = edges
-    .filter((e) => nodeIds.has(e.from) && nodeIds.has(e.to))
-    .map((e) => ({
-      data: {
-        id: e.id,
-        source: e.from,
-        target: e.to,
-        label: e.label,
-      },
-    }))
-  return [...nodeEls, ...edgeEls]
-}
-
-// ─── API 호출 ─────────────────────────────────────────────────────────────
-
-async function fetchNodes(): Promise<GraphNode[]> {
-  try {
-    const res = await fetch('/api/graph/nodes')
-    if (!res.ok) throw new Error('nodes API error')
-    const data = await res.json()
-    if (!Array.isArray(data) || data.length === 0) return MOCK_NODES
-    return data
-  } catch {
-    return MOCK_NODES
+interface ImpactResult {
+  severity: string
+  summary: string
+  affected: {
+    projects: Array<{ id: string; name: string; connectionType: string }>
+    employees: Array<{ id: string; name: string; role: string }>
+    agents: Array<{ id: string; name: string; connectionType: string }>
   }
 }
 
-async function fetchEdges(): Promise<GraphEdge[]> {
-  try {
-    const res = await fetch('/api/graph/edges')
-    if (!res.ok) throw new Error('edges API error')
-    const data = await res.json()
-    if (!Array.isArray(data) || data.length === 0) return MOCK_EDGES
-    return data
-  } catch {
-    return MOCK_EDGES
+function SeverityBadge({ severity }: { severity: string }) {
+  const colorMap: Record<string, { bg: string; text: string; label: string }> = {
+    critical: { bg: 'rgba(239,68,68,.10)', text: '#B91C1C', label: '심각' },
+    high:     { bg: 'rgba(249,115,22,.10)', text: '#C2410C', label: '높음' },
+    medium:   { bg: 'rgba(245,158,11,.10)', text: '#B45309', label: '중간' },
+    low:      { bg: 'rgba(59,130,246,.10)', text: '#1D4ED8', label: '낮음' },
   }
+  const s = colorMap[severity] ?? colorMap.low
+  return (
+    <span style={{ fontSize: 11, padding: '3px 10px', borderRadius: 20, fontWeight: 700, background: s.bg, color: s.text }}>
+      {s.label}
+    </span>
+  )
 }
-
-async function fetchOverview(): Promise<OverviewData | null> {
-  try {
-    const res = await fetch('/api/graph/overview')
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
-  }
-}
-
-async function fetchExplore(nodeId: string, nodeType: string): Promise<{ nodes: GraphNode[]; edges: GraphEdge[] } | null> {
-  try {
-    const res = await fetch(`/api/graph/explore?nodeId=${nodeId}&nodeType=${nodeType}&depth=1`)
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
-  }
-}
-
-// ─── 메인 컴포넌트 ─────────────────────────────────────────────────────────
-
-const NODE_TYPES = ['전체', 'Agent', 'Project', 'DataAsset', 'Employee'] as const
-const SECRET_LEVELS = ['전체', 'G1', 'G2', 'G3'] as const
 
 export default function GraphView() {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const cyRef = useRef<Core | null>(null)
-
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [overview, setOverview] = useState<OverviewData | null>(null)
-  const [allNodes, setAllNodes] = useState<GraphNode[]>([])
-  const [allEdges, setAllEdges] = useState<GraphEdge[]>([])
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null)
-  const [nodeTypeFilter, setNodeTypeFilter] = useState<string>('전체')
-  const [secretFilter, setSecretFilter] = useState<string>('전체')
-
-  // ─── Cytoscape 초기화 ───────────────────────────────────────────────────
-
-  const initCy = useCallback((elements: ElementDefinition[]) => {
-    if (!containerRef.current) return
-
-    if (cyRef.current) {
-      cyRef.current.stop()
-      const old = cyRef.current
-      cyRef.current = null
-      old.destroy()
-    }
-
-    const cy = cytoscape({
-      container: containerRef.current,
-      elements,
-      style: [
-        {
-          selector: 'node',
-          style: {
-            'background-color': 'data(color)',
-            label: 'data(label)',
-            'font-size': '11px',
-            color: '#fff',
-            'text-valign': 'center',
-            'text-halign': 'center',
-            width: 60,
-            height: 60,
-            'text-wrap': 'wrap',
-            'text-max-width': '55px',
-            'font-weight': 'bold',
-            'border-width': 2,
-            'border-color': 'rgba(255,255,255,0.3)',
-          },
-        },
-        {
-          selector: 'node:selected',
-          style: {
-            'border-width': 3,
-            'border-color': '#fff',
-          },
-        },
-        {
-          selector: 'edge',
-          style: {
-            width: 1.5,
-            'line-color': '#94a3b8',
-            'target-arrow-color': '#94a3b8',
-            'target-arrow-shape': 'triangle',
-            'curve-style': 'bezier',
-            label: 'data(label)',
-            'font-size': '9px',
-            color: '#64748b',
-            'text-rotation': 'autorotate',
-            'text-margin-y': -8,
-          },
-        },
-        {
-          selector: 'edge:selected',
-          style: {
-            'line-color': '#6366f1',
-            'target-arrow-color': '#6366f1',
-            color: '#4f46e5',
-          },
-        },
-      ],
-      layout: {
-        name: 'cose',
-        animate: false,
-        randomize: false,
-        nodeRepulsion: () => 8000,
-        idealEdgeLength: () => 120,
-        edgeElasticity: () => 100,
-        padding: 40,
-      } as Parameters<Core['layout']>[0],
-      minZoom: 0.3,
-      maxZoom: 3,
-      wheelSensitivity: 0.3,
-    })
-
-    cy.on('tap', 'node', (evt) => {
-      const node = evt.target as NodeSingular
-      setSelectedNode(node.data('nodeData') as GraphNode)
-    })
-
-    cy.on('tap', (evt) => {
-      if (evt.target === cy) setSelectedNode(null)
-    })
-
-    cy.on('dblclick', 'node', async (evt) => {
-      const node = evt.target as NodeSingular
-      const nd = node.data('nodeData') as GraphNode
-      const result = await fetchExplore(nd.id, nd.type)
-      if (result && (result.nodes.length > 0 || result.edges.length > 0)) {
-        const els = buildElements(result.nodes, result.edges)
-        initCy(els)
-      }
-    })
-
-    cyRef.current = cy
-  }, [])
-
-  // ─── 필터 적용 ──────────────────────────────────────────────────────────
+  const router = useRouter()
+  const [selectedType, setSelectedType] = useState<string>('agent')
+  const [selectedId, setSelectedId] = useState<string>('')
+  const [items, setItems] = useState<Array<{ id: string; name: string }>>([])
+  const [loadingItems, setLoadingItems] = useState(false)
+  const [impact, setImpact] = useState<ImpactResult | null>(null)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [activeTab, setActiveTab] = useState<'list' | 'graph'>('list')
+  const [analyzed, setAnalyzed] = useState(false)
 
   useEffect(() => {
-    if (allNodes.length === 0) return
+    setSelectedId('')
+    setItems([])
+    setImpact(null)
+    setAnalyzed(false)
+    setLoadingItems(true)
 
-    let filtered = allNodes
+    const url = selectedType === 'agent' ? '/api/registry' : '/api/projects'
+    fetch(url)
+      .then(r => r.json())
+      .then(data => {
+        const list = Array.isArray(data) ? data : (data.agents ?? data.projects ?? [])
+        setItems(list.map((x: any) => ({
+          id: x.id,
+          name: x.agentName ?? x.name ?? x.id,
+        })))
+        setLoadingItems(false)
+      })
+      .catch(() => setLoadingItems(false))
+  }, [selectedType])
 
-    if (nodeTypeFilter !== '전체') {
-      filtered = filtered.filter((n) => n.type === nodeTypeFilter)
+  const analyze = async () => {
+    if (!selectedId) return
+    setAnalyzing(true)
+    setImpact(null)
+    setAnalyzed(false)
+    try {
+      const res = await fetch(`/api/graph/impact?type=${selectedType}&id=${selectedId}`)
+      const data = await res.json()
+      setImpact(data)
+      setAnalyzed(true)
+      setActiveTab('list')
+    } finally {
+      setAnalyzing(false)
     }
+  }
 
-    if (secretFilter !== '전체') {
-      filtered = filtered.filter(
-        (n) => n.type !== 'DataAsset' || n.secretLevel === secretFilter
-      )
-    }
+  const selectedItem = items.find(x => x.id === selectedId)
 
-    const filteredIds = new Set(filtered.map((n) => n.id))
-    const filteredEdges = allEdges.filter(
-      (e) => filteredIds.has(e.from) && filteredIds.has(e.to)
-    )
-
-    initCy(buildElements(filtered, filteredEdges))
-  }, [nodeTypeFilter, secretFilter, allNodes, allEdges, initCy])
-
-  // ─── 초기 데이터 로드 ───────────────────────────────────────────────────
-
-  useEffect(() => {
-    let mounted = true
-
-    async function load() {
-      try {
-        setLoading(true)
-        setError(null)
-
-        const [nodes, edges, ov] = await Promise.all([
-          fetchNodes(),
-          fetchEdges(),
-          fetchOverview(),
-        ])
-
-        if (!mounted) return
-        setAllNodes(nodes)
-        setAllEdges(edges)
-        setOverview(ov)
-        initCy(buildElements(nodes, edges))
-      } catch {
-        if (mounted) setError('데이터를 불러올 수 없습니다.')
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    }
-
-    load()
-    return () => {
-      mounted = false
-      cyRef.current?.destroy()
-    }
-  }, [initCy])
-
-  // ─── 선택 노드 연결 수 ──────────────────────────────────────────────────
-
-  const connectedCount = selectedNode
-    ? allEdges.filter(
-        (e) => e.from === selectedNode.id || e.to === selectedNode.id
-      ).length
-    : 0
-
-  // ─── 렌더 ──────────────────────────────────────────────────────────────
+  const inputSt: React.CSSProperties = {
+    width: '100%', background: '#FFFFFF', border: `1px solid ${BDR}`,
+    borderRadius: 8, padding: '10px 12px', fontSize: 13, color: TEXT,
+    outline: 'none', boxSizing: 'border-box',
+  }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shrink-0">
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">지식 그래프</h1>
-          {overview && (
-            <p className="text-xs text-[var(--muted)] mt-0.5">
-              총 {overview.totalNodes}개 노드
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          <select
-            value={nodeTypeFilter}
-            onChange={(e) => setNodeTypeFilter(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {NODE_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t === '전체' ? '노드 타입: 전체' : t}
-              </option>
-            ))}
-          </select>
-          <select
-            value={secretFilter}
-            onChange={(e) => setSecretFilter(e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {SECRET_LEVELS.map((l) => (
-              <option key={l} value={l}>
-                {l === '전체' ? '기밀등급: 전체' : `${l}급`}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
+    <div style={{ minHeight: '100vh', background: SB, padding: '32px 24px' }}>
+      <div style={{ maxWidth: 760, margin: '0 auto' }}>
 
-      {/* 범례 */}
-      <div className="flex items-center gap-4 px-6 py-2 bg-white border-b border-gray-100 shrink-0">
-        {Object.entries(NODE_COLORS).map(([type, color]) => (
-          <div key={type} className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs text-[var(--muted)]">{type}</span>
-          </div>
-        ))}
-        <div className="w-px h-4 bg-gray-200 mx-1" />
-        <span className="text-xs text-[var(--muted)]">DataAsset 기밀등급:</span>
-        {Object.entries(SECRET_LEVEL_COLORS).map(([lvl, color]) => (
-          <div key={lvl} className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-            <span className="text-xs text-[var(--muted)]">{lvl}</span>
-          </div>
-        ))}
-      </div>
+        {/* 헤더 */}
+        <div style={{ marginBottom: 28 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: TEXT, margin: 0 }}>영향도 분석</h1>
+          <p style={{ fontSize: 13, color: MUTED, marginTop: 6 }}>
+            에이전트 또는 과제를 선택하면, 폐기·변경 시 영향받는 항목을 분석합니다.
+          </p>
+        </div>
 
-      {/* 바디 */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* 그래프 캔버스 */}
-        <div className="flex-1 relative">
-          {loading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm text-[var(--muted)]">그래프 로딩 중...</span>
+        {/* 질문 선택 UI */}
+        <div style={{ background: '#FFFFFF', borderRadius: 12, border: `1px solid ${BDR}`, padding: 24, marginBottom: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {/* 타입 선택 */}
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 8 }}>
+                분석 대상 타입
+              </label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {TYPE_OPTIONS.map(opt => (
+                  <button key={opt.value} onClick={() => setSelectedType(opt.value)} style={{
+                    flex: 1, padding: '10px', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                    background: selectedType === opt.value ? ACCENT : '#FFFFFF',
+                    color: selectedType === opt.value ? '#FFFFFF' : MUTED,
+                    border: `1px solid ${selectedType === opt.value ? ACCENT : BDR}`,
+                    transition: 'all .15s',
+                  }}>
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
-          {error && (
-            <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10">
-              <div className="text-center">
-                <p className="text-red-500 font-medium">{error}</p>
-                <p className="text-sm text-[var(--muted)] mt-1">Mock 데이터로 시도합니다.</p>
-              </div>
-            </div>
-          )}
-          <div ref={containerRef} className="w-full h-full" />
-        </div>
 
-        {/* 사이드 패널 */}
-        <div className="w-64 bg-white border-l border-gray-200 flex flex-col shrink-0">
-          <div className="px-4 py-3 border-b border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-700">선택 노드 상세</h2>
-          </div>
-
-          {selectedNode ? (
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-              {/* 노드 타입 배지 */}
-              <div
-                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold text-white"
-                style={{ backgroundColor: nodeColor(selectedNode) }}
+            {/* 대상 선택 */}
+            <div>
+              <label style={{ fontSize: 11, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', display: 'block', marginBottom: 8 }}>
+                대상 선택
+              </label>
+              <select
+                value={selectedId}
+                onChange={e => setSelectedId(e.target.value)}
+                disabled={loadingItems}
+                style={inputSt}
               >
-                {selectedNode.type}
-              </div>
-
-              {/* 이름 */}
-              <div>
-                <p className="text-xs text-[var(--muted)] mb-0.5">이름</p>
-                <p className="text-sm font-semibold text-gray-900">{selectedNode.name}</p>
-              </div>
-
-              {/* 타입별 추가 정보 */}
-              {selectedNode.status && (
-                <div>
-                  <p className="text-xs text-[var(--muted)] mb-0.5">상태</p>
-                  <p className="text-sm text-gray-700">{selectedNode.status}</p>
-                </div>
-              )}
-              {selectedNode.lifecycleStage && (
-                <div>
-                  <p className="text-xs text-[var(--muted)] mb-0.5">라이프사이클</p>
-                  <p className="text-sm text-gray-700">{selectedNode.lifecycleStage}</p>
-                </div>
-              )}
-              {selectedNode.secretLevel && (
-                <div>
-                  <p className="text-xs text-[var(--muted)] mb-0.5">기밀등급</p>
-                  <span
-                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-white"
-                    style={{ backgroundColor: SECRET_LEVEL_COLORS[selectedNode.secretLevel] }}
-                  >
-                    {selectedNode.secretLevel}
-                  </span>
-                </div>
-              )}
-              {selectedNode.dept && (
-                <div>
-                  <p className="text-xs text-[var(--muted)] mb-0.5">부서</p>
-                  <p className="text-sm text-gray-700">{selectedNode.dept}</p>
-                </div>
-              )}
-
-              {/* 연결 수 */}
-              <div>
-                <p className="text-xs text-[var(--muted)] mb-0.5">연결</p>
-                <p className="text-sm text-gray-700">{connectedCount}개</p>
-              </div>
-
-              {/* 더블클릭 안내 */}
-              <p className="text-xs text-[var(--muted)] italic">
-                더블클릭으로 이 노드를 중심으로 탐색
-              </p>
+                <option value="">{loadingItems ? '로딩 중...' : '선택하세요'}</option>
+                {items.map(item => (
+                  <option key={item.id} value={item.id}>{item.name}</option>
+                ))}
+              </select>
             </div>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-xs text-[var(--muted)] text-center px-4">
-                노드를 클릭하면<br />상세 정보가 표시됩니다
-              </p>
-            </div>
-          )}
+
+            {/* 분석 버튼 */}
+            <button
+              onClick={analyze}
+              disabled={!selectedId || analyzing}
+              style={{
+                padding: '12px', borderRadius: 8, fontSize: 14, fontWeight: 700, cursor: selectedId ? 'pointer' : 'not-allowed',
+                background: selectedId && !analyzing ? ACCENT : 'rgba(74,111,165,.3)',
+                color: '#FFFFFF', border: 'none', transition: 'background .15s',
+              }}
+            >
+              {analyzing ? '분석 중...' : '영향도 분석 시작'}
+            </button>
+          </div>
         </div>
+
+        {/* 결과 */}
+        {analyzed && impact && (
+          <div style={{ background: '#FFFFFF', borderRadius: 12, border: `1px solid ${BDR}`, overflow: 'hidden' }}>
+
+            {/* 결과 헤더 */}
+            <div style={{ padding: '16px 20px', borderBottom: `1px solid ${BDR}`, background: SB }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <SeverityBadge severity={impact.severity} />
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: TEXT, margin: 0 }}>
+                    {selectedItem?.name ?? '선택한 항목'}
+                  </p>
+                  <p style={{ fontSize: 11, color: MUTED, marginTop: 2 }}>{impact.summary}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 탭 */}
+            <div style={{ display: 'flex', borderBottom: `1px solid ${BDR}` }}>
+              {(['list', 'graph'] as const).map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                  flex: 1, padding: '12px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  background: 'none', border: 'none',
+                  borderBottom: activeTab === tab ? `2px solid ${ACCENT}` : '2px solid transparent',
+                  color: activeTab === tab ? ACCENT : MUTED,
+                }}>
+                  {tab === 'list' ? '목록' : '그래프'}
+                </button>
+              ))}
+            </div>
+
+            {/* 탭 콘텐츠 */}
+            <div style={{ padding: 20 }}>
+              {activeTab === 'list' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                  {/* 영향받는 과제 */}
+                  {impact.affected.projects.length > 0 && (
+                    <div>
+                      <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                        영향받는 AI 활용 ({impact.affected.projects.length}건)
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {impact.affected.projects.map(p => (
+                          <div
+                            key={p.id}
+                            onClick={() => router.push('/projects')}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: SB, borderRadius: 8, border: `1px solid ${BDR}`, cursor: 'pointer', transition: 'border-color .15s' }}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = ACCENT)}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = BDR)}
+                          >
+                            <span style={{ fontSize: 13, color: TEXT, fontWeight: 500 }}>{p.name}</span>
+                            <span style={{ fontSize: 11, color: DIM }}>{p.connectionType}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 영향받는 에이전트 */}
+                  {impact.affected.agents && impact.affected.agents.length > 0 && (
+                    <div>
+                      <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                        의존 에이전트 ({impact.affected.agents.length}개)
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        {impact.affected.agents.map(a => (
+                          <div
+                            key={a.id}
+                            onClick={() => router.push('/registry')}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: SB, borderRadius: 8, border: `1px solid ${BDR}`, cursor: 'pointer', transition: 'border-color .15s' }}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = ACCENT)}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = BDR)}
+                          >
+                            <span style={{ fontSize: 13, color: TEXT, fontWeight: 500 }}>{a.name}</span>
+                            <span style={{ fontSize: 11, color: DIM }}>{a.connectionType}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 통보 대상 */}
+                  {impact.affected.employees.length > 0 && (
+                    <div>
+                      <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 10 }}>
+                        통보 대상 ({impact.affected.employees.length}명)
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {impact.affected.employees.map(e => (
+                          <div key={e.id} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, background: SB, border: `1px solid ${BDR}`, color: MUTED }}>
+                            {e.name} <span style={{ color: DIM }}>· {e.role}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {impact.affected.projects.length === 0 &&
+                    impact.affected.employees.length === 0 &&
+                    (!impact.affected.agents || impact.affected.agents.length === 0) && (
+                    <div style={{ padding: '20px', textAlign: 'center', color: '#059669', background: 'rgba(16,185,129,.06)', borderRadius: 8, border: '1px solid rgba(16,185,129,.2)', fontSize: 13 }}>
+                      ✓ 영향받는 항목이 없습니다. 안전하게 변경 가능합니다.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'graph' && (
+                <ImpactSubgraph impact={impact} severity={impact.severity} centerName={selectedItem?.name ?? ''} />
+              )}
+            </div>
+          </div>
+        )}
       </div>
+    </div>
+  )
+}
+
+function ImpactSubgraph({ impact, severity, centerName }: { impact: ImpactResult; severity: string; centerName: string }) {
+  const allNodes = [
+    { id: 'center', name: centerName, type: 'center' },
+    ...impact.affected.projects.map(p => ({ id: `proj-${p.id}`, name: p.name, type: 'project' })),
+    ...(impact.affected.agents ?? []).map(a => ({ id: `agent-${a.id}`, name: a.name, type: 'agent' })),
+    ...impact.affected.employees.map(e => ({ id: `emp-${e.id}`, name: e.name, type: 'employee' })),
+  ]
+
+  const centerColor = SEVERITY_COLOR[severity] ?? '#3B82F6'
+  const typeColors: Record<string, string> = {
+    center:   centerColor,
+    project:  '#4A6FA5',
+    agent:    '#7C3AED',
+    employee: '#059669',
+  }
+
+  if (allNodes.length <= 1) {
+    return (
+      <div style={{ textAlign: 'center', padding: '32px', color: MUTED, fontSize: 13 }}>
+        영향받는 항목이 없어 그래프를 표시할 수 없습니다.
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <svg width="100%" viewBox={`0 0 700 ${Math.max(200, allNodes.length * 60)}`} style={{ minHeight: 200 }}>
+        {allNodes.slice(1).map((node, i) => {
+          const cx = 500
+          const cy = 60 + i * 60
+          const color = typeColors[node.type] ?? '#8898BB'
+          return (
+            <g key={node.id}>
+              <line x1={200} y1={Math.max(200, allNodes.length * 60) / 2} x2={cx} y2={cy}
+                stroke={BDR} strokeWidth={1.5} />
+              <circle cx={cx} cy={cy} r={20} fill={`${color}22`} stroke={color} strokeWidth={1.5} />
+              <text x={cx} y={cy + 4} textAnchor="middle" fontSize={9} fill={color} fontWeight={600}>
+                {node.type === 'project' ? '과제' : node.type === 'agent' ? '에이전트' : '직원'}
+              </text>
+              <text x={cx + 28} y={cy + 4} fontSize={11} fill={TEXT}>{node.name.length > 14 ? node.name.slice(0, 14) + '…' : node.name}</text>
+            </g>
+          )
+        })}
+        {/* 중심 노드 */}
+        <circle cx={200} cy={Math.max(200, allNodes.length * 60) / 2} r={32} fill={`${centerColor}22`} stroke={centerColor} strokeWidth={2} />
+        <text x={200} y={Math.max(200, allNodes.length * 60) / 2 + 4} textAnchor="middle" fontSize={11} fill={centerColor} fontWeight={700}>
+          {centerName.length > 8 ? centerName.slice(0, 8) + '…' : centerName}
+        </text>
+      </svg>
+      <p style={{ fontSize: 10, color: DIM, textAlign: 'center', marginTop: 8 }}>
+        영향 범위 서브그래프 — 연결된 항목만 표시
+      </p>
     </div>
   )
 }

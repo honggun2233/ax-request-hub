@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import RetireConfirmModal from './components/RetireConfirmModal'
 
 const CARD   = '#FFFFFF'
 const CARD2  = '#F7F9FC'
@@ -95,6 +96,7 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [selectedRole, setSelectedRole] = useState('PRIMARY')
   const [dataWarning, setDataWarning] = useState<{ pendingCount: number; totalCount: number } | null>(null)
+  const [showRetireModal, setShowRetireModal] = useState(false)
 
   const linkedIds = new Set((agent.projects ?? []).map((p: any) => p.projectId))
   const unlinkable = allProjects.filter(p => !linkedIds.has(p.id))
@@ -317,13 +319,21 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
               </button>
             )}
             {!['ACTIVE', 'RETIRED'].includes(agent.lifecycleStage) && (
-              <button onClick={() => advanceStage('RETIRED')} style={{
+              <button onClick={() => setShowRetireModal(true)} style={{
                 padding: '8px', background: 'none', border: '1px solid rgba(239,68,68,.35)', color: '#B94040', borderRadius: 6, fontSize: 11, cursor: 'pointer',
               }}>
                 폐기 처리 (RETIRED)
               </button>
             )}
           </div>
+        )}
+        {showRetireModal && (
+          <RetireConfirmModal
+            agentId={agent.id}
+            agentName={agent.agentName}
+            onClose={() => setShowRetireModal(false)}
+            onConfirm={() => { setShowRetireModal(false); onStageChange(); onClose() }}
+          />
         )}
       </div>
     </div>
