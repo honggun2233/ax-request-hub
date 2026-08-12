@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data: {
         employeeId: application.employeeId,
         fromLevel,
-        toLevel,
+        toLevel: toLevel ?? '',
         reason: body.reviewNote || "레벨 신청 심사 통과",
         changedById: reviewerId,
       },
