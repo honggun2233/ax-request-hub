@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { invalidateGraph } from '@/lib/graph/cache'
 
 // POST: 에이전트-프로젝트 링크 추가
 export async function POST(req: NextRequest) {
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
     include: { project: true },
   })
 
+  invalidateGraph()
   return NextResponse.json(link, { status: 201 })
 }
 
@@ -39,5 +41,6 @@ export async function DELETE(req: NextRequest) {
     where: { agentId_projectId: { agentId, projectId } },
   })
 
+  invalidateGraph()
   return NextResponse.json({ ok: true })
 }
