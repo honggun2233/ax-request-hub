@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
+﻿import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
@@ -8,28 +8,28 @@ export async function GET() {
     const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000)
 
     const [activeEmployees, monthlyTokens, pendingApplications, activeProjects] = await Promise.all([
-      db.employee.count({ where: { isActive: true, currentLevel: { not: 'L0' } } }),
-      db.usageRecord.aggregate({ where: { yearMonth }, _sum: { tokenUsed: true } }),
-      db.levelApplication.count({ where: { status: 'PENDING' } }),
-      db.project.count({ where: { status: { in: ['submitted', 'evaluated', 'pilot'] } } }),
+      prisma.employee.count({ where: { isActive: true, currentLevel: { not: 'L0' } } }),
+      prisma.usageRecord.aggregate({ where: { yearMonth }, _sum: { tokenUsed: true } }),
+      prisma.levelApplication.count({ where: { status: 'PENDING' } }),
+      prisma.project.count({ where: { status: { in: ['submitted', 'evaluated', 'pilot'] } } }),
     ])
 
-    const recentApplications = await db.levelApplication.findMany({
+    const recentApplications = await prisma.levelApplication.findMany({
       take: 5, orderBy: { createdAt: 'desc' },
       include: { employee: { select: { name: true, department: true } } }
     })
 
-    const recentProjects = await db.project.findMany({
+    const recentProjects = await prisma.project.findMany({
       take: 5, orderBy: { createdAt: 'desc' },
       select: { id: true, title: true, department: true, totalScore: true, status: true, createdAt: true }
     })
 
-    const applicationTrend = await db.levelApplication.findMany({
+    const applicationTrend = await prisma.levelApplication.findMany({
       where: { createdAt: { gte: sixtyDaysAgo } },
       select: { createdAt: true }
     })
 
-    const serviceUsage = await db.usageRecord.groupBy({
+    const serviceUsage = await prisma.usageRecord.groupBy({
       by: ['service'], where: { yearMonth },
       _sum: { tokenUsed: true }
     })

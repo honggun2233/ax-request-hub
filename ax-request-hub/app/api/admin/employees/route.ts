@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { db } from "@/src/lib/db"
+import { prisma } from "@/lib/prisma"
 import * as XLSX from "xlsx"
 
 export async function GET(req: NextRequest) {
@@ -13,13 +13,13 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const status = searchParams.get("status")
 
-  const applications = await db.levelApplication.findMany({
+  const applications = await prisma.levelApplication.findMany({
     where: status ? { status } : {},
     include: { employee: true, reviewedBy: true },
     orderBy: { createdAt: "desc" },
   })
 
-  const employees = await db.employee.findMany({
+  const employees = await prisma.employee.findMany({
     where: { isActive: true },
     orderBy: { department: "asc" },
   })
@@ -55,21 +55,21 @@ export async function POST(req: NextRequest) {
 
       if (!employeeId || !name) { errors.push(`사번/이름 누락: ${JSON.stringify(row)}`); continue }
 
-      const existing = await db.employee.findUnique({ where: { employeeId } })
+      const existing = await prisma.employee.findUnique({ where: { employeeId } })
       if (existing) {
         const oldLevel = existing.currentLevel
-        await db.employee.update({
+        await prisma.employee.update({
           where: { employeeId },
           data: { name, department, currentLevel: level, levelGrantedAt: new Date() },
         })
         if (oldLevel !== level) {
-          await db.levelHistory.create({
+          await prisma.levelHistory.create({
             data: { employeeId: existing.id, fromLevel: oldLevel, toLevel: level, reason: "엑셀 일괄 업로드", changedById: adminId },
           })
         }
         updated++
       } else {
-        await db.employee.create({
+        await prisma.employee.create({
           data: { employeeId, name, email, department, currentLevel: level, levelGrantedAt: new Date() },
         })
         created++

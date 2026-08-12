@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const artifacts = await db.agentArtifact.findMany({
+  const artifacts = await prisma.agentArtifact.findMany({
     where: { agentId: id },
     orderBy: { createdAt: 'desc' },
   })
@@ -27,11 +27,11 @@ export async function POST(
   const body = await req.json()
   const { artifactType, title, contentPath, dataRetentionYears = 3 } = body
 
-  const agent = await db.agent.findUnique({ where: { id } })
+  const agent = await prisma.agent.findUnique({ where: { id } })
   const retainUntil = new Date()
   retainUntil.setFullYear(retainUntil.getFullYear() + (agent?.dataRetentionYears ?? dataRetentionYears))
 
-  const artifact = await db.agentArtifact.create({
+  const artifact = await prisma.agentArtifact.create({
     data: { agentId: id, artifactType, title, contentPath, retainUntil },
   })
   return NextResponse.json(artifact, { status: 201 })

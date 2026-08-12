@@ -1,7 +1,7 @@
 ﻿import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 import { RevokeButton, DeptAssignForm, AdminActionButtons, SuspendButton } from './DeptToolActions'
 
 const TOOL_LABEL: Record<string, string> = {
@@ -43,7 +43,7 @@ export default async function DeptToolsPage() {
 
   if (!isAdmin && role !== 'DEPT_HEAD') redirect('/me')
 
-  const quotas = await db.departmentQuota.findMany({
+  const quotas = await prisma.departmentQuota.findMany({
     where: isAdmin ? {} : { managedBy: email },
     include: {
       toolAccounts: {
@@ -60,12 +60,12 @@ export default async function DeptToolsPage() {
 
   if (isAdmin) {
     ;[totalByTool, pending] = await Promise.all([
-      db.toolAccount.groupBy({
+      prisma.toolAccount.groupBy({
         by: ['toolType'],
         where: { status: { in: ['PENDING', 'APPROVED', 'ACTIVE'] } },
         _count: { id: true },
       }),
-      db.toolAccount.findMany({
+      prisma.toolAccount.findMany({
         where: { status: 'PENDING' },
         include: {
           employee: { select: { name: true, email: true, department: true } },

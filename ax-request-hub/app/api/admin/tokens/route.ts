@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { db } from "@/src/lib/db"
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -11,13 +11,13 @@ export async function GET() {
 
   const yearMonth = new Date().toISOString().slice(0, 7)
   const [policies, usageRecords, alerts] = await Promise.all([
-    db.tokenPolicy.findMany({ orderBy: [{ scope: "asc" }, { level: "asc" }] }),
-    db.usageRecord.findMany({
+    prisma.tokenPolicy.findMany({ orderBy: [{ scope: "asc" }, { level: "asc" }] }),
+    prisma.usageRecord.findMany({
       where: { yearMonth },
       include: { employee: { select: { name: true, department: true, currentLevel: true } } },
       orderBy: [{ service: "asc" }, { tokenUsed: "desc" }],
     }),
-    db.usageAlert.findMany({ where: { yearMonth, acknowledged: false }, take: 20 }),
+    prisma.usageAlert.findMany({ where: { yearMonth, acknowledged: false }, take: 20 }),
   ])
 
   const totalByService = usageRecords.reduce((acc: Record<string, number>, r) => {
@@ -38,23 +38,23 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
 
   if (body.action === "upsert_usage") {
-    const record = await db.usageRecord.upsert({
+    const record = await prisma.usageRecord.upsert({
       where: { employeeId_service_yearMonth: { employeeId: body.employeeId, service: body.service, yearMonth: body.yearMonth } },
       update: { tokenUsed: body.tokenUsed, costKrw: body.costKrw || 0, inputById: adminId },
       create: { employeeId: body.employeeId, service: body.service, yearMonth: body.yearMonth, tokenUsed: body.tokenUsed, costKrw: body.costKrw || 0, inputById: adminId },
     })
 
-    const employee = await db.employee.findUnique({ where: { id: body.employeeId } })
-    const policy = await db.tokenPolicy.findFirst({ where: { scope: "LEVEL", level: employee?.currentLevel, isActive: true } })
+    const employee = await prisma.employee.findUnique({ where: { id: body.employeeId } })
+    const policy = await prisma.tokenPolicy.findFirst({ where: { scope: "LEVEL", level: employee?.currentLevel, isActive: true } })
     if (policy && policy.monthlyLimit > 0) {
-      const allUsage = await db.usageRecord.findMany({ where: { employeeId: body.employeeId, yearMonth: body.yearMonth } })
+      const allUsage = await prisma.usageRecord.findMany({ where: { employeeId: body.employeeId, yearMonth: body.yearMonth } })
       const total = allUsage.reduce((s, r) => s + r.tokenUsed, 0)
       const pct = (total / policy.monthlyLimit) * 100
 
       for (const threshold of [80, 100]) {
         if (pct >= threshold) {
           const alertId = `${body.employeeId}-${body.service}-${body.yearMonth}-${threshold}`
-          await db.usageAlert.upsert({
+          await prisma.usageAlert.upsert({
             where: { id: alertId },
             update: {},
             create: {
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
   if (body.action === "upsert_policy") {
     const policyId = body.id || `${body.scope}-${body.level || "all"}-${body.service}`
-    const policy = await db.tokenPolicy.upsert({
+    const policy = await prisma.tokenPolicy.upsert({
       where: { id: policyId },
       update: { monthlyLimit: body.monthlyLimit, singleCallLimit: body.singleCallLimit || 0, warningThreshold: body.warningThreshold || 80 },
       create: {

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/skills?category=ETF운용&status=active&q=검색어
 export async function GET(req: NextRequest) {
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
     ]
   }
 
-  const skills = await db.skill.findMany({
+  const skills = await prisma.skill.findMany({
     where,
     include: {
       ratings: { select: { score: true } },
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'skillId, name, category, promptText 필수' }, { status: 400 })
   }
 
-  const skill = await db.skill.upsert({
+  const skill = await prisma.skill.upsert({
     where: { skillId },
     create: {
       skillId, name, category, author: author || (session.user as any).email || '',
@@ -91,7 +91,7 @@ export async function PATCH(req: NextRequest) {
   const { id, status, approvedBy } = await req.json()
   if (!id) return NextResponse.json({ error: 'id 필수' }, { status: 400 })
 
-  const skill = await db.skill.update({
+  const skill = await prisma.skill.update({
     where: { id },
     data: {
       status: status || undefined,

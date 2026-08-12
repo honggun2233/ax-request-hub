@@ -1,6 +1,6 @@
-import { NextAuthOptions } from "next-auth"
+﻿import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { db } from "@/src/lib/db"
+import { prisma } from "@/lib/prisma"
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -12,7 +12,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email) return null
-        const employee = await db.employee.findUnique({
+        const employee = await prisma.employee.findUnique({
           where: { email: credentials.email, isActive: true },
         })
         if (!employee) return null

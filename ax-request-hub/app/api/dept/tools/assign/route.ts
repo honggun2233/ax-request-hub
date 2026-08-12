@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   const isAdmin = ADMIN_ROLES.includes(role)
 
   // quotaId로 직접 조회; 관리자는 모든 쿼타, 부서장은 자신이 관리하는 것만
-  const quota = await db.departmentQuota.findFirst({
+  const quota = await prisma.departmentQuota.findFirst({
     where: isAdmin ? { id: quotaId } : { id: quotaId, managedBy: deptHead },
     include: { toolAccounts: { where: { status: { in: ['PENDING', 'APPROVED', 'ACTIVE'] } } } },
   })
@@ -41,13 +41,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `쿼터 소진 (${usedCount}/${quota.totalQuota})` }, { status: 409 })
   }
 
-  const employee = await db.employee.findUnique({ where: { email: employeeEmail } })
+  const employee = await prisma.employee.findUnique({ where: { email: employeeEmail } })
   if (!employee) {
     return NextResponse.json({ error: '직원을 찾을 수 없습니다.' }, { status: 404 })
   }
 
   // 중복 체크
-  const existing = await db.toolAccount.findFirst({
+  const existing = await prisma.toolAccount.findFirst({
     where: { employeeId: employee.id, toolType, status: { in: ['PENDING', 'APPROVED', 'ACTIVE'] } },
   })
   if (existing) {
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     GEMINI: 'ENTERPRISE',
   }
 
-  const account = await db.toolAccount.create({
+  const account = await prisma.toolAccount.create({
     data: {
       employeeId: employee.id,
       quotaId: quota.id,

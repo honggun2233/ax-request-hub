@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
+﻿import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/admin/agents/flags
 // performanceFlag가 null이 아닌 에이전트 목록 반환 (AX팀 월별 체크용)
 export async function GET() {
   try {
-    const flagged = await db.agent.findMany({
+    const flagged = await prisma.agent.findMany({
       where: {
         performanceFlag: { not: null },
       },

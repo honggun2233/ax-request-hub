@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
   try {
-    const agents = await db.agent.findMany({
+    const agents = await prisma.agent.findMany({
       orderBy: { createdAt: 'desc' },
     })
     return NextResponse.json(agents)
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     if (!name || !department) {
       return NextResponse.json({ error: 'name and department are required' }, { status: 400 })
     }
-    const agent = await db.agent.create({
+    const agent = await prisma.agent.create({
       data: {
         name,
         department,

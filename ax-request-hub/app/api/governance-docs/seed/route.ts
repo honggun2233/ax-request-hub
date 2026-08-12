@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
+﻿import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 const SEED_DOCS = [
   {
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
   try {
     const results = []
     for (const d of SEED_DOCS) {
-      const doc = await db.governanceDoc.upsert({
+      const doc = await prisma.governanceDoc.upsert({
         where: { docId: d.docId },
         create: {
           ...d,

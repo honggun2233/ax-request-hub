@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export async function PATCH(
   req: NextRequest,
@@ -21,7 +21,7 @@ export async function PATCH(
   }
 
   const now = new Date()
-  const updated = await db.toolAccount.update({
+  const updated = await prisma.toolAccount.update({
     where: { id },
     data: {
       ...(status && { status }),
