@@ -3,7 +3,8 @@ import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 
-const SERVICES = ["openai", "claude", "gemini", "all"]
+// 게이트웨이 quota.ts SERVICE_MAP과 동일하게 유지
+const SERVICES = ["Claude", "GPT Enterprise", "Gemini", "all"]
 const LEVELS = ["L1", "L2", "L3", "L4"]
 const _now = new Date()
 const MONTHS = Array.from({ length: 6 }, (_, i) => {
@@ -19,10 +20,12 @@ export default function AdminTokensPage() {
   const [policyForm, setPolicyForm] = useState({ scope: "LEVEL", level: "L1", service: "all", monthlyLimit: "", singleCallLimit: "0", warningThreshold: "80" })
   const [employees, setEmployees] = useState<any[]>([])
   const [msg, setMsg] = useState("")
+  const [gatewayStatus, setGatewayStatus] = useState<any>(null)
 
   const load = () => {
     fetch("/api/admin/tokens").then(r => r.json()).then(setData)
     fetch("/api/admin/employees").then(r => r.json()).then(d => setEmployees(d.employees || []))
+    fetch("/api/ai/status").then(r => r.ok ? r.json() : null).then(d => setGatewayStatus(d))
   }
   useEffect(() => {
     if (status === "unauthenticated") router.push("/login")
@@ -54,6 +57,28 @@ export default function AdminTokensPage() {
       <div><a href="/admin" className="text-sm text-[var(--muted)] hover:underline">← 관리 포털</a></div>
       <h1 className="text-2xl font-bold text-[#18243D]">토큰·비용 관리</h1>
       {msg && <div className="bg-blue-50 text-blue-800 rounded-lg p-3 text-sm">{msg}</div>}
+
+      {/* AI 게이트웨이 상태 */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E4E9F2]">
+        <h2 className="font-semibold mb-4 text-[#18243D] flex items-center gap-2">
+          AI 게이트웨이 상태
+          <span className="text-xs font-normal text-[var(--muted)]">— API 키 설정 현황</span>
+        </h2>
+        {!gatewayStatus ? (
+          <p className="text-sm text-[var(--muted)]">로딩 중...</p>
+        ) : (
+          <div className="flex gap-4 flex-wrap">
+            {gatewayStatus.providers?.map((p: any) => (
+              <div key={p.key} className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm ${p.configured ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-gray-200 text-gray-400'}`}>
+                <span className={`w-2 h-2 rounded-full ${p.configured ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <span className="font-medium capitalize">{p.key}</span>
+                <span>{p.configured ? '연결됨' : '미설정'}</span>
+                {!p.configured && <span className="text-xs text-gray-400">({p.envVar})</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-[#E4E9F2]">
