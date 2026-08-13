@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const quotas = await db.departmentQuota.findMany({
+  const quotas = await prisma.departmentQuota.findMany({
     include: {
       toolAccounts: { where: { status: { in: ['PENDING', 'APPROVED', 'ACTIVE'] } }, select: { id: true } },
     },
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   const { department, toolType, totalQuota, aiDensity, managedBy } = await req.json()
 
-  const quota = await db.departmentQuota.upsert({
+  const quota = await prisma.departmentQuota.upsert({
     where: { department_toolType: { department, toolType } },
     create: { department, toolType, totalQuota: totalQuota ?? 0, aiDensity: aiDensity ?? 'STANDARD', managedBy: managedBy ?? '' },
     update: { totalQuota: totalQuota ?? 0, aiDensity: aiDensity ?? 'STANDARD', managedBy: managedBy ?? '' },
@@ -48,7 +48,7 @@ export async function PATCH(req: NextRequest) {
 
   const { id, totalQuota, managedBy, aiDensity } = await req.json()
 
-  const updated = await db.departmentQuota.update({
+  const updated = await prisma.departmentQuota.update({
     where: { id },
     data: {
       ...(totalQuota !== undefined && { totalQuota }),

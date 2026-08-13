@@ -1,5 +1,5 @@
-import Link from 'next/link'
-import { db } from '@/src/lib/db'
+﻿import Link from 'next/link'
+import { prisma } from '@/lib/prisma'
 import { ApproveButtons } from './ApproveButtons'
 
 const SURFACE = '#FFFFFF'
@@ -19,7 +19,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; stripe: stri
 const STATUS_ORDER = ['submitted', 'evaluated', 'pilot', 'production', 'closed']
 
 export default async function DashboardPage() {
-  const projects = await db.project.findMany({
+  const projects = await prisma.project.findMany({
     include: { scoreCard: true },
     orderBy: { createdAt: 'desc' },
   })

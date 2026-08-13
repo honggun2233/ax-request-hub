@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { readdir, readFile, stat } from 'fs/promises'
 import type { Dirent } from 'fs'
 import path from 'path'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 const DOCS_DIR = path.join(process.cwd(), 'docs')
 const GOVERNANCE_SUBDIR = path.join(DOCS_DIR, 'governance')
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
       const [content, stats, meta] = await Promise.all([
         readFile(filePath, 'utf-8'),
         stat(filePath),
-        db.governanceDoc.findUnique({ where: { fileName: file } }),
+        prisma.governanceDoc.findUnique({ where: { fileName: file } }),
       ])
       return NextResponse.json({ file, content, updatedAt: stats.mtime, meta })
     }
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
     const [governanceFiles, rootEntries, allMeta] = await Promise.all([
       collectMdFiles(GOVERNANCE_SUBDIR, 'governance').catch(() => []),
       readdir(DOCS_DIR, { withFileTypes: true }).catch(() => []),
-      db.governanceDoc.findMany(),
+      prisma.governanceDoc.findMany(),
     ])
 
     const rootMdFiles = (rootEntries as Dirent[])

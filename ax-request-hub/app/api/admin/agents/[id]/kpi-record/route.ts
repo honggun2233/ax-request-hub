@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 // POST /api/admin/agents/:id/kpi-record
 // 월별 KPI 실적 입력 — achieveRate, performMatrix, kpiMissCount 자동 계산
@@ -17,7 +17,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     // 에이전트 조회
-    const agent = await db.agent.findUnique({ where: { id: agentId } })
+    const agent = await prisma.agent.findUnique({ where: { id: agentId } })
     if (!agent) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
     }
@@ -26,7 +26,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const achieveRate = (Number(actualValue) / targetValue) * 100
 
     // 해당 월 평균 tokenCost 산출 (performMatrix 판정에 사용)
-    const avgRecord = await (db.agentKpiRecord as any).aggregate({
+    const avgRecord = await (prisma.agentKpiRecord as any).aggregate({
       _avg: { tokenCost: true },
     })
     const avgTokenCost: number = avgRecord._avg?.tokenCost ?? 0
@@ -56,7 +56,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     // AgentKpiRecord 생성
-    const record = await db.agentKpiRecord.create({
+    const record = await prisma.agentKpiRecord.create({
       data: {
         agentId,
         recordMonth,
@@ -71,7 +71,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     })
 
     // Agent 업데이트
-    await db.agent.update({
+    await prisma.agent.update({
       where: { id: agentId },
       data: {
         kpiLastScore: achieveRate,
@@ -81,7 +81,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     })
 
     // AuditLog 기록
-    await db.auditLog.create({
+    await prisma.auditLog.create({
       data: {
         entityType: 'AgentKpiRecord',
         entityId: record.id,

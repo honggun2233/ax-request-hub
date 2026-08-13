@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 // GET /api/governance-docs/meta  → 전체 메타데이터 목록
 export async function GET() {
-  const docs = await db.governanceDoc.findMany({
+  const docs = await prisma.governanceDoc.findMany({
     orderBy: [{ type: 'asc' }, { docId: 'asc' }],
   })
   return NextResponse.json({ docs })
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'docId, fileName, type, title 필수' }, { status: 400 })
   }
 
-  const doc = await db.governanceDoc.upsert({
+  const doc = await prisma.governanceDoc.upsert({
     where: { docId },
     create: {
       docId, fileName, type, level: level || 'L2', title,
@@ -59,7 +59,7 @@ export async function PATCH(req: NextRequest) {
   const { id, ...updates } = await req.json()
   if (!id) return NextResponse.json({ error: 'id 필수' }, { status: 400 })
 
-  const doc = await db.governanceDoc.update({
+  const doc = await prisma.governanceDoc.update({
     where: { id },
     data: {
       ...updates,

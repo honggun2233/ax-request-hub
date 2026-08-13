@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 // POST /api/skills/rate  { skillId, score, comment }
 export async function POST(req: NextRequest) {
@@ -13,17 +13,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'skillId + score(1~5) 필수' }, { status: 400 })
   }
 
-  const skill = await db.skill.findUnique({ where: { id: skillId } })
+  const skill = await prisma.skill.findUnique({ where: { id: skillId } })
   if (!skill) return NextResponse.json({ error: '스킬 없음' }, { status: 404 })
 
-  await db.skillRating.upsert({
+  await prisma.skillRating.upsert({
     where: { skillId_employeeEmail: { skillId, employeeEmail: session.user.email } },
     create: { skillId, employeeEmail: session.user.email, score, comment: comment || '' },
     update: { score, comment: comment || '' },
   })
 
   // usageCount 증가
-  await db.skill.update({ where: { id: skillId }, data: { usageCount: { increment: 1 } } })
+  await prisma.skill.update({ where: { id: skillId }, data: { usageCount: { increment: 1 } } })
 
   return NextResponse.json({ ok: true })
 }

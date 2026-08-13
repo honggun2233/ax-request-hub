@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
+﻿import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export async function GET(req: NextRequest) {
   try {
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const from = searchParams.get('from')
     const to = searchParams.get('to')
 
-    const logs = await db.auditLog.findMany({
+    const logs = await prisma.auditLog.findMany({
       where: {
         ...(entityType ? { entityType } : {}),
         ...(from ? { createdAt: { gte: new Date(from) } } : {}),
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
       take: 200,
     })
-    const stats = await db.auditLog.groupBy({ by: ['entityType'], _count: { _all: true } })
+    const stats = await prisma.auditLog.groupBy({ by: ['entityType'], _count: { _all: true } })
     return NextResponse.json({ logs, stats })
   } catch (err: any) {
     console.error('[governance GET]', err)
