@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { db } from '@/src/lib/db'
+import { prisma } from '@/lib/prisma'
 
 // P3-3a: EXECUTIVE 역할 분리 — AX_TEAM(ADMIN), C_LEVEL(경영진), EXECUTIVE(임원) 허용
 const ALLOWED_ROLES = ['AX_TEAM', 'C_LEVEL', 'EXECUTIVE']
@@ -25,24 +25,24 @@ export async function GET() {
     usageTrend,
   ] = await Promise.all([
     // 에이전트 Gate 단계별 카운트
-    db.agentRegistry.groupBy({ by: ['lifecycleStage'], _count: { id: true } }),
+    prisma.agentRegistry.groupBy({ by: ['lifecycleStage'], _count: { id: true } }),
 
     // 과제 상태별 카운트
-    db.project.groupBy({ by: ['status'], _count: { id: true } }),
+    prisma.project.groupBy({ by: ['status'], _count: { id: true } }),
 
     // 평균 ScoreCard
-    db.scoreCard.aggregate({
+    prisma.scoreCard.aggregate({
       _avg: { totalScore: true },
       _count: { id: true },
     }),
 
     // 누적 AI 비용
-    db.usageRecord.aggregate({
+    prisma.usageRecord.aggregate({
       _sum: { costKrw: true, tokenUsed: true },
     }),
 
     // AXProject + 연결 에이전트 수
-    db.aXProject.findMany({
+    prisma.aXProject.findMany({
       select: {
         id: true,
         name: true,
@@ -52,14 +52,14 @@ export async function GET() {
     }),
 
     // 각 프로젝트의 에이전트 단계 분포 (LEFT JOIN — 고아 링크 안전 처리)
-    db.$queryRaw<{ projectId: string; lifecycleStage: string | null }[]>`
+    prisma.$queryRaw<{ projectId: string; lifecycleStage: string | null }[]>`
       SELECT apl."projectId", ar."lifecycleStage"
       FROM "AgentProjectLink" apl
       LEFT JOIN "AgentRegistry" ar ON ar.id = apl."agentId"
     `,
 
     // 최근 감사 로그 5건
-    db.auditLog.findMany({
+    prisma.auditLog.findMany({
       orderBy: { createdAt: 'desc' },
       take: 5,
       select: {
@@ -72,14 +72,14 @@ export async function GET() {
     }),
 
     // 직원 AI 레벨 분포
-    db.employee.groupBy({
+    prisma.employee.groupBy({
       by: ['currentLevel'],
       where: { isActive: true },
       _count: { id: true },
     }),
 
     // 월별 비용 트렌드 (최근 6개월)
-    db.usageRecord.groupBy({
+    prisma.usageRecord.groupBy({
       by: ['yearMonth'],
       _sum: { costKrw: true, tokenUsed: true },
       orderBy: { yearMonth: 'asc' },

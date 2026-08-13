@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { db } from "@/src/lib/db"
+import { prisma } from "@/lib/prisma"
 import * as XLSX from "xlsx"
 
 export async function GET(req: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const employees = await db.employee.findMany({
+  const employees = await prisma.employee.findMany({
     where: { isActive: true },
     orderBy: [{ department: "asc" }, { name: "asc" }],
   })

@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server"
+﻿import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { db } from "@/src/lib/db"
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -12,12 +12,12 @@ export async function GET() {
   const yearMonth = new Date().toISOString().slice(0, 7)
 
   const [usageRecords, levelPolicy, alerts] = await Promise.all([
-    db.usageRecord.findMany({ where: { employeeId: userId, yearMonth }, orderBy: { service: "asc" } }),
-    db.tokenPolicy.findFirst({ where: { scope: "LEVEL", level: currentLevel, isActive: true } }),
-    db.usageAlert.findMany({ where: { employeeId: userId, yearMonth, acknowledged: false } }),
+    prisma.usageRecord.findMany({ where: { employeeId: userId, yearMonth }, orderBy: { service: "asc" } }),
+    prisma.tokenPolicy.findFirst({ where: { scope: "LEVEL", level: currentLevel, isActive: true } }),
+    prisma.usageAlert.findMany({ where: { employeeId: userId, yearMonth, acknowledged: false } }),
   ])
 
-  const companyPolicy = await db.tokenPolicy.findFirst({ where: { scope: "COMPANY", isActive: true } })
+  const companyPolicy = await prisma.tokenPolicy.findFirst({ where: { scope: "COMPANY", isActive: true } })
 
   const totalUsed = usageRecords.reduce((s, r) => s + r.tokenUsed, 0)
   const limit = levelPolicy?.monthlyLimit || companyPolicy?.monthlyLimit || 0

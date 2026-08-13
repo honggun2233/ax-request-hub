@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
+﻿import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { db } from "@/src/lib/db"
+import { prisma } from "@/lib/prisma"
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -9,10 +9,10 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  const policies = await db.distributionPolicy.findMany({
+  const policies = await prisma.distributionPolicy.findMany({
     orderBy: [{ level: "asc" }, { serviceName: "asc" }],
   })
-  const allocations = await db.serviceAllocation.findMany({
+  const allocations = await prisma.serviceAllocation.findMany({
     include: {
       employee: { select: { name: true, department: true } },
       policy: { select: { serviceName: true, level: true } },
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   const adminId = (session.user as any).id
 
   if (body.action === "grant") {
-    const allocation = await db.serviceAllocation.create({
+    const allocation = await prisma.serviceAllocation.create({
       data: {
         employeeId: body.employeeId,
         policyId: body.policyId,
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.action === "revoke") {
-    await db.serviceAllocation.update({
+    await prisma.serviceAllocation.update({
       where: { id: body.allocationId },
       data: { status: "REVOKED", revokedAt: new Date() },
     })
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (body.action === "add_policy") {
-    const policy = await db.distributionPolicy.upsert({
+    const policy = await prisma.distributionPolicy.upsert({
       where: { level_serviceName: { level: body.level, serviceName: body.serviceName } },
       update: { isActive: true, serviceDescription: body.serviceDescription || "" },
       create: { level: body.level, serviceName: body.serviceName, serviceDescription: body.serviceDescription || "" },

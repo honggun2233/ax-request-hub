@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { db } from "@/src/lib/db"
+import { prisma } from "@/lib/prisma"
 import { notify } from "@/lib/notify"
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -14,7 +14,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const reviewerId = (session.user as any).id
   const body = await req.json()
 
-  const application = await db.levelApplication.update({
+  const application = await prisma.levelApplication.update({
     where: { id },
     data: {
       status: body.status,
@@ -31,12 +31,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const fromLevel = application.employee.currentLevel
     toLevel = body.grantLevel || application.requestedLevel
 
-    await db.employee.update({
+    await prisma.employee.update({
       where: { id: application.employeeId },
       data: { currentLevel: toLevel, levelGrantedAt: new Date() },
     })
 
-    await db.levelHistory.create({
+    await prisma.levelHistory.create({
       data: {
         employeeId: application.employeeId,
         fromLevel,

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "collect-usage": "ts-node -r tsconfig-paths/register scripts/collect-llm-usage.ts"
+    "collect-usage": "ts-node -r tsconfig-paths/register scripts/collect-llm-usage.ts",
+    "test": "jest"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.109.0",

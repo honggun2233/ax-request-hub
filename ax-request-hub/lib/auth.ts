@@ -1,6 +1,6 @@
-import { NextAuthOptions } from "next-auth"
+﻿import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { db } from "@/src/lib/db"
+import { prisma } from "@/lib/prisma"
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -11,10 +11,9 @@ export const authOptions: NextAuthOptions = {
         password: { label: "비밀번호", type: "password" },
       },
       async authorize(credentials) {
-        // 개발용 SSO 대체 — 이메일로 직원 조회 (비밀번호 검증은 실 SSO/LDAP 연동 시 추가)
         const email = credentials?.email?.trim()
         if (!email) return null
-        const employee = await db.employee.findUnique({
+        const employee = await prisma.employee.findUnique({
           where: { email },
         })
         if (!employee || !employee.isActive) return null

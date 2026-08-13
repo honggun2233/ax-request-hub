@@ -1,4 +1,4 @@
-﻿import { db } from '@/src/lib/db'
+﻿import { prisma } from '@/lib/prisma'
 import { ProjectForm } from '@/src/components/ProjectForm'
 import { notFound, redirect } from 'next/navigation'
 
@@ -9,7 +9,7 @@ export default async function SubmitPage({
 }) {
   const { projectId } = await searchParams
   if (!projectId) redirect('/projects/new')
-  const project = await db.project.findUnique({ where: { id: projectId } })
+  const project = await prisma.project.findUnique({ where: { id: projectId } })
   if (!project) notFound()
   return (
     <main className="min-h-screen bg-white">

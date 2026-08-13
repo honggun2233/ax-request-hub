@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/src/lib/db'
+﻿import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 const SEED_SKILLS = [
   {
@@ -179,7 +179,7 @@ export async function POST(req: NextRequest) {
   try {
     const results = []
     for (const s of SEED_SKILLS) {
-      const skill = await db.skill.upsert({
+      const skill = await prisma.skill.upsert({
         where: { skillId: s.skillId },
         create: {
           ...s,
