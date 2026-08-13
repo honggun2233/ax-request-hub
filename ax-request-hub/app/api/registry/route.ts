@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { requireRole } from '@/lib/authz'
 
 const LIFECYCLE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'GATE3', 'ACTIVE', 'DEGRADED', 'RETIRED']
 
 export async function GET() {
+  const auth = await requireRole()
+  if ('error' in auth) return auth.error
+
   try {
     const agents = await prisma.agentRegistry.findMany({
       include: {
@@ -25,10 +27,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session || !['AX_TEAM'].includes((session.user as any)?.role)) {
-    return NextResponse.json({ error: 'Forbidden — AX팀만 에이전트 등록 가능' }, { status: 403 })
-  }
+  const auth = await requireRole('AX_TEAM')
+  if ('error' in auth) return auth.error
   const data = await req.json()
 
   // Phase B — Q2=A: 승인된 과제 연결 필수
@@ -49,15 +49,27 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const agent = await prisma.agentRegistry.create({ data })
+  // 허용된 필드만 명시적으로 추출 (Mass Assignment 방지 — gate*Passed, lifecycleStage 등 서버 전용 필드 차단)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const safeData: any = {
+    agentName: data.agentName,
+    projectId: data.projectId,
+    ...(data.agentId      !== undefined && { agentId: data.agentId }),
+    ...(data.agentType    !== undefined && { agentType: data.agentType }),
+    ...(data.phase        !== undefined && { phase: data.phase }),
+    ...(data.devStage     !== undefined && { devStage: data.devStage }),
+    ...(data.prodStatus   !== undefined && { prodStatus: data.prodStatus }),
+    ...(data.description  !== undefined && { description: data.description }),
+    ...(data.modelVersion !== undefined && { modelVersion: data.modelVersion }),
+    ...(data.department   !== undefined && { department: data.department }),
+  }
+  const agent = await prisma.agentRegistry.create({ data: safeData })
   return NextResponse.json(agent, { status: 201 })
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session || !['AX_TEAM'].includes((session.user as any)?.role)) {
-    return NextResponse.json({ error: 'Forbidden — AX팀만 에이전트 상태 변경 가능' }, { status: 403 })
-  }
+  const auth = await requireRole('AX_TEAM')
+  if ('error' in auth) return auth.error
   const { id, lifecycleStage, operatorTrustScore, operatorComment, sam30dAccuracy, retireReason } = await req.json()
   const now = new Date()
   const updateData: any = { lifecycleStage, updatedAt: now }

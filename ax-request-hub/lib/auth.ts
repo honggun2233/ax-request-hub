@@ -11,11 +11,12 @@ export const authOptions: NextAuthOptions = {
         password: { label: "비밀번호", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email) return null
+        const email = credentials?.email?.trim()
+        if (!email) return null
         const employee = await prisma.employee.findUnique({
-          where: { email: credentials.email, isActive: true },
+          where: { email },
         })
-        if (!employee) return null
+        if (!employee || !employee.isActive) return null
         return {
           id: employee.id,
           email: employee.email,

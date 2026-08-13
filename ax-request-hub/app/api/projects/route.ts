@@ -51,7 +51,15 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json()
-    const { dataRequirements, noDataRequired, ...projectData } = body
+    const { dataRequirements, noDataRequired } = body
+
+    // 필수 필드 검증 — 누락 시 500 대신 400으로 응답
+    const requiredFields = ['title', 'department', 'requesterEmail', 'requesterName', 'description', 'asIs', 'expectedBenefit'] as const
+    for (const field of requiredFields) {
+      if (!body[field]) {
+        return NextResponse.json({ error: `필수 항목 누락: ${field}` }, { status: 400 })
+      }
+    }
 
     // Q1: 데이터 요건 선언 강제 — 둘 다 없으면 거부
     if (!noDataRequired && (!dataRequirements || dataRequirements.length === 0)) {
@@ -61,14 +69,24 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // 허용된 필드만 명시적으로 추출 (Mass Assignment 방지)
+    const projectData = {
+      title: body.title,
+      department: body.department,
+      requesterEmail: body.requesterEmail,
+      requesterName: body.requesterName,
+      description: body.description,
+      asIs: body.asIs,
+      expectedBenefit: body.expectedBenefit,
+      businessNeed: body.businessNeed ?? null,
+      expectedEffect: body.expectedEffect ?? null,
+      confidentialityLevel: body.confidentialityLevel ?? 'G2',
+      source: body.source ?? 'ax_discovery',
+      noDataRequired: !!noDataRequired,
+    }
+
     const project = await prisma.project.create({
-      data: {
-        ...projectData,
-        noDataRequired: !!noDataRequired,
-        source: projectData.source ?? 'ax_discovery',
-        // 데이터 요건은 과제 승인 시점에 DataRequest로 변환 (approve API에서 처리)
-        // 임시 보관: description에 JSON으로 삽입하지 않고 별도 필드 없이 body만 전달
-      },
+      data: projectData,
     })
 
     // dataRequirements를 DRAFT 상태로 미리 생성 (승인 시 PENDING으로 전환)

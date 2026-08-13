@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireRole } from '@/lib/authz'
 
 export async function GET(req: Request) {
+  const auth = await requireRole()
+  if ('error' in auth) return auth.error
+
   const { searchParams } = new URL(req.url)
   const mode = searchParams.get('mode') ?? 'overview'
   const nodeId = searchParams.get('nodeId')

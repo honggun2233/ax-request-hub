@@ -11,16 +11,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params
-  const { action, note }: { action: 'approve' | 'hold' | 'reject'; note?: string } = await req.json()
+  const body = await req.json()
+  const { action, note } = body
+
+  const VALID_ACTIONS = ['approve', 'hold', 'reject']
+  if (!VALID_ACTIONS.includes(action)) {
+    return NextResponse.json({ error: '유효하지 않은 action입니다.' }, { status: 400 })
+  }
+
   const project = await prisma.project.findUnique({ where: { id } })
   if (!project) return NextResponse.json({ error: '과제를 찾을 수 없습니다.' }, { status: 404 })
+
+  // C-2: 이미 종료된 과제 재승인 방지
+  if (!['submitted', 'evaluated'].includes(project.status)) {
+    return NextResponse.json({ error: `현재 상태(${project.status})에서는 승인·보류·반려할 수 없습니다.` }, { status: 409 })
+  }
+
+  const typedAction = action as 'approve' | 'hold' | 'reject'
   const statusMap = { approve: 'pilot', hold: 'evaluated', reject: 'closed' } as const
   await prisma.project.update({
     where: { id },
-    data: { status: statusMap[action], approvedBy: (session.user as any)?.name ?? session.user?.email ?? 'unknown', decisionNote: note ?? null },
+    data: { status: statusMap[typedAction], approvedBy: (session.user as any)?.name ?? session.user?.email ?? 'unknown', decisionNote: note ?? null },
   })
 
-  if (action === 'approve') {
+  if (typedAction === 'approve') {
     // Phase A: 과제 승인 시 DRAFT DataRequest → PENDING 전환 (DATA_PLATFORM 큐 진입)
     const draftCount = await prisma.dataRequest.updateMany({
       where: { projectId: id, status: 'DRAFT' },
@@ -36,10 +50,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     return NextResponse.json({
       ok: true,
-      status: statusMap[action],
-      dataRequestsActivated: draftCount.count, // 자동 생성된 데이터 신청 수
+      status: statusMap[typedAction],
+      dataRequestsActivated: draftCount.count,
     })
   }
 
-  return NextResponse.json({ ok: true, status: statusMap[action] })
+  return NextResponse.json({ ok: true, status: statusMap[typedAction] })
 }

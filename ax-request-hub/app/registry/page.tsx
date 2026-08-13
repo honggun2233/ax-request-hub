@@ -1,6 +1,7 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import RetireConfirmModal from './components/RetireConfirmModal'
 
@@ -88,10 +89,15 @@ const inputSt: React.CSSProperties = {
 function SlideOver({ agent, allProjects, onClose, onStageChange }: {
   agent: any; allProjects: any[]; onClose: () => void; onStageChange: () => void
 }) {
+  const { data: session } = useSession()
+  const isAxTeam = (session?.user as any)?.role === 'AX_TEAM'
+
   const [trustScore, setTrustScore]   = useState<number>(agent.operatorTrustScore ?? 3)
   const [comment, setComment]         = useState<string>(agent.operatorComment ?? '')
   const [saving, setSaving]           = useState(false)
+  const [stageError, setStageError]   = useState<string | null>(null)
   const [linkSaving, setLinkSaving]   = useState(false)
+  const [linkError, setLinkError]     = useState<string | null>(null)
   const [addingProject, setAddingProject] = useState(false)
   const [selectedProjectId, setSelectedProjectId] = useState('')
   const [selectedRole, setSelectedRole] = useState('PRIMARY')
@@ -102,11 +108,17 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
   const unlinkable = allProjects.filter(p => !linkedIds.has(p.id))
 
   const advanceStage = async (newStage: string) => {
-    setSaving(true); setDataWarning(null)
+    setSaving(true); setStageError(null); setDataWarning(null)
     const res = await fetch('/api/registry', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: agent.id, lifecycleStage: newStage, operatorTrustScore: trustScore, operatorComment: comment }),
     })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: '요청 실패' }))
+      setStageError(err.error ?? '단계 변경에 실패했습니다.')
+      setSaving(false)
+      return
+    }
     const json = await res.json()
     setSaving(false)
     if (json.dataWarning) { setDataWarning(json.dataWarning); onStageChange(); return }
@@ -115,20 +127,27 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
 
   const addLink = async () => {
     if (!selectedProjectId) return
-    setLinkSaving(true)
-    await fetch('/api/registry/links', {
+    setLinkSaving(true); setLinkError(null)
+    const res = await fetch('/api/registry/links', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agentId: agent.id, projectId: selectedProjectId, role: selectedRole }),
     })
-    setLinkSaving(false); setAddingProject(false); setSelectedProjectId('')
+    setLinkSaving(false)
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: '연결 실패' }))
+      setLinkError(err.error ?? '프로젝트 연결에 실패했습니다.')
+      return
+    }
+    setAddingProject(false); setSelectedProjectId('')
     onStageChange()
   }
 
   const removeLink = async (projectId: string) => {
-    await fetch('/api/registry/links', {
+    const res = await fetch('/api/registry/links', {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ agentId: agent.id, projectId }),
     })
+    if (!res.ok) return
     onStageChange()
   }
 
@@ -160,10 +179,12 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', margin: 0 }}>소속 AI 활용</p>
-              <button onClick={() => setAddingProject(!addingProject)}
-                style={{ fontSize: 11, color: '#4A6FA5', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
-                {addingProject ? '취소' : '+ 연결'}
-              </button>
+              {isAxTeam && (
+                <button onClick={() => setAddingProject(!addingProject)}
+                  style={{ fontSize: 11, color: '#4A6FA5', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                  {addingProject ? '취소' : '+ 연결'}
+                </button>
+              )}
             </div>
             {(agent.projects ?? []).length === 0 && !addingProject && (
               <p style={{ fontSize: 11, color: DIM, fontStyle: 'italic' }}>연결된 AI 활용 없음</p>
@@ -175,12 +196,19 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
                     <span style={{ color: TEXT, fontWeight: 500 }}>{link.project?.name ?? link.projectId}</span>
                     <span style={{ marginLeft: 8, color: DIM, fontSize: 10 }}>{ROLE_LABEL[link.role] ?? link.role}</span>
                   </div>
-                  <button onClick={() => removeLink(link.projectId)}
-                    style={{ background: 'none', border: 'none', color: DIM, cursor: 'pointer', fontSize: 12 }}>✕</button>
+                  {isAxTeam && (
+                    <button onClick={() => removeLink(link.projectId)}
+                      style={{ background: 'none', border: 'none', color: DIM, cursor: 'pointer', fontSize: 12 }}>✕</button>
+                  )}
                 </div>
               ))}
             </div>
-            {addingProject && (
+            {linkError && (
+              <div style={{ marginTop: 6, fontSize: 11, color: '#B94040', background: 'rgba(239,68,68,.06)', border: '1px solid rgba(239,68,68,.25)', borderRadius: 6, padding: '6px 10px' }}>
+                {linkError}
+              </div>
+            )}
+            {addingProject && isAxTeam && (
               <div style={{ marginTop: 8, padding: 12, background: 'rgba(59,130,246,.08)', border: `1px solid rgba(59,130,246,.2)`, borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <select value={selectedProjectId} onChange={e => setSelectedProjectId(e.target.value)} style={inputSt}>
                   <option value="">프로젝트 선택...</option>
@@ -209,7 +237,7 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
                 { label: 'Gate2 — 도메인 검증',   passed: agent.gate2Passed, at: agent.gate2PassedAt, criteria: '30일 정확도 ≥ 55%, 신뢰점수 ≥ 3' },
                 { label: 'Gate3 — 스트레스 검증', passed: agent.gate3Passed, at: agent.gate3PassedAt, criteria: '이상값/데이터없음 크래시 0' },
               ].map(g => (
-                <div key={g.label} style={{ borderRadius: 6, padding: '8px 12px', background: g.passed ? 'rgba(16,185,129,.08)' : 'rgba(255,255,255,.03)', border: `1px solid ${g.passed ? 'rgba(16,185,129,.25)' : BDR}` }}>
+                <div key={g.label} style={{ borderRadius: 6, padding: '8px 12px', background: g.passed ? 'rgba(16,185,129,.08)' : CARD2, border: `1px solid ${g.passed ? 'rgba(16,185,129,.25)' : BDR}` }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 12, color: g.passed ? '#059669' : DIM }}>{g.passed ? '✓' : '○'}</span>
                     <span style={{ fontSize: 12, color: g.passed ? '#065F46' : MUTED, flex: 1 }}>{g.label}</span>
@@ -257,8 +285,8 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
             </div>
           )}
 
-          {/* Gate2 운용역 리뷰 */}
-          {agent.lifecycleStage === 'GATE2' && (
+          {/* Gate2 운용역 리뷰 — AX_TEAM 전용 */}
+          {agent.lifecycleStage === 'GATE2' && isAxTeam && (
             <div>
               <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>운용역 리뷰 태깅</p>
               <div style={{ background: 'rgba(249,115,22,.06)', border: '1px solid rgba(249,115,22,.25)', borderRadius: 6, padding: '14px' }}>
@@ -294,9 +322,14 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
           )}
         </div>
 
-        {/* 액션 버튼 */}
-        {(nextStage || agent.lifecycleStage === 'GATE3' || agent.lifecycleStage === 'DEGRADED') && (
+        {/* 액션 버튼 — AX_TEAM 전용 */}
+        {isAxTeam && (nextStage || agent.lifecycleStage === 'GATE3' || agent.lifecycleStage === 'DEGRADED') && (
           <div style={{ padding: '14px 20px', borderTop: `1px solid ${BDR}`, background: SB, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {stageError && (
+              <div style={{ fontSize: 11, color: '#B94040', background: 'rgba(239,68,68,.06)', border: '1px solid rgba(239,68,68,.25)', borderRadius: 6, padding: '6px 10px' }}>
+                {stageError}
+              </div>
+            )}
             {agent.lifecycleStage === 'DEGRADED' && (
               <button disabled={saving} onClick={() => advanceStage('ACTIVE')} style={{
                 padding: '10px', background: '#10B981', color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
@@ -384,7 +417,7 @@ function RegisterModal({ approvedProjects, defaultProjectId, onClose, onCreated 
               <span style={{ fontWeight: 400, color: DIM, marginLeft: 6, textTransform: 'none' }}>(승인된 것만 표시)</span>
             </label>
             {approvedProjects.length === 0 ? (
-              <div style={{ background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 6, padding: '10px 12px', fontSize: 12, color: '#FCD34D' }}>
+              <div style={{ background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 6, padding: '10px 12px', fontSize: 12, color: '#92400E' }}>
                 승인된 AI 활용이 없습니다.{' '}
                 <Link href="/me/projects" style={{ color: '#4A6FA5', fontWeight: 600 }}>내 AI 활용</Link>에서 먼저 신청하세요.
               </div>
@@ -541,10 +574,13 @@ function ProjectView({ projects, onAgentClick }: { projects: any[]; onAgentClick
 }
 
 // ── 메인 페이지 ──────────────────────────────────────────────
-export default function RegistryPage() {
+function RegistryPageContent() {
   const searchParams = useSearchParams()
   const defaultProjectId  = searchParams.get('projectId') ?? ''
   const highlightAgentId  = searchParams.get('highlight') ?? ''
+
+  const { data: session } = useSession()
+  const isAxTeam = (session?.user as any)?.role === 'AX_TEAM'
 
   const [agentData, setAgentData]         = useState<{ agents: any[]; stageCounts: Record<string, number> }>({ agents: [], stageCounts: {} })
   const [projects, setProjects]           = useState<any[]>([])
@@ -553,20 +589,27 @@ export default function RegistryPage() {
   const [selectedAgent, setSelectedAgent] = useState<any | null>(null)
   const [viewMode, setViewMode]           = useState<'agent' | 'project'>('agent')
   const [loading, setLoading]             = useState(true)
+  const [loadError, setLoadError]         = useState<string | null>(null)
   const [showRegister, setShowRegister]   = useState(!!defaultProjectId)
 
   const load = useCallback(async () => {
+    setLoadError(null)
     try {
       const [regRes, projRes, myProjRes] = await Promise.all([
         fetch('/api/registry'), fetch('/api/ax-projects'), fetch('/api/projects'),
       ])
+      if (!regRes.ok || !projRes.ok) throw new Error('데이터 로드 실패')
       const regJson  = await regRes.json()
       const projJson = await projRes.json()
       const myProj   = await myProjRes.json()
       setAgentData(regJson)
       setProjects(projJson.projects ?? [])
       setApprovedProjects(Array.isArray(myProj) ? myProj.filter((p: any) => ['pilot', 'production'].includes(p.status)) : [])
-    } catch { } finally { setLoading(false) }
+    } catch (e: any) {
+      setLoadError(e.message ?? '데이터를 불러오지 못했습니다.')
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { load() }, [load])
@@ -605,17 +648,28 @@ export default function RegistryPage() {
           }}>
             폐기 거버넌스
           </Link>
-          <button onClick={() => setShowRegister(true)} style={{
-            padding: '8px 16px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-          }}>
-            + 에이전트 등록
-          </button>
+          {isAxTeam && (
+            <button onClick={() => setShowRegister(true)} style={{
+              padding: '8px 16px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}>
+              + 에이전트 등록
+            </button>
+          )}
           <div style={{ display: 'flex', gap: 4, background: CARD2, borderRadius: 8, padding: 3, border: `1px solid ${BDR}` }}>
             <button onClick={() => setViewMode('agent')} style={btnTabSt(viewMode === 'agent')}>에이전트 뷰</button>
             <button onClick={() => setViewMode('project')} style={btnTabSt(viewMode === 'project')}>AI 활용 뷰</button>
           </div>
         </div>
       </div>
+
+      {/* 로드 에러 */}
+      {loadError && (
+        <div style={{ background: 'rgba(239,68,68,.06)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, padding: '14px 16px', fontSize: 13, color: '#B94040', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>⚠</span>
+          <span>{loadError} —</span>
+          <button onClick={load} style={{ background: 'none', border: 'none', color: ACCENT, fontSize: 13, cursor: 'pointer', fontWeight: 600, padding: 0 }}>재시도</button>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: DIM, fontSize: 13 }}>로딩 중...</div>
@@ -725,9 +779,18 @@ export default function RegistryPage() {
       {selectedAgent && (
         <SlideOver agent={selectedAgent} allProjects={projects} onClose={() => setSelectedAgent(null)} onStageChange={load} />
       )}
-      {showRegister && (
+      {showRegister && isAxTeam && (
         <RegisterModal approvedProjects={approvedProjects} defaultProjectId={defaultProjectId} onClose={() => setShowRegister(false)} onCreated={load} />
       )}
     </div>
+  )
+}
+
+// ── Suspense 래퍼 (useSearchParams 경계) ──────────────────────
+export default function RegistryPage() {
+  return (
+    <Suspense fallback={<div style={{ textAlign: 'center', padding: '60px 0', color: '#BEC8DC', fontSize: 13 }}>로딩 중...</div>}>
+      <RegistryPageContent />
+    </Suspense>
   )
 }
