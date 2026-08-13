@@ -1,4 +1,4 @@
-import { db } from '@/src/lib/db'
+import { prisma as db } from '@/lib/prisma'
 import type { QuotaCheckResult, ProviderKey } from './types'
 
 const SERVICE_MAP: Record<ProviderKey, string> = {
@@ -32,7 +32,7 @@ export async function checkQuota(
     }),
   ])
 
-  const used = usageRecords.reduce((s, r) => s + r.tokenUsed, 0)
+  const used = usageRecords.reduce((s: number, r: { tokenUsed: number }) => s + r.tokenUsed, 0)
   const limit = policy?.monthlyLimit ?? 0
 
   if (limit === 0) {
@@ -83,7 +83,7 @@ export async function recordUsage(params: {
   const afterUsage = await db.usageRecord.findMany({
     where: { employeeId: params.employeeId, yearMonth },
   })
-  const totalUsed = afterUsage.reduce((s, r) => s + r.tokenUsed, 0)
+  const totalUsed = afterUsage.reduce((s: number, r: { tokenUsed: number }) => s + r.tokenUsed, 0)
   const policy = await db.tokenPolicy.findFirst({
     where: {
       isActive: true,
