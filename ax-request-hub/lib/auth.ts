@@ -1,12 +1,22 @@
 ﻿import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
+import { timingSafeEqual } from "crypto"
 import { prisma } from "@/lib/prisma"
 import type { Employee } from "@prisma/client"
+
+/** 타이밍 어택 방지 — TEMP_AUTH_PASSWORD 평문 비교에 사용 */
+function safeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return timingSafeEqual(bufA, bufB)
+}
 
 function toSessionUser(emp: Employee) {
   return {
     id: emp.id,
+    employeeId: emp.employeeId,
     email: emp.email,
     name: emp.name,
     role: emp.role,
@@ -50,7 +60,7 @@ export const authOptions: NextAuthOptions = {
         const tempPassword = process.env.TEMP_AUTH_PASSWORD
         if (tempPassword) {
           // 과도기: 전직원 동일 임시 비밀번호 (SSO/LDAP 연동 전)
-          if (password !== tempPassword) return null
+          if (!safeCompare(password, tempPassword)) return null
         } else if (emp.password) {
           // 개인 bcrypt 해시 검증
           const valid = await bcrypt.compare(password, emp.password)
@@ -68,6 +78,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
+        token.employeeId = (user as any).employeeId
         token.role = (user as any).role
         token.currentLevel = (user as any).currentLevel
         token.department = (user as any).department
@@ -77,6 +88,7 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id
+        ;(session.user as any).employeeId = token.employeeId
         ;(session.user as any).role = token.role
         ;(session.user as any).currentLevel = token.currentLevel
         ;(session.user as any).department = token.department
