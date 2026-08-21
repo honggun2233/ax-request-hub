@@ -1,4 +1,4 @@
-import { anthropic, MODEL } from '@/src/lib/claude'
+import { gatewayComplete } from '@/src/lib/ai-gateway/gateway'
 import { ExtractedProject } from '@/src/lib/agents/consultation'
 
 export interface ScoreCardResult {
@@ -48,13 +48,15 @@ As-Is: ${project.asIs}
 
     let raw: string
     try {
-      const response = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 600,
-        system: EVAL_SYSTEM,
-        messages: [{ role: 'user', content: userMessage }],
+      const res = await gatewayComplete({
+        messages: [
+          { role: 'system', content: EVAL_SYSTEM },
+          { role: 'user', content: userMessage },
+        ],
+        maxTokens: 600,
+        temperature: 0, // JSON 출력 일관성 강화 (온프렘 Qwen 포함)
       })
-      raw = response.content[0]?.type === 'text' ? response.content[0].text : ''
+      raw = res.content
     } catch (err) {
       throw new Error(`Evaluation API call failed: ${err instanceof Error ? err.message : String(err)}`)
     }

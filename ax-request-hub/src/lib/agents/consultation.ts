@@ -1,4 +1,4 @@
-import { anthropic, MODEL } from '@/src/lib/claude'
+import { gatewayComplete } from '@/src/lib/ai-gateway/gateway'
 
 export interface ExtractedProject {
   title: string
@@ -45,41 +45,39 @@ const SYSTEM_PROMPT = `당신은 삼성자산운용 AX/PI팀의 AI 활용 신청
 
 export class ConsultationAgent {
   async start(): Promise<AgentResponse> {
-    let response
+    let content: string
     try {
-      response = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 800,
-        system: SYSTEM_PROMPT,
+      const res = await gatewayComplete({
         messages: [
-          {
-            role: 'user',
-            content: '안녕하세요, AI 활용 신청을 시작하고 싶습니다.',
-          },
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: '안녕하세요, AI 활용 신청을 시작하고 싶습니다.' },
         ],
+        maxTokens: 800,
       })
+      content = res.content
     } catch (err) {
       throw new Error(`ConsultationAgent.start() API 호출 실패: ${err}`)
     }
 
-    const message = response.content[0]?.type === 'text' ? response.content[0].text : ''
-    return { message, isComplete: false, extracted: null }
+    return { message: content, isComplete: false, extracted: null }
   }
 
   async continueChat(messages: ChatMessage[]): Promise<AgentResponse> {
-    let response
+    let content: string
     try {
-      response = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 800,
-        system: SYSTEM_PROMPT,
-        messages,
+      const res = await gatewayComplete({
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...messages,
+        ],
+        maxTokens: 800,
       })
+      content = res.content
     } catch (err) {
       throw new Error(`ConsultationAgent.continueChat() API 호출 실패: ${err}`)
     }
 
-    const message = response.content[0]?.type === 'text' ? response.content[0].text : ''
+    const message = content
     const extracted = this.parseExtracted(message)
 
     return {

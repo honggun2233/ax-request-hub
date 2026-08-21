@@ -1,6 +1,7 @@
 import { AnthropicAdapter } from './adapters/anthropic'
 import { OpenAIAdapter } from './adapters/openai'
 import { GeminiAdapter } from './adapters/gemini'
+import { OnpremAdapter } from './adapters/onprem'
 import type { AIProviderAdapter } from './adapters/base'
 import type { ProviderKey } from './types'
 
@@ -8,6 +9,7 @@ const adapters: Record<ProviderKey, AIProviderAdapter> = {
   anthropic: new AnthropicAdapter(),
   openai: new OpenAIAdapter(),
   gemini: new GeminiAdapter(),
+  onprem: new OnpremAdapter(),
 }
 
 export function getAdapter(provider: ProviderKey): AIProviderAdapter {
@@ -21,7 +23,8 @@ export function getProviderStatus(): Record<ProviderKey, boolean> {
     anthropic: adapters.anthropic.isConfigured(),
     openai: adapters.openai.isConfigured(),
     gemini: adapters.gemini.isConfigured(),
+    onprem: adapters.onprem.isConfigured(),
   }
 }
 
-export const VALID_PROVIDERS: ProviderKey[] = ['anthropic', 'openai', 'gemini']
+export const VALID_PROVIDERS: ProviderKey[] = ['anthropic', 'openai', 'gemini', 'onprem']

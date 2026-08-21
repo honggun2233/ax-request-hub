@@ -5,6 +5,7 @@ const SERVICE_MAP: Record<ProviderKey, string> = {
   anthropic: 'Claude',
   openai: 'GPT Enterprise',
   gemini: 'Gemini',
+  onprem: 'Onprem',  // 온프렘 고정비 — 쿼터 체크 시 정책 미설정 시 무제한 허용
 }
 
 export async function checkQuota(

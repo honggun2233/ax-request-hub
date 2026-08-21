@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { anthropic, MODEL } from '@/src/lib/claude'
+import { gatewayComplete } from '@/src/lib/ai-gateway/gateway'
 import { prisma } from '@/lib/prisma'
 
 const SCHEMA = `
@@ -75,16 +75,18 @@ export async function POST(req: NextRequest) {
   while (attempts < MAX_ATTEMPTS) {
     attempts++
 
-    // Observe → Think (Claude가 SQL 생성)
+    // Observe → Think (LLM이 SQL 생성)
     let raw = ''
     try {
-      const msg = await anthropic.messages.create({
-        model: MODEL,
-        max_tokens: 1024,
-        system: '당신은 SQLite 전문가입니다. 자연어 질문을 SQL로 변환해 JSON으로만 출력하세요. 반드시 SELECT만 사용하세요.',
-        messages,
+      const res = await gatewayComplete({
+        messages: [
+          { role: 'system', content: '당신은 SQLite 전문가입니다. 자연어 질문을 SQL로 변환해 JSON으로만 출력하세요. 반드시 SELECT만 사용하세요.' },
+          ...messages.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+        ],
+        maxTokens: 1024,
+        temperature: 0, // SQL 생성 — 결정론적 출력 선호
       })
-      raw = msg.content[0].type === 'text' ? msg.content[0].text : ''
+      raw = res.content
     } catch (err: any) {
       return NextResponse.json({ error: `SQL 생성 실패: ${err?.message}` }, { status: 500 })
     }

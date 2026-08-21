@@ -1,4 +1,4 @@
-export type ProviderKey = 'anthropic' | 'openai' | 'gemini'
+export type ProviderKey = 'anthropic' | 'openai' | 'gemini' | 'onprem'
 
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system'
