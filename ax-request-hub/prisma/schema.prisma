@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -110,6 +110,7 @@ model Employee {
   grantedAllocations   ServiceAllocation[] @relation("GranterAllocations")
   usageRecords         UsageRecord[]       @relation("EmployeeUsage")
   inputUsageRecords    UsageRecord[]       @relation("InputterUsage")
+  usageDailies         UsageRecordDaily[]
   usageAlerts          UsageAlert[]
   toolAccounts         ToolAccount[]
   agentLinks           EmployeeAgentLink[]
@@ -240,6 +241,23 @@ model UsageRecord {
   createdAt  DateTime @default(now())
 
   @@unique([employeeId, service, yearMonth])
+}
+
+// A트랙 — 벤더 관리자 API로 수집한 일별 원시 데이터
+// 매일 collect-llm-usage.ts 배치 실행 → 여기에 upsert
+// → rollupCurrentMonthToUsageRecord()로 UsageRecord에 월 집계
+model UsageRecordDaily {
+  id         String   @id @default(cuid())
+  employeeId String
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  service    String   // "CLAUDE_ENTERPRISE" | "GPT_CHAT" | "GEMINI"
+  date       String   // "2026-08-21" (UTC 기준)
+  tokenUsed  Int      @default(0)
+  costKrw    Float    @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([employeeId, service, date])
 }
 
 model UsageAlert {
