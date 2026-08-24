@@ -61,6 +61,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     ...(Object.keys(agentUpdate).length
       ? [prisma.agentRegistry.update({ where: { id: item.agentId }, data: agentUpdate })]
       : []),
+    // PROD_APPROVAL 승인 → 연결 과제 status 동기화
+    ...(item.itemType === "PROD_APPROVAL" && decision === "APPROVED" && item.agent.projectId
+      ? [prisma.project.update({ where: { id: item.agent.projectId }, data: { status: "production" } })]
+      : []),
+    // PROD_APPROVAL 최종 반려 → 연결 과제 status 동기화
+    ...(item.itemType === "PROD_APPROVAL" && decision === "REJECTED" && item.agent.projectId
+      ? [prisma.project.update({ where: { id: item.agent.projectId }, data: { status: "closed" } })]
+      : []),
     prisma.auditLog.create({
       data: {
         entityType: "AgentRegistry",

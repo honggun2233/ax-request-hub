@@ -19,6 +19,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   conds[index] = { ...conds[index], done: Boolean(done), checkedBy: done ? auth.user.email : null };
   const allDone = conds.every((c) => c.done);
 
+  const agent = await prisma.agentRegistry.findUnique({ where: { id: item.agentId }, select: { projectId: true } });
+
   await prisma.$transaction([
     prisma.councilAgendaItem.update({ where: { id: item.id }, data: { conditions: JSON.stringify(conds) } }),
     ...(allDone
@@ -27,6 +29,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             where: { id: item.agentId },
             data: { phase: "PRODUCTION", devStage: null, prodStatus: "ACTIVE", productionAt: new Date() },
           }),
+          ...(agent?.projectId
+            ? [prisma.project.update({ where: { id: agent.projectId }, data: { status: "production" } })]
+            : []),
           prisma.auditLog.create({
             data: {
               entityType: "AgentRegistry",

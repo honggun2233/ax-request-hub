@@ -86,6 +86,68 @@ const inputSt: React.CSSProperties = {
 }
 
 // ── 슬라이드오버 ───────────────────────────────────────────────
+function KpiScorePanel({ agentId, onSaved }: { agentId: string; onSaved: () => void }) {
+  const [month, setMonth] = useState(() => {
+    const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+  })
+  const [achieveRate, setAchieveRate] = useState('')
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null)
+
+  const handleSave = async () => {
+    if (!month || achieveRate === '') return
+    setSaving(true); setResult(null)
+    try {
+      const res = await fetch(`/api/registry/${agentId}/kpi-score`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month, achieveRate: Number(achieveRate), note }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? '저장 실패')
+      setResult({ ok: true, msg: json.retireFlagSet ? 'KPI 저장 완료 — RETIRE_CANDIDATE 자동 플래그됨' : 'KPI 실적 저장 완료' })
+      onSaved()
+    } catch (e: any) {
+      setResult({ ok: false, msg: e.message })
+    } finally { setSaving(false) }
+  }
+
+  const panelSt: React.CSSProperties = { borderRadius: 6, border: `1px solid rgba(74,111,165,.25)`, background: 'rgba(74,111,165,.06)', padding: '14px' }
+  const labelSt: React.CSSProperties = { fontSize: 11, color: MUTED, display: 'block', marginBottom: 4 }
+  const inputSt2: React.CSSProperties = { width: '100%', fontSize: 12, padding: '7px 10px', border: `1px solid ${BDR}`, borderRadius: 6, background: CARD, color: TEXT, boxSizing: 'border-box' as const }
+
+  return (
+    <div>
+      <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 8 }}>월별 KPI 실적 입력 (PRODUCTION)</p>
+      <div style={panelSt}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelSt}>측정 월 (YYYY-MM)</label>
+            <input type="month" value={month} onChange={e => setMonth(e.target.value)} style={inputSt2} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <label style={labelSt}>달성률 (%)</label>
+            <input type="number" min={0} max={200} value={achieveRate} onChange={e => setAchieveRate(e.target.value)} placeholder="0~100" style={inputSt2} />
+          </div>
+        </div>
+        <div style={{ marginBottom: 8 }}>
+          <label style={labelSt}>비고 (선택)</label>
+          <input value={note} onChange={e => setNote(e.target.value)} placeholder="특이사항" style={inputSt2} />
+        </div>
+        <button onClick={handleSave} disabled={saving || !achieveRate} style={{
+          width: '100%', padding: '8px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+        }}>
+          {saving ? '저장 중...' : 'KPI 실적 저장'}
+        </button>
+        {result && (
+          <p style={{ fontSize: 11, marginTop: 6, color: result.ok ? '#059669' : '#B94040' }}>{result.msg}</p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function SlideOver({ agent, allProjects, onClose, onStageChange }: {
   agent: any; allProjects: any[]; onClose: () => void; onStageChange: () => void
 }) {
@@ -313,6 +375,26 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* RETIRE_CANDIDATE 경고 배너 */}
+          {agent.retireFlag && (
+            <div style={{ borderRadius: 6, border: '1px solid rgba(185,64,64,.35)', background: 'rgba(185,64,64,.08)', padding: '12px 14px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                <span style={{ color: '#B94040', fontSize: 16, marginTop: 1 }}>⚠</span>
+                <div>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: '#991B1B', margin: 0 }}>RETIRE_CANDIDATE — 폐기 검토 대상</p>
+                  <p style={{ fontSize: 11, color: '#B94040', marginTop: 4, lineHeight: 1.5 }}>
+                    월별 KPI 달성률이 3개월 연속 60% 미달로 자동 플래그되었습니다. 협의회 보고 후 DEPRECATED/폐기 처리를 검토하세요.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ACTIVE 상태 월별 KPI 실적 입력 — AX_TEAM 전용 */}
+          {isAxTeam && agent.lifecycleStage === 'ACTIVE' && (
+            <KpiScorePanel agentId={agent.id} onSaved={() => {}} />
           )}
 
           {agent.notes && (

@@ -74,6 +74,22 @@ export async function PATCH(req: NextRequest) {
   const now = new Date()
   const updateData: any = { lifecycleStage, updatedAt: now }
 
+  // GATE1 → GATE2 전환 시: 과제에 DataRequest가 있으면 전건 PROVISIONED 여야 함 (v3 §10-4)
+  if (lifecycleStage === 'GATE2') {
+    const current = await prisma.agentRegistry.findUnique({ where: { id }, select: { projectId: true, lifecycleStage: true } })
+    if (current?.lifecycleStage === 'GATE1' && current.projectId) {
+      const unprovisionedCount = await prisma.dataRequest.count({
+        where: { projectId: current.projectId, status: { notIn: ['PROVISIONED', 'REJECTED', 'REVOKED'] } },
+      })
+      if (unprovisionedCount > 0) {
+        return NextResponse.json(
+          { error: `데이터 신청 ${unprovisionedCount}건이 미제공(PROVISIONED 미완료) 상태입니다. 데이터 제공 완료 후 GATE2로 전환하세요.` },
+          { status: 422 }
+        )
+      }
+    }
+  }
+
   if (lifecycleStage === 'ACTIVE' && operatorTrustScore) {
     updateData.gate2Passed = true
     updateData.gate2PassedAt = now
@@ -93,6 +109,48 @@ export async function PATCH(req: NextRequest) {
   if (lifecycleStage === 'RETIRED') { updateData.retiredAt = now; updateData.retireReason = retireReason }
 
   const agent = await prisma.agentRegistry.update({ where: { id }, data: updateData })
+
+  // ACTIVE 전환 시 연결 과제 status → 'production' 동기화
+  if (lifecycleStage === 'ACTIVE' && agent.projectId) {
+    await prisma.project.update({
+      where: { id: agent.projectId },
+      data: { status: 'production' },
+    }).catch(() => {})
+  }
+  // RETIRED 전환 시 연결 과제 status → 'closed' 동기화 + 데이터 제공 전건 회수 (v3 §9-3)
+  if (lifecycleStage === 'RETIRED' && agent.projectId) {
+    await prisma.project.update({
+      where: { id: agent.projectId },
+      data: { status: 'closed' },
+    }).catch(() => {})
+
+    // 연결 과제의 DataProvision 전건 REVOKED 처리
+    const dataRequests = await prisma.dataRequest.findMany({
+      where: { projectId: agent.projectId, status: 'PROVISIONED' },
+      select: { id: true },
+    })
+    const requestIds = dataRequests.map((r: { id: string }) => r.id)
+    if (requestIds.length > 0) {
+      const revokeNow = new Date()
+      await prisma.dataProvision.updateMany({
+        where: { requestId: { in: requestIds }, revokedAt: null },
+        data: { revokedAt: revokeNow, revokeReason: `에이전트 폐기(RETIRED): ${agent.agentName ?? id}` },
+      })
+      await prisma.dataRequest.updateMany({
+        where: { id: { in: requestIds } },
+        data: { status: 'REVOKED' },
+      })
+      await prisma.auditLog.create({
+        data: {
+          entityType: 'AgentRegistry',
+          entityId: id,
+          action: 'DATA_PROVISIONS_REVOKED_ON_RETIRE',
+          actorEmail: auth.user.email,
+          detail: JSON.stringify({ revokedRequestCount: requestIds.length, projectId: agent.projectId }),
+        },
+      })
+    }
+  }
 
   // Phase C — Q3=B: Gate 2 진입 시 데이터 승인 상태 확인 (경고 반환, 차단 아님)
   let dataWarning: { pendingCount: number; totalCount: number } | null = null

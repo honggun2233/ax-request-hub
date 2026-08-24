@@ -57,12 +57,43 @@ export async function PATCH(
     const body = await req.json()
     const { status, rejectReason } = body
 
+    // G3 데이터 승인 선결조건: 과제의 isEssentialBusiness가 true여야 함
+    if (status === 'APPROVED') {
+      const dr = await prisma.dataRequest.findUnique({
+        where: { id },
+        select: { classification: true, projectId: true },
+      })
+      if (dr?.classification === 'G3' && dr.projectId) {
+        const project = await prisma.project.findUnique({
+          where: { id: dr.projectId },
+          select: { isEssentialBusiness: true } as any,
+        }) as any
+        if (project && !project.isEssentialBusiness) {
+          return NextResponse.json(
+            { error: 'G3(기밀) 데이터 승인을 위해서는 과제가 "본질적 업무"로 지정되어야 합니다. 과제 신청자에게 업무 필수성 확인 후 재요청하세요.' },
+            { status: 422 }
+          )
+        }
+      }
+    }
+
     const dataRequest = await prisma.dataRequest.update({
       where: { id },
       data: {
         status,
         reviewerId: userId,
         ...(rejectReason !== undefined ? { rejectReason } : {}),
+      },
+    })
+
+    // AuditLog 기록 — 모든 DataRequest 상태 전이 (v3 §10-3)
+    await prisma.auditLog.create({
+      data: {
+        entityType: 'DataRequest',
+        entityId: id,
+        action: `DATA_REQUEST_${status}`,
+        actorEmail: (session.user as any)?.email ?? 'unknown',
+        detail: JSON.stringify({ status, rejectReason: rejectReason ?? null }),
       },
     })
 

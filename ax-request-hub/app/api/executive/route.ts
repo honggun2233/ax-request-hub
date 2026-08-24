@@ -24,7 +24,7 @@ export async function GET() {
     employeeLevels,
     usageTrend,
   ] = await Promise.all([
-    // 에이전트 Gate 단계별 카운트
+    // 에이전트 Gate 단계별 카운트 (lifecycleStage)
     prisma.agentRegistry.groupBy({ by: ['lifecycleStage'], _count: { id: true } }),
 
     // 과제 상태별 카운트
@@ -84,6 +84,14 @@ export async function GET() {
       _sum: { costKrw: true, tokenUsed: true },
       orderBy: { yearMonth: 'asc' },
     }),
+  ])
+
+  // v3 개발/상용 에이전트 phase별 분리 요약 (별도 쿼리)
+  const [devCount, prodCount, suspendedCount, retireCandidateCount] = await Promise.all([
+    prisma.agentRegistry.count({ where: { phase: 'DEVELOPMENT' } }),
+    prisma.agentRegistry.count({ where: { phase: 'PRODUCTION', prodStatus: 'ACTIVE' } }),
+    prisma.agentRegistry.count({ where: { phase: 'PRODUCTION', prodStatus: 'SUSPENDED' } }),
+    prisma.agentRegistry.count({ where: { retireFlag: true } }),
   ])
 
   // Gate 단계 순서 정의
@@ -149,6 +157,13 @@ export async function GET() {
       totalCostKrw: costAgg._sum.costKrw ?? 0,
       totalTokens: costAgg._sum.tokenUsed ?? 0,
       activationRate,
+    },
+    // v3 개발/상용 에이전트 분리 요약
+    agentPhaseSummary: {
+      development: devCount,
+      productionActive: prodCount,
+      productionSuspended: suspendedCount,
+      retireCandidate: retireCandidateCount,
     },
     // Gate 퍼널
     gateFunnel: GATE_ORDER.map((stage) => ({

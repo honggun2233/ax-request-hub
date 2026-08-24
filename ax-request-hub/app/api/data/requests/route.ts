@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
       accessType,
       isAnonymized,
       anonNote,
+      prevRequestId,
     } = body
 
     // Validate required fields
@@ -95,6 +96,7 @@ export async function POST(req: NextRequest) {
         ...(accessType ? { accessType } : {}),
         ...(isAnonymized !== undefined ? { isAnonymized: Boolean(isAnonymized) } : {}),
         ...(anonNote ? { anonNote } : {}),
+        ...(prevRequestId ? { prevRequestId } : {}),
       },
     })
 
