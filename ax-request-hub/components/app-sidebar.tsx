@@ -44,12 +44,6 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    title: "AI 직접 활용",
-    items: [
-      { href: "/me/ai", label: "AI 채팅", icon: Cpu },
-    ],
-  },
-  {
     title: "내 정보",
     items: [
       { href: "/me",       label: "프로필 · 교육", icon: User },

@@ -753,3 +753,35 @@ model EmployeeAgentLink {
   @@unique([employeeId, agentId])
 }
 
+// AI 라우팅 이벤트 로그 (매 Bedrock 호출마다 기록)
+model GatewayCallLog {
+  id           String   @id @default(cuid())
+  providerKey  String   // 'anthropic' | 'openai' | 'gemini' | 'onprem'
+  taskType     String?  // 'TIER1_PARSE' | 'GATE3_RATIONALE' | ...
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  totalTokens  Int      @default(0)
+  costKrw      Decimal  @default(0)
+  employeeId   String?
+  projectId    String?
+  createdAt    DateTime @default(now())
+
+  @@index([providerKey, createdAt])
+  @@index([taskType, providerKey])
+}
+
+// 모델 카탈로그 (UI용)
+model ModelProvider {
+  id                 String   @id @default(cuid())
+  providerKey        String   @unique  // 'anthropic' | 'openai' | 'gemini' | 'onprem'
+  displayName        String
+  description        String   @default("")
+  hostType           String   // 'CLOUD' | 'ONPREM'
+  costTier           String   // 'HIGH' | 'MID' | 'LOW' | 'FREE'
+  isActive           Boolean  @default(true)
+  modelName          String?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
