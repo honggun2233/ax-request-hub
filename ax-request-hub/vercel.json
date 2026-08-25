@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/usage/expire-check",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/admin/agents/inactive-check",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/admin/agents/retire-check",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}
