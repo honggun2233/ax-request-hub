@@ -1,4 +1,4 @@
-import { gatewayComplete } from '@/src/lib/ai-gateway/gateway'
+import { gatewayCompleteRouted } from '@/src/lib/ai-gateway/routing'
 
 export interface ExtractedProject {
   title: string
@@ -47,13 +47,16 @@ export class ConsultationAgent {
   async start(): Promise<AgentResponse> {
     let content: string
     try {
-      const res = await gatewayComplete({
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: '안녕하세요, AI 활용 신청을 시작하고 싶습니다.' },
-        ],
-        maxTokens: 800,
-      })
+      const res = await gatewayCompleteRouted(
+        {
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user', content: '안녕하세요, AI 활용 신청을 시작하고 싶습니다.' },
+          ],
+          maxTokens: 800,
+        },
+        { taskType: 'SYNTHESIZE' },
+      )
       content = res.content
     } catch (err) {
       throw new Error(`ConsultationAgent.start() API 호출 실패: ${err}`)
@@ -65,13 +68,16 @@ export class ConsultationAgent {
   async continueChat(messages: ChatMessage[]): Promise<AgentResponse> {
     let content: string
     try {
-      const res = await gatewayComplete({
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...messages,
-        ],
-        maxTokens: 800,
-      })
+      const res = await gatewayCompleteRouted(
+        {
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...messages,
+          ],
+          maxTokens: 800,
+        },
+        { taskType: 'GATE3_RATIONALE' },
+      )
       content = res.content
     } catch (err) {
       throw new Error(`ConsultationAgent.continueChat() API 호출 실패: ${err}`)

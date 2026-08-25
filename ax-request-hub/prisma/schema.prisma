@@ -770,6 +770,21 @@ model GatewayCallLog {
   @@index([taskType, providerKey])
 }
 
+// C트랙 — 배포된 에이전트가 자기 사용량을 보고하는 테이블
+// ServiceToken 인증 후 POST /api/internal/usage 로 수신
+model AgentRuntimeUsage {
+  id          String   @id @default(cuid())
+  agentId     String                        // AgentRegistry.id
+  ownerEmail  String                        // 에이전트 담당자
+  providerKey String                        // 사용한 AI 벤더
+  tokenUsed   Int      @default(0)
+  costKrw     Decimal  @default(0)
+  calledAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([agentId, calledAt])
+}
+
 // 모델 카탈로그 (UI용)
 model ModelProvider {
   id                 String   @id @default(cuid())

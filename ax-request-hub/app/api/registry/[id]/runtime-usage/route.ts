@@ -84,7 +84,7 @@ export async function GET(
     take: 100,
   });
 
-  const totalCost = usages.reduce((s, u) => s + u.costKrw, 0);
+  const totalCost = usages.reduce((s, u) => s + Number(u.costKrw), 0);
   const totalTokens = usages.reduce((s, u) => s + u.tokenUsed, 0);
 
   return NextResponse.json({ agentId, totalCost, totalTokens, count: usages.length, usages });

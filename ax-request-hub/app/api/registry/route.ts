@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
+import { linkAgentToRegistry } from '@/src/lib/agent-registry-link'
 
 const LIFECYCLE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'GATE3', 'ACTIVE', 'DEGRADED', 'RETIRED']
 
@@ -110,12 +111,22 @@ export async function PATCH(req: NextRequest) {
 
   const agent = await prisma.agentRegistry.update({ where: { id }, data: updateData })
 
-  // ACTIVE 전환 시 연결 과제 status → 'production' 동기화
+  // ACTIVE 전환 시 연결 과제 status → 'production' 동기화 + Agent.agentRegistryId 자동 세팅
   if (lifecycleStage === 'ACTIVE' && agent.projectId) {
     await prisma.project.update({
       where: { id: agent.projectId },
       data: { status: 'production' },
     }).catch(() => {})
+
+    // 같은 이름의 Agent 레코드에 agentRegistryId 연결
+    const linkedAgent = await prisma.agent.findFirst({
+      where: { name: agent.agentName, agentRegistryId: null },
+    })
+    if (linkedAgent) {
+      await prisma.$transaction(async (tx) => {
+        await linkAgentToRegistry(tx, linkedAgent.id, agent.id)
+      }).catch(() => {})
+    }
   }
   // RETIRED 전환 시 연결 과제 status → 'closed' 동기화 + 데이터 제공 전건 회수 (v3 §9-3)
   if (lifecycleStage === 'RETIRED' && agent.projectId) {

@@ -155,17 +155,17 @@ ${rawText.slice(0, 3000)}
         }
         parsed = extracted
         tier = 1
-        // UsageEvent 기록
-        await prisma.usageEvent.create({
+        // GatewayCallLog 기록 (B트랙 — AX Hub 자체 AI 호출)
+        await prisma.gatewayCallLog.create({
           data: {
-            service: 'CLAUDE_API',
-            accountType: 'AX_HUB_SYSTEM',
-            sourceType: 'INTAKE_PARSE',
             providerKey: res.provider,
-            tokenUsed: res.totalTokens,
+            taskType: 'TIER1_PARSE',
+            inputTokens: res.inputTokens,
+            outputTokens: res.outputTokens,
+            totalTokens: res.totalTokens,
             costKrw: Math.round(res.inputTokens / 1000 * 12 + res.outputTokens / 1000 * 36),
-          } as any,
-        })
+          },
+        }).catch(() => {})
       } catch (e: any) {
         return NextResponse.json(
           { error: `Tier1 파싱 실패: ${e.message}. 표준 프롬프트를 사용하거나 직접 입력해 주세요.` },

@@ -1,14 +1,16 @@
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime'
 import { AIProviderAdapter } from './base'
-import type { AIRequest, AIResponse } from '../types'
+import type { AIRequest, AIResponse, ProviderKey } from '../types'
 
 // 환경변수:
 // BEDROCK_REGION: 기본 ap-northeast-2
 // BEDROCK_ACCESS_KEY_REF: Access Key
 // BEDROCK_SECRET_KEY_REF: Secret Key
 
+// BedrockAdapter: 전송 레이어(내부 헬퍼). 직접 라우팅 대상 아님.
+// AnthropicAdapter / OpenAIAdapter / GeminiAdapter가 상속해서 Bedrock 경유 실행.
 export class BedrockAdapter extends AIProviderAdapter {
-  readonly provider = 'bedrock' as const
+  readonly provider: ProviderKey = 'onprem' as ProviderKey  // 서브클래스가 override
   readonly defaultModel: string
 
   private client: BedrockRuntimeClient | null = null

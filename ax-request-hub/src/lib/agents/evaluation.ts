@@ -1,4 +1,4 @@
-import { gatewayComplete } from '@/src/lib/ai-gateway/gateway'
+import { gatewayCompleteRouted } from '@/src/lib/ai-gateway/routing'
 import { ExtractedProject } from '@/src/lib/agents/consultation'
 
 export interface ScoreCardResult {
@@ -48,14 +48,17 @@ As-Is: ${project.asIs}
 
     let raw: string
     try {
-      const res = await gatewayComplete({
-        messages: [
-          { role: 'system', content: EVAL_SYSTEM },
-          { role: 'user', content: userMessage },
-        ],
-        maxTokens: 600,
-        temperature: 0, // JSON 출력 일관성 강화 (온프렘 Qwen 포함)
-      })
+      const res = await gatewayCompleteRouted(
+        {
+          messages: [
+            { role: 'system', content: EVAL_SYSTEM },
+            { role: 'user', content: userMessage },
+          ],
+          maxTokens: 600,
+          temperature: 0,
+        },
+        { taskType: 'GATE2_REVIEW' },
+      )
       raw = res.content
     } catch (err) {
       throw new Error(`Evaluation API call failed: ${err instanceof Error ? err.message : String(err)}`)
