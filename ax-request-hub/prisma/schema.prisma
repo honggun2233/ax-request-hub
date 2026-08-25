@@ -449,9 +449,11 @@ model AgentRegistry {
   trustScore     Int?         // (operatorTrustScore 별칭)
   pilotKpiTarget String?      // JSON 4?�드 ???�환 근거
   prodKpiTarget  String?      // JSON 4?�드 ???�의???�인 ???�정
-  retireFlag     Boolean      @default(false)
-  lastUsedAt     DateTime?
-  productionAt   DateTime?    // ?�의???�인 ???�용 ?�환 ?�시
+  retireFlag          Boolean      @default(false)
+  lastUsedAt          DateTime?
+  productionAt        DateTime?    // ?�의???�인 ???�용 ?�환 ?�시
+  recommendedProvider String?      // Qwen 추천 벤더 (claude|gpt|gemini), null=미분류
+  providerOverride    String?      // AX_TEAM 수동 override
 
   legacyAgent      Agent?         @relation("AgentRegistryLink")
 

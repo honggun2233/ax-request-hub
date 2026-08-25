@@ -148,6 +148,96 @@ function KpiScorePanel({ agentId, onSaved }: { agentId: string; onSaved: () => v
   )
 }
 
+// ── Qwen 추천 패널 ─────────────────────────────────────────────
+type QwenResult = { vendor: 'claude' | 'gpt' | 'gemini'; confidence: number; reason: string; providerOverride: string | null }
+const VENDOR_LABEL: Record<string, string> = { claude: 'Claude (Anthropic)', gpt: 'GPT (OpenAI)', gemini: 'Gemini (Google)' }
+const VENDOR_COLOR: Record<string, string> = { claude: '#D97706', gpt: '#10B981', gemini: '#4A6FA5' }
+
+function QwenRecommendPanel({ agentId, stage }: { agentId: string; stage: string }) {
+  const [result, setResult] = useState<QwenResult | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [override, setOverride] = useState<string>('')
+  const [savingOverride, setSavingOverride] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  const GATE_STAGES = ['GATE1', 'GATE2', 'GATE3']
+  if (!GATE_STAGES.includes(stage)) return null
+
+  const fetch_classify = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/registry/${agentId}/qwen-classify`)
+      if (!res.ok) throw new Error('분류 실패')
+      const data = await res.json() as QwenResult
+      setResult(data)
+      setOverride(data.providerOverride ?? data.vendor)
+    } catch {
+      setResult({ vendor: 'claude', confidence: 0, reason: 'Qwen 연결 실패 — 기본값 적용', providerOverride: null })
+    } finally { setLoading(false) }
+  }
+
+  const saveOverride = async () => {
+    setSavingOverride(true); setSaved(false)
+    await fetch(`/api/registry/${agentId}/qwen-classify`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ providerOverride: override }),
+    })
+    setSavingOverride(false); setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  const confColor = result ? (result.confidence >= 80 ? '#059669' : result.confidence >= 50 ? '#D97706' : '#B94040') : DIM
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', margin: 0 }}>Qwen AI 벤더 추천</p>
+        {!result && !loading && (
+          <button onClick={fetch_classify} style={{ fontSize: 11, color: '#4A6FA5', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+            분류 실행 →
+          </button>
+        )}
+      </div>
+      {loading && (
+        <div style={{ fontSize: 12, color: MUTED, padding: '10px 0' }}>Qwen 분류 중…</div>
+      )}
+      {result && !loading && (
+        <div style={{ background: 'rgba(74,111,165,.05)', border: `1px solid rgba(74,111,165,.2)`, borderRadius: 6, padding: '12px 14px' }}>
+          {/* 추천 결과 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+              background: `${VENDOR_COLOR[result.vendor]}20`, color: VENDOR_COLOR[result.vendor],
+              border: `1px solid ${VENDOR_COLOR[result.vendor]}40` }}>
+              {VENDOR_LABEL[result.vendor] ?? result.vendor}
+            </span>
+            <span style={{ fontSize: 10, color: confColor, fontWeight: 600 }}>신뢰도 {result.confidence}%</span>
+          </div>
+          <p style={{ fontSize: 11, color: MUTED, lineHeight: 1.5, marginBottom: 10 }}>{result.reason}</p>
+          {/* Override 선택 */}
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <select value={override} onChange={e => setOverride(e.target.value)}
+              style={{ flex: 1, fontSize: 12, padding: '6px 8px', border: `1px solid ${BDR}`, borderRadius: 6, background: '#fff', color: TEXT }}>
+              <option value="claude">Claude (Anthropic)</option>
+              <option value="gpt">GPT (OpenAI)</option>
+              <option value="gemini">Gemini (Google)</option>
+            </select>
+            <button onClick={saveOverride} disabled={savingOverride || override === (result.providerOverride ?? result.vendor)}
+              style={{ padding: '6px 12px', fontSize: 11, fontWeight: 600, borderRadius: 6, cursor: 'pointer',
+                background: saved ? '#10B981' : '#4A6FA5', color: '#fff', border: 'none',
+                opacity: (savingOverride || override === (result.providerOverride ?? result.vendor)) ? 0.5 : 1 }}>
+              {saved ? '저장됨 ✓' : savingOverride ? '…' : '적용'}
+            </button>
+          </div>
+          {result.confidence === 0 && (
+            <p style={{ fontSize: 10, color: '#B94040', marginTop: 6 }}>⚠ Qwen 분류 실패 — 수동으로 벤더를 선택해주세요.</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SlideOver({ agent, allProjects, onClose, onStageChange }: {
   agent: any; allProjects: any[]; onClose: () => void; onStageChange: () => void
 }) {
@@ -345,6 +435,11 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* G-2: Qwen AI 벤더 추천 패널 — Gate 심사 중 AX_TEAM 전용 */}
+          {isAxTeam && ['GATE1', 'GATE2', 'GATE3'].includes(agent.lifecycleStage) && (
+            <QwenRecommendPanel agentId={agent.id} stage={agent.lifecycleStage} />
           )}
 
           {/* Gate2 운용역 리뷰 — AX_TEAM 전용 */}
