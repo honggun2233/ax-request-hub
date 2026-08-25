@@ -770,6 +770,21 @@ model GatewayCallLog {
   @@index([taskType, providerKey])
 }
 
+// C트랙 — 비인간 호출자(배포 에이전트·배치) 인증 토큰
+// rawToken은 발급 시 1회만 노출, DB에는 sha256 해시만 저장
+model ServiceToken {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique       // sha256(rawToken)
+  description String
+  agentKey    String?                 // 어떤 에이전트용인지
+  scopes      String    @default("usage:write")  // 쉼표 구분
+  isActive    Boolean   @default(true)
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  createdBy   String                  // 발급한 AX팀 담당자 이메일
+}
+
 // C트랙 — 배포된 에이전트가 자기 사용량을 보고하는 테이블
 // ServiceToken 인증 후 POST /api/internal/usage 로 수신
 model AgentRuntimeUsage {
