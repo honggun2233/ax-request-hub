@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AX Hub 워크플로 다이어그램 v3</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Malgun Gothic', sans-serif; background: #F7F9FC; color: #18243D; padding: 32px; }
+  h1 { font-size: 20px; font-weight: 700; color: #1E3560; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6B7FA3; margin-bottom: 8px; }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 32px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #475569; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  .section-header {
+    background: #1E3560; color: #fff;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 6px 16px 6px 148px;
+    margin-top: 24px; border-radius: 4px 4px 0 0;
+  }
+  .section-header.green  { background: #2D6A4F; }
+  .section-header.purple { background: #7B5EA7; }
+  .section-header.slate  { background: #475569; }
+  .section-header.gold   { background: #92703B; }
+
+  .diagram { display: flex; flex-direction: column; }
+  .lane { display: flex; align-items: stretch; border-bottom: 1px solid #E2E8F0; border-left: 1px solid #E2E8F0; border-right: 1px solid #E2E8F0; }
+  .lane-label {
+    width: 130px; min-width: 130px; padding: 14px 10px;
+    font-size: 11px; font-weight: 700; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; line-height: 1.4;
+    border-right: 1px solid rgba(255,255,255,0.15);
+  }
+  .lane-content { flex: 1; padding: 14px 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .lane-employee .lane-label { background: #4A6FA5; }
+  .lane-ax       .lane-label { background: #1E3560; }
+  .lane-dp       .lane-label { background: #2D6A4F; }
+  .lane-exec     .lane-label { background: #7B5EA7; }
+  .lane-system   .lane-label { background: #475569; }
+  .lane-agent    .lane-label { background: #92703B; }
+
+  .box {
+    background: #fff; border: 1.5px solid #CBD5E1; border-radius: 8px;
+    padding: 9px 12px; font-size: 12px; line-height: 1.5;
+    min-width: 130px; max-width: 210px;
+  }
+  .box .tag { font-size: 9px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #94A3B8; margin-bottom: 3px; }
+  .box .title { font-weight: 600; color: #1E3560; font-size: 12px; }
+  .box .desc  { font-size: 11px; color: #64748B; margin-top: 3px; }
+
+  .box.highlight { border-color: #B8956A; background: #FEF9F3; }
+  .box.highlight .title { color: #92703B; }
+  .box.auto { border-color: #64748B; background: #F8FAFC; border-style: dashed; }
+  .box.gap  { border-color: #ef4444; background: #FEF2F2; }
+  .box.gap .tag { color: #ef4444; }
+  .box.gap .title { color: #991b1b; }
+  .box.done { border-color: #22c55e; background: #F0FDF4; }
+  .box.done .tag { color: #16a34a; }
+  .box.partial { border-color: #f59e0b; background: #FFFBEB; }
+  .box.partial .tag { color: #d97706; }
+
+  .arrow { font-size: 18px; color: #94A3B8; flex-shrink: 0; align-self: center; }
+
+  .gate {
+    background: #1E3560; color: #fff; border-radius: 50%;
+    width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; text-align: center; flex-shrink: 0; line-height: 1.2;
+  }
+  .gate.g2 { background: #4A6FA5; }
+  .gate.g3 { background: #B8956A; }
+
+  .channels { display: flex; gap: 5px; flex-wrap: wrap; }
+  .ch { font-size: 10px; padding: 2px 7px; border-radius: 12px; font-weight: 600; border: 1.5px solid; }
+  .ch.ai    { color: #1E3560; border-color: #1E3560; background: #EEF3FA; }
+  .ch.file  { color: #2D6A4F; border-color: #2D6A4F; background: #E8F5EE; }
+  .ch.form  { color: #7B5EA7; border-color: #7B5EA7; background: #F3EEF9; }
+  .ch.text  { color: #B8956A; border-color: #B8956A; background: #FEF9F3; }
+
+  .status-flow { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .status {
+    font-size: 10px; padding: 2px 9px; border-radius: 12px;
+    font-weight: 600; background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1;
+  }
+  .status.active { background: #EEF3FA; color: #4A6FA5; border-color: #4A6FA5; }
+  .status.warn   { background: #FEF9F3; color: #B8956A; border-color: #B8956A; }
+  .status.done   { background: #E8F5EE; color: #2D6A4F; border-color: #2D6A4F; }
+
+  .note { font-size: 10px; color: #94A3B8; margin-top: 3px; }
+  .gap-badge {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    background: #ef4444; color: #fff; border-radius: 3px; padding: 1px 5px; margin-left: 4px;
+  }
+  .done-badge {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    background: #22c55e; color: #fff; border-radius: 3px; padding: 1px 5px; margin-left: 4px;
+  }
+  .wip-badge {
+    display: inline-block; font-size: 9px; font-weight: 700;
+    background: #f59e0b; color: #fff; border-radius: 3px; padding: 1px 5px; margin-left: 4px;
+  }
+
+  .gap-summary {
+    margin-top: 28px; border: 1.5px solid #ef4444; border-radius: 8px;
+    padding: 16px 20px; background: #FEF2F2;
+  }
+  .gap-summary h2 { font-size: 13px; color: #991b1b; margin-bottom: 12px; }
+  .gap-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 8px; font-size: 12px; }
+  .gap-id { font-weight: 700; color: #ef4444; min-width: 32px; }
+  .gap-desc { color: #18243D; line-height: 1.5; }
+  .gap-fix { color: #6B7FA3; font-size: 11px; margin-top: 2px; }
+
+  footer { margin-top: 28px; font-size: 11px; color: #94A3B8; }
+</style>
+</head>
+<body>
+
+<h1>AX Hub — 플랫폼 전체 워크플로 v3</h1>
+<p class="subtitle">2026-08-25 · 토큰관리 3트랙 + 서비스토큰 인증 + AI-native 인테이크 반영</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> 구현 완료</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> 구현 중 (WIP)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> 미구현 / 끊긴 지점</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#64748B; opacity:.5"></div> 자동 처리 (점선)</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LAYER 1: 에이전트 등록 신청 (Phase 1)
+═══════════════════════════════════════════════ -->
+<div class="section-header">Phase 1 — 에이전트 등록 신청 (AI-native 인테이크)</div>
+<div class="diagram">
+
+  <div class="lane lane-employee">
+    <div class="lane-label">전 직원<br><span style="font-weight:400;font-size:10px">신청자</span></div>
+    <div class="lane-content">
+      <div class="box partial">
+        <div class="tag">인테이크 채널 <span class="wip-badge">WIP</span></div>
+        <div class="title">자료 투척</div>
+        <div class="desc" style="margin-top:6px">
+          <div class="channels">
+            <span class="ch ai">🤖 AI 합성</span>
+            <span class="ch file">📎 파일 업로드</span>
+            <span class="ch text">✏️ 자유 텍스트</span>
+            <span class="ch form">📋 직접 입력</span>
+          </div>
+        </div>
+        <div class="note">→ projects/new 페이지 재작성 중</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box partial">
+        <div class="tag">AI 합성 <span class="wip-badge">WIP</span></div>
+        <div class="title">/api/intake/synthesize</div>
+        <div class="desc">Qwen 분류 → Bedrock 실행<br>confidence 배지 생성<br>8개 필드 자동 추출</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <div class="tag">3단계 확인</div>
+        <div class="title">기밀등급 명시 선택</div>
+        <div class="desc">G1/G2/G3 버튼 (필수)<br>데이터요건 명시 확인<br>→ /api/projects POST</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">상태 <span class="done-badge">구현됨</span></div>
+        <div class="title">submitted</div>
+        <div class="desc">ScoreCard 자동 생성<br>intakeMethod=CHAT<br>aiConfidence 기록</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LAYER 2: AI 라우팅 레이어 (B트랙)
+═══════════════════════════════════════════════ -->
+<div class="section-header slate" style="margin-top:20px">AI 라우팅 레이어 (B트랙) — AX Hub 자체 심사 업무용</div>
+<div class="diagram">
+
+  <div class="lane lane-system">
+    <div class="lane-label">Qwen<br><span style="font-weight:400;font-size:10px">판단자 (온프렘)</span></div>
+    <div class="lane-content">
+      <div class="box done">
+        <div class="tag">classifyTask <span class="done-badge">구현됨</span></div>
+        <div class="title">작업 성격 판단</div>
+        <div class="desc">TIER1_PARSE / GATE1~3<br>KPI_EVAL / SYNTHESIZE<br>vendor + confidence 반환</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">routing.ts <span class="done-badge">구현됨</span></div>
+        <div class="title">gatewayCompleteRouted</div>
+        <div class="desc">Qwen 추천 → Bedrock 경유<br>AX팀 override 가능<br>GatewayCallLog Push</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">Bedrock 실행 <span class="done-badge">구현됨</span></div>
+        <div class="title">Claude / GPT / Gemma</div>
+        <div class="desc">AWS 계정 내 처리<br>G1~G3 전부 가능<br>GEMINI_BACKEND env 스위치</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">GatewayCallLog <span class="done-badge">구현됨</span></div>
+        <div class="title">토큰 기록 (Push)</div>
+        <div class="desc">providerKey / taskType<br>costKrw: Decimal<br>인덱스: provider+날짜</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lane lane-ax">
+    <div class="lane-label">AX팀<br><span style="font-weight:400;font-size:10px">심사 + override</span></div>
+    <div class="lane-content">
+      <div class="box gap">
+        <div class="tag">미구현 <span class="gap-badge">GAP</span></div>
+        <div class="title">Qwen 추천 표시 UI</div>
+        <div class="desc">Gate 심사 화면에서<br>추천 벤더 + 신뢰도 표시<br>원클릭 override 버튼</div>
+        <div class="note">→ Gate1~3 심사 페이지에 추가 필요</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LAYER 3: Gate 1~3 심사 (Phase 2, 3, 5)
+═══════════════════════════════════════════════ -->
+<div class="section-header" style="margin-top:20px">Phase 2~5 — Gate 심사 · 개발 · 데이터 · 배포</div>
+<div class="diagram">
+
+  <div class="lane lane-ax">
+    <div class="lane-label">AX팀<br><span style="font-weight:400;font-size:10px">심사자</span></div>
+    <div class="lane-content">
+      <div class="gate">Gate<br>1</div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">적합성 심사 <span class="done-badge">구현됨</span></div>
+        <div class="title">업무 적합성 · 보안</div>
+        <div class="desc">중복 에이전트 여부<br>승인 / 조건부 / 반려<br>이의제기 가능</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gate g2">Gate<br>2</div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">기술 검증 <span class="done-badge">구현됨</span></div>
+        <div class="title">AgentRegistry 등록</div>
+        <div class="desc">API Spec · 데이터 분류<br>감사 로그 · 테스트<br>phase = DEVELOPMENT</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gate g3">Gate<br>3</div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">운영 전환 <span class="done-badge">구현됨</span></div>
+        <div class="title">PRODUCTION 전환</div>
+        <div class="desc">phase = PRODUCTION<br>prodStatus = ACTIVE<br>CouncilAgendaItem 생성</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lane lane-dp">
+    <div class="lane-label">데이터플랫폼팀</div>
+    <div class="lane-content">
+      <div class="box done">
+        <div class="tag">데이터 신청 심사 <span class="done-badge">구현됨</span></div>
+        <div class="title">/dp/requests</div>
+        <div class="desc">G1/G2/G3 분류 · PII<br>REQUESTED → APPROVED<br>감사로그 자동 기록</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LAYER 4: 토큰 관리 3트랙
+═══════════════════════════════════════════════ -->
+<div class="section-header green" style="margin-top:20px">토큰 관리 — A트랙: 엔터프라이즈 계정 사용량</div>
+<div class="diagram">
+
+  <div class="lane lane-system">
+    <div class="lane-label">벤더 API<br><span style="font-weight:400;font-size:10px">Pull 수집</span></div>
+    <div class="lane-content">
+      <div class="box gap">
+        <div class="tag">미착수 <span class="gap-badge">GAP</span></div>
+        <div class="title">Claude Enterprise API</div>
+        <div class="desc">Primary Owner API 키 필요<br>일 단위 집계 Pull<br>→ UsageRecordDaily</div>
+        <div class="note">⚠ 인표님 직접 키 발급 필요</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box gap">
+        <div class="tag">미구현 <span class="gap-badge">GAP</span></div>
+        <div class="title">OpenAI / Gemini API</div>
+        <div class="desc">조직 사용량 API<br>일 1회 배치 수집</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">스키마 <span class="done-badge">구현됨</span></div>
+        <div class="title">UsageRecordDaily</div>
+        <div class="desc">일 단위 적재<br>→ UsageRecord 월 롤업<br>→ DepartmentQuota 체크</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="section-header green">토큰 관리 — C트랙: 배포 에이전트 런타임 비용</div>
+<div class="diagram">
+
+  <div class="lane lane-agent">
+    <div class="lane-label">배포된<br>에이전트</div>
+    <div class="lane-content">
+      <div class="box gap">
+        <div class="tag">미구현 <span class="gap-badge">GAP</span></div>
+        <div class="title">AI 호출 후 자기 보고</div>
+        <div class="desc">Bearer ServiceToken<br>Authorization 헤더<br>→ POST /api/internal/usage</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box gap">
+        <div class="tag">미구현 <span class="gap-badge">GAP</span></div>
+        <div class="title">middleware.ts</div>
+        <div class="desc">/api/internal/* 경로<br>ServiceToken 인증 분기<br>(현재: NextAuth 세션만)</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box gap">
+        <div class="tag">미구현 <span class="gap-badge">GAP</span></div>
+        <div class="title">/api/internal/usage</div>
+        <div class="desc">ServiceToken 검증<br>AgentUsageLog 기록<br>GatewayCallLog 공유</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lane lane-ax">
+    <div class="lane-label">AX팀<br><span style="font-weight:400;font-size:10px">토큰 발급</span></div>
+    <div class="lane-content">
+      <div class="box gap">
+        <div class="tag">미구현 <span class="gap-badge">GAP</span></div>
+        <div class="title">ServiceToken 모델</div>
+        <div class="desc">tokenHash(sha256)<br>scopes · agentKey<br>expiresAt · lastUsedAt</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box gap">
+        <div class="tag">미구현 <span class="gap-badge">GAP</span></div>
+        <div class="title">/api/admin/service-tokens</div>
+        <div class="desc">발급(POST) · 목록(GET)<br>AX_TEAM 역할 전용<br>rawToken 1회만 노출</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LAYER 5: KPI 모니터링 · 은퇴
+═══════════════════════════════════════════════ -->
+<div class="section-header" style="margin-top:20px">Phase 6 — KPI 모니터링 · 은퇴 · 통합 대시보드</div>
+<div class="diagram">
+
+  <div class="lane lane-ax">
+    <div class="lane-label">AX팀<br><span style="font-weight:400;font-size:10px">KPI 관리</span></div>
+    <div class="lane-content">
+      <div class="box done">
+        <div class="tag">월별 KPI <span class="done-badge">구현됨</span></div>
+        <div class="title">AgentScore 기록</div>
+        <div class="desc">/api/registry/[id]/kpi-score<br>AgentKpiRecord 누적</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">자동 판정 <span class="done-badge">구현됨</span></div>
+        <div class="title">retireFlag 자동화</div>
+        <div class="desc">3개월 연속 60% 미달<br>→ RETIRE_CANDIDATE</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box done">
+        <div class="tag">라이프사이클 <span class="done-badge">구현됨</span></div>
+        <div class="title">SUSPENDED → RETIRED</div>
+        <div class="desc">지식 추출 후 폐기<br>KnowledgeExtract 저장</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lane lane-exec">
+    <div class="lane-label">경영진</div>
+    <div class="lane-content">
+      <div class="box gap">
+        <div class="tag">미구현 <span class="gap-badge">GAP</span></div>
+        <div class="title">A+B+C 통합 대시보드</div>
+        <div class="desc">전사 AI 비용 합산<br>벤더별·부서별·에이전트별<br>ROI 추적</div>
+        <div class="note">→ 세 트랙 각자 안정화 후 착수</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     GAP 분석 요약
+═══════════════════════════════════════════════ -->
+<div class="gap-summary">
+  <h2>끊긴 지점 분석 — 총 7개 GAP</h2>
+
+  <div class="gap-row">
+    <div class="gap-id">G-1</div>
+    <div>
+      <div class="gap-desc"><strong>AI-native 인테이크 UI + API</strong> — <code>app/projects/new/page.tsx</code>가 여전히 대분류/중분류/소분류 드롭다운. <code>/api/intake/synthesize</code> 미존재.</div>
+      <div class="gap-fix">→ 현재 WIP 에이전트가 구현 중. synthesize API + 3단계 UI 재작성.</div>
+    </div>
+  </div>
+
+  <div class="gap-row">
+    <div class="gap-id">G-2</div>
+    <div>
+      <div class="gap-desc"><strong>AX팀 AI override UI</strong> — Gate 심사 화면에 Qwen 추천 벤더 + 원클릭 변경 버튼 없음. routing.ts는 구현됐지만 UI가 없어서 AX팀이 볼 수가 없음.</div>
+      <div class="gap-fix">→ Gate1~3 심사 페이지에 추천 패널 추가 필요 (수동 경로 전용).</div>
+    </div>
+  </div>
+
+  <div class="gap-row">
+    <div class="gap-id">G-3</div>
+    <div>
+      <div class="gap-desc"><strong>middleware.ts 서비스토큰 인증 경로 없음</strong> — 현재 NextAuth 세션만 처리. 배포된 에이전트나 배치 작업이 Bearer 토큰으로 호출할 경로가 없어 C트랙 전체가 블로킹.</div>
+      <div class="gap-fix">→ 현재 WIP 에이전트가 구현 중. <code>/api/internal/*</code> 분기 추가.</div>
+    </div>
+  </div>
+
+  <div class="gap-row">
+    <div class="gap-id">G-4</div>
+    <div>
+      <div class="gap-desc"><strong>ServiceToken 스키마 + 발급 API 없음</strong> — C트랙의 핵심 인증 엔티티. schema.prisma에 ServiceToken 모델 없음, 발급/관리 UI도 없음.</div>
+      <div class="gap-fix">→ G-3와 동시 처리. tokenHash(sha256) 저장, rawToken 1회 노출 방식.</div>
+    </div>
+  </div>
+
+  <div class="gap-row">
+    <div class="gap-id">G-5</div>
+    <div>
+      <div class="gap-desc"><strong>A트랙 수집 스크립트 없음</strong> — Claude/GPT/Gemini Enterprise Analytics API 수집 배치 스크립트 전무. UsageRecordDaily 스키마는 있지만 데이터가 한 건도 들어오지 않는 상태.</div>
+      <div class="gap-fix">→ Claude Enterprise API Primary Owner 키 발급 (인표님) 후 착수 가능. 코드 결합 없어 병렬 진행 안전.</div>
+    </div>
+  </div>
+
+  <div class="gap-row">
+    <div class="gap-id">G-6</div>
+    <div>
+      <div class="gap-desc"><strong>ModelProvider 시드 데이터 없음</strong> — ModelProvider 스키마는 있지만 anthropic/openai/gemini/onprem 4개 레코드가 없어 라우팅 기본 동작 불가.</div>
+      <div class="gap-fix">→ G-1 에이전트에서 함께 처리 중.</div>
+    </div>
+  </div>
+
+  <div class="gap-row">
+    <div class="gap-id">G-7</div>
+    <div>
+      <div class="gap-desc"><strong>A+B+C 통합 대시보드 없음</strong> — 경영진이 "이번 달 AI 비용 총액"을 볼 방법 없음. 세 트랙이 각자 안정화되기 전까지는 재료 자체가 없음.</div>
+      <div class="gap-fix">→ G-3·G-4·G-5 완료 후 착수. 현재 착수 시점 아님.</div>
+    </div>
+  </div>
+</div>
+
+<footer>AX Hub v24+ · 삼성자산운용 AX팀 · 2026-08-25 · G-1·G-3 WIP, G-2·G-4~G-7 대기</footer>
+
+</body>
+</html>
