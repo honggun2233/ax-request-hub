@@ -29,8 +29,20 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // 2. C트랙 서비스 토큰 — API 전용 (에이전트 Push 등 서버-서버 호출)
+  // 2. C트랙 서비스 토큰 — /api/internal/* 전용 (Bearer) + 레거시 x-service-token
   if (isApi) {
+    // /api/internal/* → Authorization: Bearer 필수. 실제 검증은 route handler에서 verifyServiceToken()
+    if (pathname.startsWith("/api/internal/")) {
+      const auth = req.headers.get("authorization")
+      if (!auth?.startsWith("Bearer ")) {
+        return NextResponse.json(
+          { error: "Service token required. Use Authorization: Bearer <token>" },
+          { status: 401 }
+        )
+      }
+      return NextResponse.next()
+    }
+    // 레거시 x-service-token 헤더 지원
     const serviceToken = req.headers.get("x-service-token")
     if (serviceToken) {
       const validToken = process.env.SERVICE_API_TOKEN

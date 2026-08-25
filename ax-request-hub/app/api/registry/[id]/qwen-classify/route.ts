@@ -7,13 +7,14 @@ import { classifyTask } from '@/src/lib/ai-gateway/routing'
 // Qwen으로 에이전트 용도 분류 → recommendedProvider 저장 + 결과 반환
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireRole('AX_TEAM')
   if ('error' in auth) return auth.error
+  const { id } = await params
 
   const agent = await prisma.agentRegistry.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { id: true, agentName: true, purpose: true, recommendedProvider: true, providerOverride: true },
   })
   if (!agent) return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
@@ -24,7 +25,7 @@ export async function GET(
   // 분류 성공 시 recommendedProvider 저장 (override는 건드리지 않음)
   if (result.confidence > 0) {
     await prisma.agentRegistry.update({
-      where: { id: params.id },
+      where: { id },
       data: { recommendedProvider: result.vendor },
     }).catch(() => {})
   }
@@ -40,10 +41,11 @@ export async function GET(
 // PATCH /api/registry/[id]/qwen-classify — AX_TEAM이 수동 override 저장
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireRole('AX_TEAM')
   if ('error' in auth) return auth.error
+  const { id } = await params
 
   const { providerOverride } = await req.json() as { providerOverride: string | null }
   const allowed = ['claude', 'gpt', 'gemini', null]
@@ -52,7 +54,7 @@ export async function PATCH(
   }
 
   const agent = await prisma.agentRegistry.update({
-    where: { id: params.id },
+    where: { id },
     data: { providerOverride: providerOverride ?? null },
     select: { id: true, recommendedProvider: true, providerOverride: true },
   })
