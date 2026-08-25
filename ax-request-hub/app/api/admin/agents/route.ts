@@ -11,8 +11,19 @@ export async function GET() {
   try {
     const agents = await prisma.agent.findMany({
       orderBy: { createdAt: 'desc' },
+      include: {
+        registry: {
+          select: { id: true, retireFlag: true },
+        },
+      },
     })
-    return NextResponse.json(agents)
+    // flatten registry fields into each agent object for convenience
+    const result = agents.map((a) => ({
+      ...a,
+      agentRegistryId: a.agentRegistryId ?? null,
+      retireFlag: a.registry?.retireFlag ?? null,
+    }))
+    return NextResponse.json(result)
   } catch (err: any) {
     console.error('[admin/agents GET]', err)
     return NextResponse.json({ error: err?.message ?? 'unknown' }, { status: 500 })

@@ -30,29 +30,35 @@ type NavGroup = {
 };
 
 const NAV: NavGroup[] = [
-  // ─── 전 직원 공통 ──────────────────────────────────────
+  // ── 전 직원 공통 ─────────────────────────────────────
   {
     items: [{ href: "/", label: "홈", icon: Home }],
   },
   {
-    title: "AI 활용",
+    title: "신청",   // "내가 뭘 신청했는지" 한 곳에서
     items: [
-      { href: "/projects/new", label: "AI 활용 신청",  icon: Plus },
-      { href: "/me/projects",  label: "내 신청 현황",  icon: ListChecks },
-      { href: "/me/tools",     label: "내 도구",       icon: Wrench },
-      { href: "/data/catalog", label: "데이터 신청",   icon: Database },
+      { href: "/projects/new", label: "AI 활용 신청",   icon: Plus },
+      { href: "/me/projects",  label: "내 신청 현황",   icon: ListChecks },
+      { href: "/data/catalog", label: "데이터 신청",    icon: Database },
+      { href: "/me/data",      label: "내 데이터 현황", icon: FileText },
     ],
   },
   {
     title: "내 정보",
     items: [
-      { href: "/me",      label: "프로필 · 교육", icon: User },
-      { href: "/me/data", label: "내 데이터 신청", icon: FileText },
-      { href: "/docs",    label: "규정 · 문서",   icon: Book },
+      { href: "/me",       label: "프로필 · 교육", icon: User },
+      { href: "/me/tools", label: "도구 & 서비스",  icon: Wrench },
+      { href: "/docs",     label: "규정 · 문서",   icon: Book },
+    ],
+  },
+  {
+    title: "AI 직접 활용",   // 에이전트 신청이 아니라 그냥 AI 쓰는 것
+    items: [
+      { href: "/me/ai", label: "AI 채팅 & 활용", icon: Cpu },
     ],
   },
 
-  // ─── 부서장 ────────────────────────────────────────────
+  // ── 부서장 ───────────────────────────────────────────
   {
     title: "팀 관리",
     roles: ["DEPT_HEAD"],
@@ -62,7 +68,7 @@ const NAV: NavGroup[] = [
     ],
   },
 
-  // ─── 경영진 ────────────────────────────────────────────
+  // ── 경영진 ───────────────────────────────────────────
   {
     title: "경영 현황",
     roles: ["EXECUTIVE", "C_LEVEL"],
@@ -72,50 +78,49 @@ const NAV: NavGroup[] = [
     ],
   },
 
-  // ─── 데이터플랫폼팀 ────────────────────────────────────
+  // ── 데이터플랫폼팀 ────────────────────────────────────
   {
-    title: "데이터 운영",
+    title: "데이터 거버넌스",
     roles: ["DATA_PLATFORM"],
     adminDivider: true,
     items: [
-      { href: "/dp/requests", label: "데이터 승인", icon: FileText },
+      { href: "/dp/requests", label: "데이터 신청 심사", icon: FileText },
+      { href: "/dp/catalog",  label: "카탈로그 관리",   icon: Database },
     ],
   },
 
-  // ─── AX팀 : 3기둥으로 압축 ─────────────────────────────
-  // 기둥2·3 — 에이전트 개발 지원 → 관리 (폐기 거버넌스는 에이전트 현황 헤더로 진입)
+  // ── AX팀 ─────────────────────────────────────────────
   {
     title: "AI 파이프라인",
     roles: ["AX_TEAM"],
     adminDivider: true,
     items: [
-      { href: "/dashboard", label: "활용 현황",    icon: BarChart3 },
-      { href: "/registry",  label: "에이전트 현황", icon: Cpu },
-      { href: "/graph",     label: "영향도 분석",   icon: GitFork },
-      { href: "/council",   label: "AI 위원회",    icon: Gavel },
+      { href: "/dashboard",    label: "활용 현황",    icon: BarChart3 },
+      { href: "/registry",     label: "에이전트 레지스트리", icon: Cpu },
+      { href: "/admin/agents", label: "에이전트 관리",  icon: Wrench },
+      { href: "/graph",        label: "영향도 분석",   icon: GitFork },
     ],
   },
-  // 운영 관리 — 심사·승인·인력·비용 (직원·교육은 서브탭으로 통합)
   {
-    title: "운영 관리",
+    title: "심사 & 위원회",
     roles: ["AX_TEAM"],
     items: [
-      { href: "/admin",           label: "심사 관리",   icon: LayoutDashboard },
-      { href: "/dp/requests",     label: "데이터 승인", icon: Database },
-      { href: "/admin/appeals",   label: "이의제기",    icon: Scale },
+      { href: "/admin",          label: "심사 관리",   icon: LayoutDashboard },
+      { href: "/dp/requests",    label: "데이터 승인", icon: Database },
+      { href: "/council",        label: "AI 위원회",   icon: Gavel },
+      { href: "/admin/appeals",  label: "이의제기",    icon: Scale },
+    ],
+  },
+  {
+    title: "플랫폼 관리",
+    roles: ["AX_TEAM"],
+    items: [
       { href: "/admin/employees", label: "직원 · 교육", icon: Users },
       { href: "/admin/tokens",    label: "토큰 · 쿼터", icon: Coins },
       { href: "/dept/tools",      label: "도구 배정",   icon: Wrench },
-    ],
-  },
-  // 기둥1 지원 + 거버넌스 — 규정·감사·자산
-  {
-    title: "거버넌스",
-    roles: ["AX_TEAM"],
-    items: [
-      { href: "/admin/docs",   label: "규정 · 지침",  icon: Book },
-      { href: "/governance",   label: "감사 로그",    icon: Shield },
-      { href: "/admin/skills", label: "스킬 관리",    icon: Star },
+      { href: "/governance",      label: "감사 로그",   icon: Shield },
+      { href: "/admin/skills",    label: "스킬 관리",   icon: Star },
+      { href: "/admin/docs",      label: "규정 · 지침", icon: Book },
     ],
   },
 ];

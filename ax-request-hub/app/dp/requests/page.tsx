@@ -113,14 +113,29 @@ function RequestSheet({
     }
     setSubmitting(true)
     try {
-      const res = await fetch(`/api/data/requests/${req.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: newStatus,
-          ...(showRejectReason ? { rejectReason } : {}),
-        }),
-      })
+      let res: Response
+      if (newStatus === 'REVIEWING') {
+        res = await fetch(`/api/dp/requests/${req.id}/review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        })
+      } else if (newStatus === 'SEC_REVIEW') {
+        res = await fetch(`/api/dp/requests/${req.id}/review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ secReview: true }),
+        })
+      } else {
+        res = await fetch(`/api/data/requests/${req.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status: newStatus,
+            ...(showRejectReason ? { rejectReason } : {}),
+          }),
+        })
+      }
       if (!res.ok) {
         const json = await res.json()
         throw new Error(json.error ?? '처리 실패')

@@ -34,6 +34,13 @@ const EMPTY_FORM = {
 
 const EMPTY_KNOWLEDGE_FORM = { useCaseSummary: '', lessonsLearned: '', promptPatterns: '', failureCases: '' }
 
+const thisMonth = () => {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+}
+
+const EMPTY_KPI_FORM = { month: thisMonth(), achieveRate: '', note: '' }
+
 export default function AgentsPage() {
   const [agents, setAgents] = useState<any[]>([])
   const [showAdd, setShowAdd] = useState(false)
@@ -44,6 +51,11 @@ export default function AgentsPage() {
   const [knowledgeForm, setKnowledgeForm] = useState(EMPTY_KNOWLEDGE_FORM)
   const [retiring, setRetiring] = useState(false)
   const [retireError, setRetireError] = useState<string | null>(null)
+  // KPI 기록 모달 상태
+  const [kpiAgent, setKpiAgent] = useState<any | null>(null)
+  const [kpiForm, setKpiForm] = useState(EMPTY_KPI_FORM)
+  const [kpiSubmitting, setKpiSubmitting] = useState(false)
+  const [kpiError, setKpiError] = useState<string | null>(null)
 
   const load = () =>
     fetch('/api/admin/agents')
@@ -109,6 +121,38 @@ export default function AgentsPage() {
       load()
     } catch (e: any) { setRetireError(e.message) }
     finally { setRetiring(false) }
+  }
+
+  const submitKpi = async () => {
+    if (!kpiAgent) return
+    if (!kpiForm.month || kpiForm.achieveRate === '') { setKpiError('월과 달성률을 입력해 주세요.'); return }
+    setKpiSubmitting(true)
+    setKpiError(null)
+    try {
+      const endpoint = kpiAgent.agentRegistryId
+        ? `/api/registry/${kpiAgent.agentRegistryId}/kpi-score`
+        : `/api/admin/agents/${kpiAgent.id}/kpi-record`
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          month: kpiForm.month,
+          achieveRate: Number(kpiForm.achieveRate),
+          note: kpiForm.note || undefined,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error ?? 'KPI 기록 실패')
+      }
+      setKpiAgent(null)
+      setKpiForm(EMPTY_KPI_FORM)
+      load()
+    } catch (e: any) {
+      setKpiError(e.message)
+    } finally {
+      setKpiSubmitting(false)
+    }
   }
 
   const active = agents.filter(a => a.status === 'ACTIVE')
@@ -225,7 +269,7 @@ export default function AgentsPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              {['이름', '부서', '설명', '최근 KPI 달성률', '미달 연속', '상태 플래그', '생성일', '액션'].map(h => (
+              {['이름', '부서', '설명', '최근 KPI 달성률', '미달 연속', '상태 플래그', '폐기 후보', '생성일', '액션'].map(h => (
                 <th key={h} className="px-4 py-2 text-left text-xs text-[var(--muted)] whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -268,16 +312,37 @@ export default function AgentsPage() {
                       <span className="text-[var(--text2)] text-xs">-</span>
                     )}
                   </td>
+                  <td className="px-4 py-2 whitespace-nowrap">
+                    {a.agentRegistryId ? (
+                      a.retireFlag ? (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700 border border-red-300">
+                          폐기 후보
+                        </span>
+                      ) : (
+                        <span className="text-xs text-green-600">연결됨</span>
+                      )
+                    ) : (
+                      <span className="text-[var(--text2)] text-xs">-</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2 text-[var(--muted)] whitespace-nowrap">
                     {new Date(a.createdAt).toLocaleDateString('ko-KR')}
                   </td>
                   <td className="px-4 py-2">
-                    <button
-                      onClick={() => setShowDeprecate(a.id)}
-                      className="text-xs text-orange-600 hover:underline whitespace-nowrap"
-                    >
-                      폐기 시작
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { setKpiAgent(a); setKpiForm(EMPTY_KPI_FORM); setKpiError(null) }}
+                        className="text-xs text-blue-600 hover:underline whitespace-nowrap"
+                      >
+                        KPI 기록
+                      </button>
+                      <button
+                        onClick={() => setShowDeprecate(a.id)}
+                        className="text-xs text-orange-600 hover:underline whitespace-nowrap"
+                      >
+                        폐기 시작
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )
@@ -349,6 +414,72 @@ export default function AgentsPage() {
                 </div>
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {/* KPI 기록 모달 */}
+      {kpiAgent && (
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 space-y-4">
+            <h2 className="font-semibold">KPI 기록 — {kpiAgent.name}</h2>
+            <div className="space-y-2">
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">
+                  월 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="month"
+                  value={kpiForm.month}
+                  onChange={e => setKpiForm(p => ({ ...p, month: e.target.value }))}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">
+                  달성률 (%) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  max={200}
+                  step={0.1}
+                  placeholder="0 ~ 200"
+                  value={kpiForm.achieveRate}
+                  onChange={e => setKpiForm(p => ({ ...p, achieveRate: e.target.value }))}
+                  className="w-full border rounded px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-700 block mb-1">메모 (선택)</label>
+                <textarea
+                  value={kpiForm.note}
+                  onChange={e => setKpiForm(p => ({ ...p, note: e.target.value }))}
+                  rows={2}
+                  placeholder="특이사항 등 자유 입력"
+                  className="w-full border rounded px-3 py-2 text-sm resize-none"
+                />
+              </div>
+            </div>
+            {kpiError && <p className="text-xs text-red-500">{kpiError}</p>}
+            {kpiAgent.agentRegistryId && (
+              <p className="text-xs text-blue-600">레지스트리 연결됨 → /registry/{kpiAgent.agentRegistryId}/kpi-score 사용</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={submitKpi}
+                disabled={kpiSubmitting}
+                className="flex-1 bg-blue-600 text-white py-2 rounded text-sm disabled:opacity-50"
+              >
+                {kpiSubmitting ? '저장 중...' : 'KPI 저장'}
+              </button>
+              <button
+                onClick={() => { setKpiAgent(null); setKpiError(null) }}
+                className="flex-1 border py-2 rounded text-sm"
+              >
+                취소
+              </button>
+            </div>
           </div>
         </div>
       )}

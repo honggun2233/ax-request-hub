@@ -313,6 +313,9 @@ model Agent {
   kpiLastScore     Float?
   performanceFlag  String?
 
+  agentRegistryId  String?       @unique
+  registry         AgentRegistry? @relation("AgentRegistryLink", fields: [agentRegistryId], references: [id])
+
   artifacts         AgentArtifact[]
   knowledgeExtracts AgentKnowledgeExtract[]
   kpiRecords        AgentKpiRecord[]
@@ -443,6 +446,8 @@ model AgentRegistry {
   retireFlag     Boolean      @default(false)
   lastUsedAt     DateTime?
   productionAt   DateTime?    // ?�의???�인 ???�용 ?�환 ?�시
+
+  legacyAgent      Agent?         @relation("AgentRegistryLink")
 
   scores        AgentScore[]
   projects      AgentProjectLink[]
