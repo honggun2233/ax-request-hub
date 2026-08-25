@@ -364,7 +364,45 @@ async function main() {
     await prisma.auditLog.create({ data: { ...log, createdAt: new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000) } })
   }
 
-  console.log("시드 완료: 직원 10명, 과제 8건, 리터러시 6과정, 에이전트 7개, 산출물 11건, 지식추출 3건, 감사로그 13건")
+  // ── ModelProvider (AI 라우팅 카탈로그) ──
+  const modelProviders = [
+    {
+      providerKey: 'anthropic',
+      displayName: 'Anthropic Claude',
+      hostType: 'CLOUD',
+      costTier: 'HIGH',
+      modelName: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+    },
+    {
+      providerKey: 'openai',
+      displayName: 'OpenAI GPT',
+      hostType: 'CLOUD',
+      costTier: 'HIGH',
+    },
+    {
+      providerKey: 'gemini',
+      displayName: 'Google Gemma',
+      hostType: 'CLOUD',
+      costTier: 'MID',
+      notes: 'Bedrock에서는 Gemma. Vertex AI 전환 예정(GEMINI_BACKEND=vertex_gemini).',
+    },
+    {
+      providerKey: 'onprem',
+      displayName: 'Qwen 온프렘',
+      hostType: 'ONPREM',
+      costTier: 'LOW',
+      notes: '판단/분류 전용. 실행 대상 아님.',
+    },
+  ]
+  for (const mp of modelProviders) {
+    await prisma.modelProvider.upsert({
+      where: { providerKey: mp.providerKey },
+      update: { displayName: mp.displayName, hostType: mp.hostType, costTier: mp.costTier, modelName: (mp as any).modelName ?? null, notes: (mp as any).notes ?? null },
+      create: mp,
+    })
+  }
+
+  console.log("시드 완료: 직원 10명, 과제 8건, 리터러시 6과정, 에이전트 7개, 산출물 11건, 지식추출 3건, 감사로그 13건, ModelProvider 4개")
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect())
