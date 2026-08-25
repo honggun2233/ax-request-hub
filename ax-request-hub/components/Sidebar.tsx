@@ -61,6 +61,9 @@ const ADMIN_NAV: NavItem[] = [
   { kind: 'link', href: '/admin/employees', label: '직원 관리' },
   { kind: 'link', href: '/admin/literacy',  label: '리터러시 관리' },
 
+  { kind: 'section', label: '비용 관리' },
+  { kind: 'link', href: '/admin/cost-dashboard', label: 'AI 비용 통합', icon: '💰' },
+
   { kind: 'section', label: '도구·계정' },
   { kind: 'link', href: '/admin/distribution',       label: '서비스 배분' },
   { kind: 'link', href: '/admin/tools/quota-setup',  label: '부서 계정 할당' },
