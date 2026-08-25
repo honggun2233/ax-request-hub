@@ -35,12 +35,18 @@ const NAV: NavGroup[] = [
     items: [{ href: "/", label: "홈", icon: Home }],
   },
   {
-    title: "신청",   // "내가 뭘 신청했는지" 한 곳에서
+    title: "에이전트 신청",
     items: [
-      { href: "/projects/new", label: "AI 활용 신청",   icon: Plus },
-      { href: "/me/projects",  label: "내 신청 현황",   icon: ListChecks },
-      { href: "/data/catalog", label: "데이터 신청",    icon: Database },
-      { href: "/me/data",      label: "내 데이터 현황", icon: FileText },
+      { href: "/projects/new", label: "에이전트 등록 신청", icon: Plus },
+      { href: "/me/projects",  label: "내 신청 현황",       icon: ListChecks },
+      { href: "/data/catalog", label: "데이터 신청",        icon: Database },
+      { href: "/me/data",      label: "내 데이터 현황",     icon: FileText },
+    ],
+  },
+  {
+    title: "AI 직접 활용",
+    items: [
+      { href: "/me/ai", label: "AI 채팅", icon: Cpu },
     ],
   },
   {
@@ -51,12 +57,6 @@ const NAV: NavGroup[] = [
       { href: "/docs",     label: "규정 · 문서",   icon: Book },
     ],
   },
-  {
-    title: "AI 직접 활용",   // 에이전트 신청이 아니라 그냥 AI 쓰는 것
-    items: [
-      { href: "/me/ai", label: "AI 채팅 & 활용", icon: Cpu },
-    ],
-  },
 
   // ── 부서장 ───────────────────────────────────────────
   {
@@ -64,7 +64,7 @@ const NAV: NavGroup[] = [
     roles: ["DEPT_HEAD"],
     adminDivider: true,
     items: [
-      { href: "/dept/tools", label: "도구 배정", icon: Users },
+      { href: "/dept/tools", label: "팀 도구 배정", icon: Users },
     ],
   },
 
@@ -91,36 +91,30 @@ const NAV: NavGroup[] = [
 
   // ── AX팀 ─────────────────────────────────────────────
   {
-    title: "AI 파이프라인",
+    title: "에이전트 거버넌스",
     roles: ["AX_TEAM"],
     adminDivider: true,
     items: [
-      { href: "/dashboard",    label: "활용 현황",    icon: BarChart3 },
+      { href: "/admin",        label: "에이전트 심사 관리",  icon: LayoutDashboard },
+      { href: "/admin/appeals",label: "이의제기",            icon: Scale },
+      { href: "/council",      label: "에이전트 심의위원회", icon: Gavel },
       { href: "/registry",     label: "에이전트 레지스트리", icon: Cpu },
-      { href: "/admin/agents", label: "에이전트 관리",  icon: Wrench },
-      { href: "/graph",        label: "영향도 분석",   icon: GitFork },
+      { href: "/admin/agents", label: "에이전트 운영 · KPI", icon: Wrench },
+      { href: "/dashboard",    label: "에이전트 활용 현황",  icon: BarChart3 },
+      { href: "/graph",        label: "영향도 분석",         icon: GitFork },
     ],
   },
   {
-    title: "심사 & 위원회",
+    title: "플랫폼 운영",
     roles: ["AX_TEAM"],
     items: [
-      { href: "/admin",          label: "심사 관리",   icon: LayoutDashboard },
-      { href: "/dp/requests",    label: "데이터 승인", icon: Database },
-      { href: "/council",        label: "AI 위원회",   icon: Gavel },
-      { href: "/admin/appeals",  label: "이의제기",    icon: Scale },
-    ],
-  },
-  {
-    title: "플랫폼 관리",
-    roles: ["AX_TEAM"],
-    items: [
-      { href: "/admin/employees", label: "직원 · 교육", icon: Users },
-      { href: "/admin/tokens",    label: "토큰 · 쿼터", icon: Coins },
-      { href: "/dept/tools",      label: "도구 배정",   icon: Wrench },
-      { href: "/governance",      label: "감사 로그",   icon: Shield },
-      { href: "/admin/skills",    label: "스킬 관리",   icon: Star },
-      { href: "/admin/docs",      label: "규정 · 지침", icon: Book },
+      { href: "/admin/employees", label: "직원 · 교육",     icon: Users },
+      { href: "/admin/tokens",    label: "토큰 · 쿼터",     icon: Coins },
+      { href: "/dept/tools",      label: "전사 도구 배정 정책", icon: Wrench },
+      { href: "/dp/requests",     label: "데이터 요청 현황", icon: Database },
+      { href: "/governance",      label: "감사 로그",        icon: Shield },
+      { href: "/admin/skills",    label: "스킬 관리",        icon: Star },
+      { href: "/admin/docs",      label: "규정 · 지침",      icon: Book },
     ],
   },
 ];
