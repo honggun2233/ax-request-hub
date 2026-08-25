@@ -45,6 +45,12 @@ model Project {
   // Phase A — 과제 신청 시 데이터 요건 선언
   noDataRequired Boolean @default(false)  // true = "별도 데이터 불필요" 명시
 
+  // 인테이크 채널 (v24)
+  intakeMethod   String?  // "DIRECT" | "STANDARD_FORMAT" | "FILE" | "CHAT"
+  aiConfidence   Float?   // Tier0=100, Tier1=0~80 (LLM 추출 신뢰도)
+  agentType      String?  // "SKILL" | "MCP" | "WEBAPP" | "CRAWLING"
+  scope          String?  // "DEPT" | "DIVISION" | "COMPANY"
+
   scoreCard      ScoreCard?
   chatSession    ChatSession?
   dataRequests   DataRequest[]

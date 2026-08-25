@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AX Hub 워크플로 다이어그램</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Malgun Gothic', sans-serif; background: #F7F9FC; color: #18243D; padding: 32px; }
+  h1 { font-size: 20px; font-weight: 700; color: #1E3560; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #6B7FA3; margin-bottom: 36px; }
+
+  .diagram { display: flex; flex-direction: column; gap: 0; }
+
+  /* 레인 */
+  .lane { display: flex; align-items: stretch; border-bottom: 1px solid #E2E8F0; }
+  .lane-label {
+    width: 130px; min-width: 130px; padding: 16px 12px;
+    font-size: 11px; font-weight: 700; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center; line-height: 1.4;
+    border-right: 1px solid rgba(255,255,255,0.15);
+  }
+  .lane-content { flex: 1; padding: 16px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  /* 역할 색 */
+  .lane-employee .lane-label { background: #4A6FA5; }
+  .lane-ax      .lane-label { background: #1E3560; }
+  .lane-dp      .lane-label { background: #2D6A4F; }
+  .lane-exec    .lane-label { background: #7B5EA7; }
+  .lane-system  .lane-label { background: #64748B; }
+
+  /* 박스 */
+  .box {
+    background: #fff;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    min-width: 140px;
+    max-width: 200px;
+    position: relative;
+  }
+  .box .tag {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.04em;
+    text-transform: uppercase; color: #94A3B8;
+    margin-bottom: 4px;
+  }
+  .box .title { font-weight: 600; color: #1E3560; font-size: 12px; }
+  .box .desc  { font-size: 11px; color: #64748B; margin-top: 3px; }
+
+  .box.highlight { border-color: #B8956A; background: #FEF9F3; }
+  .box.highlight .title { color: #92703B; }
+  .box.auto { border-color: #64748B; background: #F8FAFC; border-style: dashed; }
+
+  /* 화살표 */
+  .arrow { font-size: 18px; color: #94A3B8; flex-shrink: 0; align-self: center; }
+  .arrow.down { transform: rotate(90deg); }
+
+  /* 게이트 */
+  .gate {
+    background: #1E3560; color: #fff;
+    border-radius: 50%; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; text-align: center;
+    flex-shrink: 0; line-height: 1.2;
+  }
+  .gate.g2 { background: #4A6FA5; }
+  .gate.g3 { background: #B8956A; }
+
+  /* 채널 배지 */
+  .channels { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ch {
+    font-size: 10px; padding: 3px 8px; border-radius: 12px;
+    font-weight: 600; border: 1.5px solid;
+  }
+  .ch.chat   { color: #4A6FA5; border-color: #4A6FA5; background: #EEF3FA; }
+  .ch.file   { color: #2D6A4F; border-color: #2D6A4F; background: #E8F5EE; }
+  .ch.form   { color: #7B5EA7; border-color: #7B5EA7; background: #F3EEF9; }
+  .ch.voice  { color: #B8956A; border-color: #B8956A; background: #FEF9F3; }
+
+  /* 섹션 제목 */
+  .phase-title {
+    font-size: 10px; font-weight: 700; color: #94A3B8;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 10px 20px 4px 158px;
+    background: #F1F5F9;
+    border-bottom: 1px solid #E2E8F0;
+  }
+
+  /* 상태 흐름 */
+  .status-flow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .status {
+    font-size: 10px; padding: 3px 10px; border-radius: 12px;
+    font-weight: 600; background: #F1F5F9; color: #475569;
+    border: 1px solid #CBD5E1;
+  }
+  .status.active { background: #EEF3FA; color: #4A6FA5; border-color: #4A6FA5; }
+  .status.warn   { background: #FEF9F3; color: #B8956A; border-color: #B8956A; }
+  .status.done   { background: #E8F5EE; color: #2D6A4F; border-color: #2D6A4F; }
+
+  .note { font-size: 11px; color: #94A3B8; margin-top: 4px; }
+
+  footer { margin-top: 32px; font-size: 11px; color: #94A3B8; }
+</style>
+</head>
+<body>
+
+<h1>AX Hub — 에이전트 등록 전 주기 워크플로</h1>
+<p class="subtitle">v24 기준 · 2026-08-25</p>
+
+<div class="diagram">
+
+  <!-- ── Phase 1: 신청 ── -->
+  <div class="phase-title">Phase 1 — 에이전트 등록 신청</div>
+
+  <div class="lane lane-employee">
+    <div class="lane-label">전 직원<br><span style="font-weight:400;font-size:10px">신청자</span></div>
+    <div class="lane-content">
+      <div class="box highlight">
+        <div class="tag">인테이크 채널</div>
+        <div class="title">에이전트 등록 신청</div>
+        <div class="desc" style="margin-top:8px">
+          <div class="channels">
+            <span class="ch voice">💬 대화(AI)</span>
+            <span class="ch form">📝 직접 입력</span>
+            <span class="ch file">📎 파일 업로드</span>
+            <span class="ch chat">⌨️ 표준 프롬프트</span>
+          </div>
+        </div>
+        <div class="note" style="margin-top:8px">→ 모든 채널이 동일 Project 레코드로 수렴</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box auto">
+        <div class="tag">AI 자동처리</div>
+        <div class="title">Intake 파서</div>
+        <div class="desc">Tier0: 표준포맷<br>Tier1: Claude 추출<br>aiConfidence 기록</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <div class="tag">상태</div>
+        <div class="title">submitted</div>
+        <div class="desc">ScoreCard 자동 생성<br>총점 계산</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Phase 2: Gate 1 ── -->
+  <div class="phase-title">Phase 2 — Gate 1 (AX팀 적합성 심사)</div>
+
+  <div class="lane lane-ax">
+    <div class="lane-label">AX팀<br><span style="font-weight:400;font-size:10px">심사자</span></div>
+    <div class="lane-content">
+      <div class="gate">Gate<br>1</div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <div class="tag">심사 항목</div>
+        <div class="title">적합성 검토</div>
+        <div class="desc">업무 적합성<br>보안·기밀 등급<br>중복 에이전트 여부</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <div class="tag">결과</div>
+        <div class="title">승인 / 조건부 / 반려</div>
+        <div class="desc">이의제기 가능<br>반려 시 신청자 통보</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Phase 3: 개발 ── -->
+  <div class="phase-title">Phase 3 — 개발 (AgentRegistry: DEVELOPMENT)</div>
+
+  <div class="lane lane-employee">
+    <div class="lane-label">개발팀<br><span style="font-weight:400;font-size:10px">개발자</span></div>
+    <div class="lane-content">
+      <div class="box">
+        <div class="tag">AgentRegistry</div>
+        <div class="title">개발 단계 등록</div>
+        <div class="desc">phase = DEVELOPMENT<br>agentKey 발급<br>기술 스펙 입력</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="gate g2">Gate<br>2</div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <div class="tag">기술 검증</div>
+        <div class="title">AI Agent Standards</div>
+        <div class="desc">API Spec ✓<br>데이터 분류 ✓<br>감사 로그 ✓<br>테스트 커버리지 ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Phase 4: 데이터 ── -->
+  <div class="phase-title">Phase 4 — 데이터 요청 & 승인</div>
+
+  <div class="lane lane-employee">
+    <div class="lane-label">신청자</div>
+    <div class="lane-content">
+      <div class="box">
+        <div class="tag">DataRequest</div>
+        <div class="title">데이터 신청</div>
+        <div class="desc">G1/G2/G3 분류<br>PII 포함 여부<br>사용 목적·기간</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="status-flow">
+        <span class="status active">REQUESTED</span>
+        <span class="arrow">→</span>
+        <span class="status">REVIEWING</span>
+        <span class="arrow">→</span>
+        <span class="status">SEC_REVIEW</span>
+        <span class="arrow">→</span>
+        <span class="status done">APPROVED</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="lane lane-dp">
+    <div class="lane-label">데이터플랫폼팀<br><span style="font-weight:400;font-size:10px">데이터 승인자</span></div>
+    <div class="lane-content">
+      <div class="box">
+        <div class="tag">데이터 신청 심사</div>
+        <div class="title">/dp/requests</div>
+        <div class="desc">역할 체크 포함<br>감사로그 자동 기록<br>COLLECTING → PROVISIONED</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Phase 5: 운영 배포 ── -->
+  <div class="phase-title">Phase 5 — 배포 & Gate 3 (운영 전환)</div>
+
+  <div class="lane lane-ax">
+    <div class="lane-label">AX팀</div>
+    <div class="lane-content">
+      <div class="gate g3">Gate<br>3</div>
+      <div class="arrow">→</div>
+      <div class="box highlight">
+        <div class="tag">AgentRegistry</div>
+        <div class="title">PRODUCTION 전환</div>
+        <div class="desc">phase = PRODUCTION<br>prodStatus = ACTIVE<br>Agent ↔ Registry 연결</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box auto">
+        <div class="tag">AI 위원회 심의</div>
+        <div class="title">CouncilAgendaItem</div>
+        <div class="desc">분기 1회 정기 심의<br>이해상충 검토</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Phase 6: KPI 모니터링 ── -->
+  <div class="phase-title">Phase 6 — 운영 모니터링 & 은퇴 판정</div>
+
+  <div class="lane lane-ax">
+    <div class="lane-label">AX팀<br><span style="font-weight:400;font-size:10px">KPI 관리자</span></div>
+    <div class="lane-content">
+      <div class="box">
+        <div class="tag">월별 KPI</div>
+        <div class="title">AgentScore 기록</div>
+        <div class="desc">에이전트 운영 · KPI<br>→ /api/registry/[id]/kpi-score</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box auto">
+        <div class="tag">자동 판정</div>
+        <div class="title">retireFlag 자동화</div>
+        <div class="desc">3개월 연속 60% 미달<br>→ RETIRE_CANDIDATE</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="box">
+        <div class="tag">라이프사이클</div>
+        <div class="title">SUSPENDED → RETIRED</div>
+        <div class="desc">지식 추출 후 폐기<br>KnowledgeExtract 저장</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 경영진 ── -->
+  <div class="lane lane-exec">
+    <div class="lane-label">경영진</div>
+    <div class="lane-content">
+      <div class="box">
+        <div class="tag">대시보드</div>
+        <div class="title">에이전트 활용 현황</div>
+        <div class="desc">전사 KPI · ROI<br>벤더별 사용량·비용<br>PI 효과 실현 추적</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>AX Hub v24 · 삼성자산운용 AX팀 · 2026-08-25</footer>
+
+</body>
+</html>
