@@ -76,7 +76,7 @@ export class ConsultationAgent {
           ],
           maxTokens: 800,
         },
-        { taskType: 'GATE3_RATIONALE' },
+        { taskType: 'CONSULTATION_CONTINUE' },
       )
       content = res.content
     } catch (err) {

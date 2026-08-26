@@ -5,6 +5,7 @@ import type { AIRequest, ProviderKey } from './types'
 
 export type TaskType =
   | 'TIER1_PARSE'
+  | 'CONSULTATION_CONTINUE'
   | 'GATE1_REVIEW'
   | 'GATE2_REVIEW'
   | 'GATE3_RATIONALE'
