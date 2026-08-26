@@ -6,7 +6,7 @@ import {
   Home, Plus, ListChecks, Database, FileText, Star, Book,
   User, Wrench, Users, BarChart3, Cpu, Gavel, Coins,
   Shield, LogOut, LayoutDashboard, Scale, GitFork,
-  ChevronRight,
+  ChevronRight, MessageSquarePlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/authz";
@@ -37,6 +37,7 @@ const NAV: NavGroup[] = [
   {
     title: "에이전트 신청",
     items: [
+      { href: "/chat",         label: "과제 신청 (대화형)", icon: MessageSquarePlus },
       { href: "/projects/new", label: "에이전트 등록 신청", icon: Plus },
       { href: "/me/projects",  label: "내 신청 현황",       icon: ListChecks },
       { href: "/data/catalog", label: "데이터 신청",        icon: Database },
@@ -78,37 +79,55 @@ const NAV: NavGroup[] = [
     roles: ["DATA_PLATFORM"],
     adminDivider: true,
     items: [
-      { href: "/dp/requests", label: "데이터 신청 심사", icon: FileText },
-      { href: "/dp/catalog",  label: "카탈로그 관리",   icon: Database },
+      { href: "/dp/requests", label: "데이터 요청 검토", icon: FileText },
+      { href: "/dp/catalog",  label: "영향도 분석",      icon: GitFork },
     ],
   },
 
-  // ── AX팀 ─────────────────────────────────────────────
+  // ── AX팀 — ① 에이전트 거버넌스 ─────────────────────
   {
-    title: "에이전트 거버넌스",
+    title: "① 에이전트 거버넌스",
     roles: ["AX_TEAM"],
     adminDivider: true,
     items: [
-      { href: "/admin",        label: "에이전트 심사 관리",  icon: LayoutDashboard },
-      { href: "/admin/appeals",label: "이의제기",            icon: Scale },
-      { href: "/council",      label: "에이전트 심의위원회", icon: Gavel },
-      { href: "/registry",     label: "에이전트 레지스트리", icon: Cpu },
-      { href: "/admin/agents", label: "에이전트 운영 · KPI", icon: Wrench },
-      { href: "/dashboard",    label: "에이전트 활용 현황",  icon: BarChart3 },
-      { href: "/graph",        label: "영향도 분석",         icon: GitFork },
+      { href: "/admin",         label: "전체 대시보드",       icon: LayoutDashboard },
+      { href: "/executive",     label: "경영진 뷰",           icon: BarChart3 },
+      { href: "/council",       label: "AI 위원회",           icon: Gavel },
+      { href: "/registry",      label: "에이전트 레지스트리", icon: Cpu },
+      { href: "/admin/appeals", label: "이의제기",            icon: Scale },
+      { href: "/admin/retired", label: "폐기 아카이브",       icon: Shield },
     ],
   },
+  // ── AX팀 — ② 데이터 거버넌스 ───────────────────────
   {
-    title: "플랫폼 운영",
+    title: "② 데이터 거버넌스",
     roles: ["AX_TEAM"],
     items: [
-      { href: "/admin/employees", label: "직원 · 교육",     icon: Users },
-      { href: "/admin/tokens",    label: "토큰 · 쿼터",     icon: Coins },
-      { href: "/dept/tools",      label: "전사 도구 배정 정책", icon: Wrench },
-      { href: "/dp/requests",     label: "데이터 요청 현황", icon: Database },
-      { href: "/governance",      label: "감사 로그",        icon: Shield },
-      { href: "/admin/skills",    label: "스킬 관리",        icon: Star },
-      { href: "/admin/docs",      label: "규정 · 지침",      icon: Book },
+      { href: "/dp/requests", label: "데이터 요청 검토",  icon: FileText },
+      { href: "/dp/catalog",  label: "영향도 분석",       icon: GitFork },
+    ],
+  },
+  // ── AX팀 — ③ 토큰 관리 ─────────────────────────────
+  {
+    title: "③ 토큰 관리",
+    roles: ["AX_TEAM"],
+    items: [
+      { href: "/admin/cost-dashboard",    label: "AI 비용 통합",    icon: BarChart3 },
+      { href: "/admin/tokens",            label: "토큰 현황",       icon: Coins },
+      { href: "/admin/distribution",      label: "서비스 배분",     icon: GitFork },
+      { href: "/admin/tools/quota-setup", label: "부서 계정 할당",  icon: Wrench },
+    ],
+  },
+  // ── AX팀 — ④ 플랫폼 운영 ───────────────────────────
+  {
+    title: "④ 플랫폼 운영",
+    roles: ["AX_TEAM"],
+    items: [
+      { href: "/admin/employees", label: "직원 관리",   icon: Users },
+      { href: "/admin/literacy",  label: "리터러시 관리", icon: Star },
+      { href: "/admin/skills",    label: "스킬 관리",   icon: Star },
+      { href: "/admin/docs",      label: "문서 관리",   icon: Book },
+      { href: "/governance",      label: "감사 로그",   icon: Shield },
     ],
   },
 ];
