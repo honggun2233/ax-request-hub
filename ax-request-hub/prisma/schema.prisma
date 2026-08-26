@@ -35,10 +35,6 @@ model Project {
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
-  // PI 효과 실현 추적 (v3.2)
-  expectedBenefitValue Float?   // 정량 예상 효과 (연간 환산)
-  expectedBenefitUnit  String?  // "HOURS_YEAR" | "KRW_10K_YEAR"
-
   // 데이터 거버넌스 정합성 (Phase 2 — 데이터취급지침 제5조)
   isEssentialBusiness  Boolean  @default(false)  // 본질적 업무 여부 (G3 데이터 사용 선결 조건)
 
@@ -56,7 +52,6 @@ model Project {
   dataRequests   DataRequest[]
   agentRegistries AgentRegistry[]
   appeals         ProjectAppeal[]
-  benefitRecords  BenefitRecord[]
 }
 
 model ScoreCard {
@@ -708,22 +703,6 @@ model Notification {
   createdAt      DateTime  @default(now())
 
   @@index([recipientEmail, readAt])
-}
-
-// ?�?�?� PI ?�과 ?�현 추적 (v3.2) ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
-model BenefitRecord {
-  id            String   @id @default(cuid())
-  projectId     String
-  project       Project  @relation(fields: [projectId], references: [id])
-  agentId       String?
-  period        String   // "2026-Q3"
-  realizedValue Float
-  unit          String
-  note          String   @default("")
-  recordedBy    String
-  createdAt     DateTime @default(now())
-
-  @@unique([projectId, period])
 }
 
 // ════════ Knowledge Graph Phase ① ════════

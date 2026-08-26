@@ -370,8 +370,8 @@ export default function DataCatalogPage() {
       if (classFilter) params.set('classification', classFilter)
       if (deptFilter) params.set('ownerDept', deptFilter)
       const res = await fetch(`/api/data/assets?${params.toString()}`)
-      const json = await res.json()
-      setAssets(json.assets ?? json ?? [])
+      const json = res.ok ? await res.json() : {}
+      setAssets(Array.isArray(json.assets) ? json.assets : Array.isArray(json) ? json : [])
     } catch {
       setAssets([])
     } finally {

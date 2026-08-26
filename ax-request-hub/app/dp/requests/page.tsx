@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { AlertTriangle, Loader2 } from 'lucide-react'
 import { CONF_LABEL, CONF_COLOR } from '@/lib/confidentiality'
 
 interface DataRequest {
@@ -85,6 +86,138 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
+// ── 회수 영향도 확인 모달 ─────────────────────────────────────────────────────
+interface ImpactSummary {
+  total: number; highRisk: number
+  affectedAgents: Array<{ agentId: string; agentName: string; lifecycleStage: string; riskLevel: string }>
+}
+
+function RevokeConfirmModal({
+  assetId,
+  assetName,
+  onConfirm,
+  onCancel,
+}: {
+  assetId: string
+  assetName: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const [impact, setImpact] = useState<ImpactSummary | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch(`/api/data/assets/${assetId}/impact`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setImpact({
+        total: d.summary.total,
+        highRisk: d.summary.highRisk,
+        affectedAgents: d.affectedAgents ?? [],
+      }))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [assetId])
+
+  const STAGE_LABEL: Record<string, string> = {
+    GATE1: 'Gate 1', GATE2: 'Gate 2', GATE3: 'Gate 3',
+    PILOT: '파일럿', PROD: '운영', OPERATION: '운영',
+  }
+  const RISK_COLOR: Record<string, string> = {
+    HIGH: 'bg-red-100 text-red-700',
+    MEDIUM: 'bg-yellow-100 text-yellow-700',
+    LOW: 'bg-gray-100 text-gray-500',
+  }
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 mx-4">
+        <div className="flex items-center gap-2 mb-4">
+          <AlertTriangle className="text-red-500 shrink-0" size={20} />
+          <h3 className="text-base font-bold text-gray-900">데이터 회수 확인</h3>
+        </div>
+
+        <p className="text-sm text-gray-600 mb-4">
+          <span className="font-semibold text-gray-800">{assetName}</span> 자산을 회수하면
+          연관 에이전트가 즉시 중단됩니다.
+        </p>
+
+        {loading && (
+          <div className="flex justify-center py-6 text-gray-400">
+            <Loader2 size={16} className="animate-spin mr-2" /> 영향도 분석 중…
+          </div>
+        )}
+
+        {!loading && impact && (
+          <>
+            {/* KPI */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-center">
+                <p className="text-xl font-bold text-gray-800">{impact.total}</p>
+                <p className="text-xs text-gray-500 mt-0.5">영향받는 에이전트</p>
+              </div>
+              <div className={`rounded-lg border p-3 text-center ${impact.highRisk > 0 ? 'border-red-200 bg-red-50' : 'border-gray-100 bg-gray-50'}`}>
+                <p className={`text-xl font-bold ${impact.highRisk > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+                  {impact.highRisk}
+                </p>
+                <p className="text-xs text-gray-500 mt-0.5">고위험(운영 중)</p>
+              </div>
+            </div>
+
+            {/* 고위험 경고 배너 */}
+            {impact.highRisk > 0 && (
+              <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-lg mb-4 text-xs text-red-700">
+                <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                <span><strong>{impact.highRisk}개</strong> 에이전트가 Gate2 이상 운영 단계입니다. 회수 시 즉시 SUSPENDED 처리됩니다.</span>
+              </div>
+            )}
+
+            {/* 에이전트 목록 (최대 5개) */}
+            {impact.affectedAgents.length > 0 && (
+              <div className="flex flex-col gap-1.5 mb-4 max-h-36 overflow-y-auto">
+                {impact.affectedAgents.slice(0, 5).map(a => (
+                  <div key={a.agentId} className="flex items-center justify-between text-xs rounded-lg border border-gray-100 px-3 py-2">
+                    <span className="text-gray-700 font-medium truncate mr-2">{a.agentName}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-gray-400">{STAGE_LABEL[a.lifecycleStage] ?? a.lifecycleStage}</span>
+                      <span className={`px-1.5 py-0.5 rounded-full font-medium ${RISK_COLOR[a.riskLevel]}`}>
+                        {a.riskLevel === 'HIGH' ? '고위험' : a.riskLevel === 'MEDIUM' ? '중위험' : '저위험'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {impact.affectedAgents.length > 5 && (
+                  <p className="text-xs text-gray-400 text-center">외 {impact.affectedAgents.length - 5}개…</p>
+                )}
+              </div>
+            )}
+
+            {impact.total === 0 && (
+              <p className="text-xs text-gray-400 text-center py-3 mb-4">영향받는 에이전트가 없습니다.</p>
+            )}
+          </>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 border border-gray-200 text-gray-700 text-sm font-medium rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            취소
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-xl hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            회수 확정
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function RequestSheet({
   req,
   onClose,
@@ -101,11 +234,23 @@ function RequestSheet({
   const [expiresAt, setExpiresAt] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [showRevokeModal, setShowRevokeModal] = useState(false)
 
   const showProvisionForm = newStatus === 'APPROVED'
   const showRejectReason = newStatus === 'REJECTED'
+  // REVOKED는 PROVISIONED/COLLECTING 상태일 때만 선택 가능
+  const canRevoke = ['PROVISIONED', 'COLLECTING'].includes(req.status)
 
   const handleSubmit = async () => {
+    // REVOKED 선택 시 먼저 영향도 확인 모달
+    if (newStatus === 'REVOKED') {
+      setShowRevokeModal(true)
+      return
+    }
+    await doSubmit()
+  }
+
+  const doSubmit = async () => {
     setError('')
     if (showRejectReason && !rejectReason.trim()) {
       setError('반려 사유를 입력해 주세요.')
@@ -268,7 +413,15 @@ function RequestSheet({
                   </option>
                 )
               )}
+              {canRevoke && (
+                <option value="REVOKED">⚠ 회수 (REVOKED)</option>
+              )}
             </select>
+            {newStatus === 'REVOKED' && (
+              <p className="text-xs text-red-600 flex items-center gap-1 mt-1">
+                <AlertTriangle size={11} /> 회수 시 연관 에이전트가 자동으로 SUSPENDED 처리됩니다.
+              </p>
+            )}
           </div>
 
           {/* Reject reason */}
@@ -346,12 +499,26 @@ function RequestSheet({
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            className={`w-full py-2.5 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors ${
+              newStatus === 'REVOKED'
+                ? 'bg-red-600 hover:bg-red-700'
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
           >
-            {submitting ? '처리 중...' : '처리 완료'}
+            {submitting ? '처리 중...' : newStatus === 'REVOKED' ? '회수 처리' : '처리 완료'}
           </button>
         </div>
       </div>
+
+      {/* 회수 영향도 확인 모달 */}
+      {showRevokeModal && req.assetId && (
+        <RevokeConfirmModal
+          assetId={req.assetId}
+          assetName={req.asset?.name ?? ''}
+          onConfirm={doSubmit}
+          onCancel={() => setShowRevokeModal(false)}
+        />
+      )}
     </div>
   )
 }

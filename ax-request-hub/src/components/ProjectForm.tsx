@@ -28,8 +28,6 @@ interface ProjectFormData {
   description: string
   asIs: string
   expectedBenefit: string
-  expectedBenefitValue?: number | null
-  expectedBenefitUnit?: string | null
   confidentialityLevel: 'G1' | 'G2' | 'G3'
   championName: string
   estimatedUsers: number
@@ -145,27 +143,6 @@ export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
         <textarea value={data.expectedBenefit}
           onChange={(e) => setData({ ...data, expectedBenefit: e.target.value })}
           rows={2} className={inputCls} />
-      </div>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          정량 예상 효과 <span className="text-gray-400 font-normal">(선택)</span>
-        </label>
-        <p className="text-xs text-gray-500 mb-2">정식 운영 전환 후 실현 효과와 비교하는 데 사용됩니다. 대략적인 추정이면 충분합니다.</p>
-        <div className="flex gap-2">
-          <input type="number" min={0}
-            value={data.expectedBenefitValue ?? ''}
-            onChange={(e) => setData({ ...data, expectedBenefitValue: e.target.value ? Number(e.target.value) : null })}
-            placeholder="예: 500"
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
-          <select
-            value={data.expectedBenefitUnit ?? ''}
-            onChange={(e) => setData({ ...data, expectedBenefitUnit: e.target.value || null })}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">단위 선택</option>
-            <option value="HOURS_YEAR">시간/년</option>
-            <option value="KRW_10K_YEAR">만원/년</option>
-          </select>
-        </div>
       </div>
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">데이터 기밀등급</label>

@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getAffectedAgents } from '@/lib/impact-graph'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
@@ -84,6 +85,7 @@ export async function PATCH(
         reviewerId: userId,
         ...(rejectReason !== undefined ? { rejectReason } : {}),
       },
+      include: { asset: { select: { id: true } }, provision: { select: { id: true } } },
     })
 
     // AuditLog 기록 — 모든 DataRequest 상태 전이 (v3 §10-3)
@@ -96,6 +98,44 @@ export async function PATCH(
         detail: JSON.stringify({ status, rejectReason: rejectReason ?? null }),
       },
     })
+
+    // REVOKE 처리: 영향도 엔진으로 연관 에이전트 일괄 SUSPENDED
+    if (status === 'REVOKED') {
+      const assetId = dataRequest.asset?.id
+      if (assetId) {
+        const affected = await getAffectedAgents(assetId)
+        const affectedIds = affected.map(a => a.agentId)
+
+        if (affectedIds.length > 0) {
+          await prisma.agentRegistry.updateMany({
+            where: { id: { in: affectedIds } },
+            data: { lifecycleStage: 'SUSPENDED' },
+          })
+
+          await prisma.auditLog.create({
+            data: {
+              entityType: 'DataRequest',
+              entityId: id,
+              action: 'AGENTS_SUSPENDED_ON_REVOKE',
+              actorEmail: (session.user as any)?.email ?? 'unknown',
+              detail: JSON.stringify({
+                assetId,
+                suspendedCount: affectedIds.length,
+                agentIds: affectedIds,
+              }),
+            },
+          })
+        }
+      }
+
+      // DataProvision에 revokedAt 기록
+      if (dataRequest.provision?.id) {
+        await prisma.dataProvision.update({
+          where: { id: dataRequest.provision.id },
+          data: { revokedAt: new Date() },
+        })
+      }
+    }
 
     return NextResponse.json(dataRequest)
   } catch (error: any) {

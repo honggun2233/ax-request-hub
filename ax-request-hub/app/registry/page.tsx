@@ -148,6 +148,117 @@ function KpiScorePanel({ agentId, onSaved }: { agentId: string; onSaved: () => v
   )
 }
 
+// ── 데이터 의존성 패널 (B방향: 에이전트 → 데이터) ─────────────────
+const CONF_LABEL: Record<string, string> = { G1: 'G1 기밀', G2: 'G2 내부', G3: 'G3 공개' }
+const CONF_BG:    Record<string, string> = {
+  G1: 'rgba(220,38,38,.08)',  G2: 'rgba(245,158,11,.08)',  G3: 'rgba(5,150,105,.08)',
+}
+const CONF_BORDER: Record<string, string> = {
+  G1: 'rgba(220,38,38,.3)', G2: 'rgba(245,158,11,.3)', G3: 'rgba(5,150,105,.3)',
+}
+const CONF_TEXT: Record<string, string> = {
+  G1: '#DC2626', G2: '#B45309', G3: '#059669',
+}
+
+type DataDep = {
+  assetId: string; assetName: string; classification: string
+  ownerDept: string; isActive: boolean; connectionType: string
+  accessLevel: string | null; requestStatus: string | null
+  expiresAt: string | null; revokedAt: string | null
+}
+type DataDepsResult = {
+  agentName: string
+  deps: DataDep[]
+  summary: { total: number; revokedCount: number; expiredCount: number; g1Count: number }
+}
+
+function DataDepsPanel({ agentId }: { agentId: string }) {
+  const [data, setData]       = useState<DataDepsResult | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch(`/api/registry/${agentId}/data-deps`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setData(d))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [agentId])
+
+  return (
+    <div>
+      <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: 8 }}>
+        데이터 의존성
+      </p>
+      <div style={{ background: 'rgba(74,111,165,.04)', border: `1px solid rgba(74,111,165,.2)`, borderRadius: 6, padding: '12px 14px' }}>
+        {loading && (
+          <p style={{ fontSize: 12, color: MUTED }}>조회 중…</p>
+        )}
+
+        {!loading && data && data.deps.length === 0 && (
+          <p style={{ fontSize: 12, color: MUTED }}>연결된 데이터 자산이 없습니다.</p>
+        )}
+
+        {!loading && data && data.deps.length > 0 && (
+          <>
+            {/* 요약 */}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 10 }}>
+              <span style={{ fontSize: 11, color: MUTED }}>전체 <strong style={{ color: TEXT }}>{data.summary.total}</strong></span>
+              {data.summary.g1Count > 0 && (
+                <span style={{ fontSize: 11, color: '#DC2626' }}>
+                  G1 기밀 <strong>{data.summary.g1Count}</strong>
+                </span>
+              )}
+              {data.summary.revokedCount > 0 && (
+                <span style={{ fontSize: 11, color: '#B94040' }}>
+                  ⚠ 회수됨 <strong>{data.summary.revokedCount}</strong>
+                </span>
+              )}
+              {data.summary.expiredCount > 0 && (
+                <span style={{ fontSize: 11, color: '#B45309' }}>
+                  만료 <strong>{data.summary.expiredCount}</strong>
+                </span>
+              )}
+            </div>
+
+            {/* 자산 목록 */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {data.deps.map(dep => (
+                <div key={dep.assetId} style={{
+                  background: dep.revokedAt ? 'rgba(185,64,64,.06)' : '#fff',
+                  border: `1px solid ${dep.revokedAt ? 'rgba(185,64,64,.3)' : BDR}`,
+                  borderRadius: 6, padding: '8px 10px',
+                  display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
+                }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: dep.revokedAt ? '#B94040' : TEXT, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {dep.revokedAt ? '⛔ ' : ''}{dep.assetName}
+                    </p>
+                    <p style={{ fontSize: 10, color: MUTED, marginTop: 2 }}>
+                      {dep.ownerDept} · {dep.connectionType === 'DIRECT' ? '직접 연결' : '과제 경유'}
+                      {dep.accessLevel ? ` · ${dep.accessLevel}` : ''}
+                      {dep.revokedAt ? ' · 회수됨' : ''}
+                      {dep.expiresAt && !dep.revokedAt ? ` · 만료 ${new Date(dep.expiresAt).toLocaleDateString('ko-KR')}` : ''}
+                    </p>
+                  </div>
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 4, flexShrink: 0,
+                    background: CONF_BG[dep.classification],
+                    border: `1px solid ${CONF_BORDER[dep.classification]}`,
+                    color: CONF_TEXT[dep.classification],
+                  }}>
+                    {CONF_LABEL[dep.classification] ?? dep.classification}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Qwen 추천 패널 ─────────────────────────────────────────────
 type QwenResult = { vendor: 'claude' | 'gpt' | 'gemini'; confidence: number; reason: string; providerOverride: string | null }
 const VENDOR_LABEL: Record<string, string> = { claude: 'Claude (Anthropic)', gpt: 'GPT (OpenAI)', gemini: 'Gemini (Google)' }
@@ -440,6 +551,11 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
           {/* G-2: Qwen AI 벤더 추천 패널 — Gate 심사 중 AX_TEAM 전용 */}
           {isAxTeam && ['GATE1', 'GATE2', 'GATE3'].includes(agent.lifecycleStage) && (
             <QwenRecommendPanel agentId={agent.id} stage={agent.lifecycleStage} />
+          )}
+
+          {/* 데이터 의존성 패널 — AX_TEAM 심사 화면 (Gate1~3, ACTIVE, DEGRADED) */}
+          {isAxTeam && !['DEVELOPING', 'RETIRED'].includes(agent.lifecycleStage) && (
+            <DataDepsPanel agentId={agent.id} />
           )}
 
           {/* Gate2 운용역 리뷰 — AX_TEAM 전용 */}

@@ -49,21 +49,6 @@ export async function GET() {
 
   const stageCount = (s: string) => stageRows.find((r: { devStage: string | null; _count: number }) => r.devStage === s)?._count ?? 0;
 
-  let benefitRealizedPct: number | null = null;
-  try {
-    const anyPrisma = prisma as any;
-    if (anyPrisma.benefitRecord) {
-      const recs: { realizedValue: number; projectId: string }[] = await anyPrisma.benefitRecord.findMany({ select: { realizedValue: true, projectId: true } });
-      const projs = await prisma.project.findMany({
-        where: { id: { in: recs.map((r) => r.projectId) } },
-        select: { id: true, expectedBenefitValue: true } as any,
-      }) as unknown as { id: string; expectedBenefitValue?: number | null }[];
-      const expected = projs.reduce((s: number, p: { expectedBenefitValue?: number | null }) => s + (p.expectedBenefitValue ?? 0), 0);
-      const realized = recs.reduce((s: number, r: { realizedValue: number }) => s + r.realizedValue, 0);
-      benefitRealizedPct = expected > 0 ? Math.round((realized / expected) * 100) : null;
-    }
-  } catch { /* BenefitRecord 미도입 — 정상 */ }
-
   const exceptions = expiringProvisions.map((p: typeof expiringProvisions[number]) => {
     const d = Math.max(0, Math.ceil((p.expiresAt.getTime() - now.getTime()) / 86400000));
     return {
@@ -87,7 +72,6 @@ export async function GET() {
       pi: {
         activeDepartments: new Set(activeProjects.map((p: { department: string }) => p.department)).size,
         activeProjects: activeProjects.length,
-        benefitRealizedPct,
       },
       adoption: {
         activeToolAccounts,

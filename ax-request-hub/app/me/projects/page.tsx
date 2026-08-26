@@ -54,8 +54,9 @@ export default function MyProjectsPage() {
 
   useEffect(() => {
     fetch("/api/projects?mine=1")
-      .then((r) => r.json())
-      .then(setProjects)
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => setProjects(Array.isArray(data) ? data : []))
+      .catch(() => setProjects([]))
       .finally(() => setLoading(false));
   }, []);
 
