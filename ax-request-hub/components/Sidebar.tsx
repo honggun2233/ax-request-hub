@@ -45,49 +45,45 @@ const DEPT_HEAD_NAV: NavItem[] = [
   { kind: 'link', href: '/dept/tools', label: '팀 AI 도구 배분' },
 ]
 
-// ─── AX팀 (관리자) ──────────────────────────────────────────
+// ─── AX팀 (관리자) — 3축+플랫폼 4그룹 ──────────────────────
 const ADMIN_NAV: NavItem[] = [
   { kind: 'divider' },
-  { kind: 'section', label: '운영 현황' },
-  { kind: 'link', href: '/admin',     label: '전체 대시보드', icon: '🏠' },
-  { kind: 'link', href: '/executive', label: '경영진 뷰', icon: '📈' },
-  { kind: 'link', href: '/council',   label: 'AI 위원회', icon: '⚖️' },
 
-  { kind: 'section', label: '과제·에이전트' },
+  // ① 에이전트 거버넌스
+  { kind: 'section', label: '① 에이전트 거버넌스' },
+  { kind: 'link', href: '/admin',          label: '전체 대시보드', icon: '🏠' },
+  { kind: 'link', href: '/executive',      label: '경영진 뷰', icon: '📈' },
+  { kind: 'link', href: '/council',        label: 'AI 위원회', icon: '⚖️' },
   { kind: 'link', href: '/registry',       label: '에이전트 레지스트리' },
   { kind: 'link', href: '/admin/retired',  label: '폐기 아카이브' },
 
-  { kind: 'section', label: '직원·리터러시' },
-  { kind: 'link', href: '/admin/employees', label: '직원 관리' },
-  { kind: 'link', href: '/admin/literacy',  label: '리터러시 관리' },
-
-  { kind: 'section', label: '비용 관리' },
-  { kind: 'link', href: '/admin/cost-dashboard', label: 'AI 비용 통합', icon: '💰' },
-
-  { kind: 'section', label: '도구·계정' },
-  { kind: 'link', href: '/admin/distribution',       label: '서비스 배분' },
-  { kind: 'link', href: '/admin/tools/quota-setup',  label: '부서 계정 할당' },
-  { kind: 'link', href: '/admin/tokens',             label: '토큰 관리' },
-
-  { kind: 'section', label: '데이터 관리' },
+  // ② 데이터 거버넌스
+  { kind: 'section', label: '② 데이터 거버넌스' },
   { kind: 'link', href: '/dp/requests', label: '데이터 요청 검토' },
   { kind: 'link', href: '/dp/catalog',  label: 'DP 카탈로그' },
 
-  { kind: 'section', label: '스킬·문서' },
-  { kind: 'link', href: '/admin/skills', label: '스킬 관리' },
-  { kind: 'link', href: '/admin/docs',   label: '문서 관리' },
+  // ③ 토큰 관리
+  { kind: 'section', label: '③ 토큰 관리' },
+  { kind: 'link', href: '/admin/cost-dashboard',      label: 'AI 비용 통합', icon: '💰' },
+  { kind: 'link', href: '/admin/tokens',              label: '토큰 현황' },
+  { kind: 'link', href: '/admin/distribution',        label: '서비스 배분' },
+  { kind: 'link', href: '/admin/tools/quota-setup',   label: '부서 계정 할당' },
 
-  { kind: 'section', label: '거버넌스' },
-  { kind: 'link', href: '/governance', label: '감사 로그' },
-  { kind: 'link', href: '/graph',      label: '지식 그래프', icon: '🕸️' },
+  // ④ 플랫폼 운영
+  { kind: 'section', label: '④ 플랫폼 운영' },
+  { kind: 'link', href: '/admin/employees', label: '직원 관리' },
+  { kind: 'link', href: '/admin/literacy',  label: '리터러시 관리' },
+  { kind: 'link', href: '/admin/skills',    label: '스킬 관리' },
+  { kind: 'link', href: '/admin/docs',      label: '문서 관리' },
+  { kind: 'link', href: '/governance',      label: '감사 로그' },
 ]
 
 // ─── 데이터플랫폼팀 (AX팀 아닌 경우) ────────────────────────
 const DP_NAV: NavItem[] = [
   { kind: 'divider' },
-  { kind: 'section', label: '데이터 플랫폼' },
+  { kind: 'section', label: '데이터 거버넌스' },
   { kind: 'link', href: '/dp/requests', label: '데이터 요청 검토' },
-  { kind: 'link', href: '/dp/catalog',  label: 'DP 카탈로그' },
+  { kind: 'link', href: '/dp/catalog',  label: '영향도 분석', icon: '🔍' },
 ]
 
 export default function Sidebar() {
