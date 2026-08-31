@@ -1,11 +1,10 @@
 """
 거버넌스 벡터화 파이프라인 — Step 2
 =====================================
-docs/governance/**/*.md → OpenAI text-embedding-3-small → pgvector upsert
+docs/governance/**/*.md → sentence-transformers 로컬 임베딩 → pgvector upsert
 
-환경변수:
-  OPENAI_API_KEY   OpenAI API 키
-  DATABASE_URL     PostgreSQL DSN (pgvector 익스텐션 활성화 필요)
+환경변수 (선택):
+  DATABASE_URL   PostgreSQL DSN (기본값: postgresql://axadmin:axpassword@localhost:5438/ax_governance)
 
 실행:
   python scripts/governance/embed_pipeline.py
@@ -16,18 +15,19 @@ import os
 import sys
 from pathlib import Path
 
-# 로컬 governance 패키지 임포트
 sys.path.insert(0, str(Path(__file__).parent))
 
 from parser import parse_file, recompute_is_latest  # noqa: E402
 
-import openai
+from sentence_transformers import SentenceTransformer
 import psycopg2
 from psycopg2.extras import execute_values
 
-EMBED_MODEL = "text-embedding-3-small"
-EMBED_DIM = 1536
-BATCH_SIZE = 256  # OpenAI 단일 호출 최대 텍스트 수
+EMBED_MODEL = "paraphrase-multilingual-mpnet-base-v2"
+EMBED_DIM = 768
+BATCH_SIZE = 64  # sentence-transformers 로컬 배치
+
+DEFAULT_DB_URL = "postgresql://axadmin:axpassword@localhost:5438/ax_governance"
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 DOCS_DIR = REPO_ROOT / "docs" / "governance"
@@ -35,10 +35,21 @@ DOCS_DIR = REPO_ROOT / "docs" / "governance"
 
 # ── 임베딩 ──────────────────────────────────────────────────────────
 
-def embed_batch(client: openai.OpenAI, texts: list[str]) -> list[list[float]]:
-    resp = client.embeddings.create(model=EMBED_MODEL, input=texts)
-    resp.data.sort(key=lambda d: d.index)
-    return [d.embedding for d in resp.data]
+def load_model() -> SentenceTransformer:
+    print(f"[MODEL] {EMBED_MODEL} 로드 중...")
+    model = SentenceTransformer(EMBED_MODEL)
+    print(f"[MODEL] 로드 완료  dim={EMBED_DIM}")
+    return model
+
+
+def embed_all(model: SentenceTransformer, texts: list[str]) -> list[list[float]]:
+    vecs = model.encode(
+        texts,
+        batch_size=BATCH_SIZE,
+        show_progress_bar=True,
+        normalize_embeddings=True,
+    )
+    return vecs.tolist()
 
 
 # ── DB upsert ───────────────────────────────────────────────────────
@@ -80,8 +91,8 @@ def upsert_chunks(conn, rows: list[dict]) -> None:
             json.dumps(r["references"], ensure_ascii=False),
             r["version"],
             r["is_latest"],
-            # pgvector: '[0.1,0.2,...]' 문자열로 전달 후 ::vector 캐스트
-            "[" + ",".join(str(v) for v in r["embedding"]) + "]",
+            # pgvector: '[0.1,0.2,...]' 문자열 → ::vector 캐스트
+            "[" + ",".join(f"{v:.8f}" for v in r["embedding"]) + "]",
         )
         for r in rows
     ]
@@ -93,7 +104,7 @@ def upsert_chunks(conn, rows: list[dict]) -> None:
 # ── 파싱 ────────────────────────────────────────────────────────────
 
 def collect_chunks(docs_dir: Path):
-    """docs_dir/**/*.md 파싱 → (all_meta, all_chunks) 반환. UNKNOWN doc_id 제외."""
+    """docs_dir/**/*.md 파싱 → (all_meta, all_chunks). UNKNOWN doc_id 제외."""
     all_meta, all_chunks = [], []
 
     for f in sorted(docs_dir.rglob("*.md")):
@@ -117,12 +128,12 @@ def collect_chunks(docs_dir: Path):
 # ── 메인 ────────────────────────────────────────────────────────────
 
 def main() -> None:
-    api_key = os.environ["OPENAI_API_KEY"]
-    db_url = os.environ["DATABASE_URL"]
+    db_url = os.environ.get("DATABASE_URL", DEFAULT_DB_URL)
 
-    print(f"=== 거버넌스 벡터화 파이프라인 ===")
+    print("=== 거버넌스 벡터화 파이프라인 ===")
     print(f"docs_dir : {DOCS_DIR}")
-    print(f"model    : {EMBED_MODEL}")
+    print(f"model    : {EMBED_MODEL}  (dim={EMBED_DIM})")
+    print(f"db       : {db_url}\n")
 
     # 1. 파싱
     all_meta, all_chunks = collect_chunks(DOCS_DIR)
@@ -132,19 +143,15 @@ def main() -> None:
         print("적재할 청크가 없습니다. 종료.")
         return
 
-    # 2. is_latest 재계산 (버전 그룹 내 최신본 플래그)
+    # 2. is_latest 재계산
     recompute_is_latest(all_meta, all_chunks)
 
-    # 3. 임베딩 (배치)
-    client = openai.OpenAI(api_key=api_key)
+    # 3. 로컬 임베딩
+    model = load_model()
     texts = [c.text for c in all_chunks]
-    embeddings: list[list[float]] = []
-
-    for i in range(0, len(texts), BATCH_SIZE):
-        batch = texts[i : i + BATCH_SIZE]
-        vecs = embed_batch(client, batch)
-        embeddings.extend(vecs)
-        print(f"[EMBED] {min(i + BATCH_SIZE, len(texts))}/{len(texts)} 청크 완료")
+    print(f"\n[EMBED] {len(texts)}개 청크 임베딩 시작...")
+    embeddings = embed_all(model, texts)
+    print(f"[EMBED] 완료")
 
     # 4. pgvector upsert
     rows = [
@@ -165,6 +172,7 @@ def main() -> None:
         for c, emb in zip(all_chunks, embeddings)
     ]
 
+    print(f"\n[DB] {db_url} upsert 중...")
     conn = psycopg2.connect(db_url)
     try:
         upsert_chunks(conn, rows)

@@ -813,7 +813,7 @@ model GovernanceChunk {
   references    String[]
   version       String
   is_latest     Boolean                      @default(true)
-  embedding     Unsupported("vector(1536)")?
+  embedding     Unsupported("vector(768)")?   // paraphrase-multilingual-mpnet-base-v2
   created_at    DateTime                     @default(now())
 
   @@index([doc_id, is_latest])
