@@ -6,7 +6,7 @@ import {
   Home, Plus, ListChecks, Database, FileText, Star, Book,
   User, Wrench, Users, BarChart3, Cpu, Gavel, Coins,
   Shield, LogOut, LayoutDashboard, Scale, GitFork,
-  ChevronRight, MessageSquarePlus,
+  ChevronRight, MessageSquarePlus, FileSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/authz";
@@ -126,8 +126,9 @@ const NAV: NavGroup[] = [
       { href: "/admin/employees", label: "직원 관리",   icon: Users },
       { href: "/admin/literacy",  label: "리터러시 관리", icon: Star },
       { href: "/admin/skills",    label: "스킬 관리",   icon: Star },
-      { href: "/admin/docs",      label: "문서 관리",   icon: Book },
-      { href: "/governance",      label: "감사 로그",   icon: Shield },
+      { href: "/admin/docs",          label: "문서 관리",     icon: Book },
+      { href: "/governance",          label: "감사 로그",     icon: Shield },
+      { href: "/governance/search",   label: "거버넌스 검색", icon: FileSearch },
     ],
   },
 ];
