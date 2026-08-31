@@ -1,0 +1,44 @@
+name: Governance Embed Pipeline
+
+on:
+  push:
+    paths:
+      - "docs/governance/**/*.md"
+  workflow_dispatch:  # 수동 트리거
+
+jobs:
+  embed:
+    name: Re-embed governance chunks
+    runs-on: ubuntu-latest
+
+    env:
+      # ⚠️  DATABASE_URL을 프로덕션 PostgreSQL로 교체 필요
+      # 현재 파이프라인 기본값(localhost:5438)은 CI에서 연결 불가.
+      # GitHub Secrets에 DATABASE_URL을 등록한 뒤 아래 주석 해제.
+      # DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      HF_HUB_DISABLE_SYMLINKS_WARNING: "1"
+      # Hugging Face 모델 캐시 경로 (Actions 캐시와 연동)
+      HF_HOME: /tmp/hf_cache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scripts/governance/requirements.txt
+
+      - name: Cache Hugging Face model
+        uses: actions/cache@v4
+        with:
+          path: /tmp/hf_cache
+          key: hf-paraphrase-multilingual-mpnet-base-v2-${{ runner.os }}
+
+      - name: Install dependencies
+        run: pip install -r scripts/governance/requirements.txt
+
+      - name: Run embed pipeline
+        run: python scripts/governance/embed_pipeline.py
