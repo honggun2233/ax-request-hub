@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS governance_chunks (
     text          TEXT        NOT NULL,
     is_addendum   BOOLEAN     NOT NULL DEFAULT FALSE,
     risk_level    TEXT        NOT NULL DEFAULT '해당없음',
-    references    TEXT        NOT NULL DEFAULT '[]',  -- JSON 배열 문자열
+    xrefs         TEXT        NOT NULL DEFAULT '[]',  -- JSON 배열 문자열 (references는 예약어)
     version       TEXT        NOT NULL,
     is_latest     BOOLEAN     NOT NULL DEFAULT TRUE,
     embedding     vector(768),

@@ -57,7 +57,7 @@ def embed_all(model: SentenceTransformer, texts: list[str]) -> list[list[float]]
 _UPSERT_SQL = """
 INSERT INTO governance_chunks (
     chunk_id, doc_id, chapter, article_no, article_title,
-    text, is_addendum, risk_level, references, version,
+    text, is_addendum, risk_level, xrefs, version,
     is_latest, embedding
 ) VALUES %s
 ON CONFLICT (chunk_id) DO UPDATE SET
@@ -68,7 +68,7 @@ ON CONFLICT (chunk_id) DO UPDATE SET
     text          = EXCLUDED.text,
     is_addendum   = EXCLUDED.is_addendum,
     risk_level    = EXCLUDED.risk_level,
-    references    = EXCLUDED.references,
+    xrefs    = EXCLUDED.xrefs,
     version       = EXCLUDED.version,
     is_latest     = EXCLUDED.is_latest,
     embedding     = EXCLUDED.embedding
@@ -88,7 +88,7 @@ def upsert_chunks(conn, rows: list[dict]) -> None:
             r["text"],
             r["is_addendum"],
             r["risk_level"],
-            json.dumps(r["references"], ensure_ascii=False),
+            json.dumps(r["xrefs"], ensure_ascii=False),
             r["version"],
             r["is_latest"],
             # pgvector: '[0.1,0.2,...]' 문자열 → ::vector 캐스트
@@ -164,7 +164,7 @@ def main() -> None:
             "text": c.text,
             "is_addendum": c.is_addendum,
             "risk_level": c.risk_level.value if hasattr(c.risk_level, "value") else c.risk_level,
-            "references": c.references,
+            "xrefs": c.references,
             "version": c.version,
             "is_latest": c.is_latest,
             "embedding": emb,
@@ -172,14 +172,22 @@ def main() -> None:
         for c, emb in zip(all_chunks, embeddings)
     ]
 
+    # chunk_id 중복 제거 (같은 doc_id 문서가 여러 파일에서 파싱될 경우 마지막 것 사용)
+    seen: dict[str, dict] = {}
+    for r in rows:
+        seen[r["chunk_id"]] = r
+    deduped = list(seen.values())
+    if len(deduped) < len(rows):
+        print(f"[DEDUP] {len(rows) - len(deduped)}개 중복 chunk_id 제거 → {len(deduped)}개")
+
     print(f"\n[DB] {db_url} upsert 중...")
     conn = psycopg2.connect(db_url)
     try:
-        upsert_chunks(conn, rows)
+        upsert_chunks(conn, deduped)
     finally:
         conn.close()
 
-    print(f"\n완료: {len(rows)}개 청크 → governance_chunks upsert")
+    print(f"\n완료: {len(deduped)}개 청크 → governance_chunks upsert")
 
 
 if __name__ == "__main__":
