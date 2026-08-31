@@ -2,8 +2,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// 현재 dev는 SQLite. PostgreSQL 전환 시 provider 변경 + pgvector 익스텐션 활성화 필요
+// (governance_chunks 모델은 String[] · vector 타입으로 PostgreSQL 전용)
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -796,3 +798,24 @@ model ModelProvider {
   updatedAt          DateTime @updatedAt
 }
 
+// ── 거버넌스 문서 벡터 청크 (pgvector — PostgreSQL 전용) ────────────────────────
+// embed_pipeline.py 가 docs/governance/**/*.md 를 파싱해 upsert.
+// chunk_id = "{doc_id}#[부칙-]{article_no}"  (parser.py 기준)
+model GovernanceChunk {
+  chunk_id      String                       @id
+  doc_id        String
+  chapter       String?
+  article_no    String
+  article_title String
+  text          String
+  is_addendum   Boolean                      @default(false)
+  risk_level    String                       @default("해당없음")
+  references    String[]
+  version       String
+  is_latest     Boolean                      @default(true)
+  embedding     Unsupported("vector(1536)")?
+  created_at    DateTime                     @default(now())
+
+  @@index([doc_id, is_latest])
+  @@map("governance_chunks")
+}
