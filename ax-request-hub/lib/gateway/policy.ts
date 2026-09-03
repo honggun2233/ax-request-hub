@@ -101,11 +101,13 @@ export async function checkPolicy(agentId: string, employeeId: string): Promise<
     const employee = await prisma.employee.findUnique({ where: { id: employeeId } })
     const currentLevel = employee?.currentLevel ?? 'L0'
 
+    // Policy Gateway는 전사 통합 사용량 기준 — service='ALL' 정책 행만 참조
+    // (checkQuota는 서비스별 행 참조, 두 시스템이 다른 행을 봄으로써 혼용 방지)
     const [usageRecords, tokenPolicy] = await Promise.all([
       prisma.usageRecord.findMany({ where: { employeeId, yearMonth } }),
       prisma.tokenPolicy
-        .findFirst({ where: { scope: 'LEVEL', level: currentLevel, isActive: true } })
-        .then(p => p ?? prisma.tokenPolicy.findFirst({ where: { scope: 'COMPANY', isActive: true } })),
+        .findFirst({ where: { scope: 'LEVEL', level: currentLevel, service: 'ALL', isActive: true } })
+        .then(p => p ?? prisma.tokenPolicy.findFirst({ where: { scope: 'COMPANY', service: 'ALL', isActive: true } })),
     ])
 
     const totalUsed = usageRecords.reduce((s, r) => s + r.tokenUsed, 0)
