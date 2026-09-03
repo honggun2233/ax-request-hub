@@ -68,3 +68,9 @@ update_*.py
 test_style.py
 
 docs/governance/*.zip
+
+# Obsidian
+docs/.obsidian/
+docs/*.canvas
+docs/*.base
+docs/'무제 1.canvas'

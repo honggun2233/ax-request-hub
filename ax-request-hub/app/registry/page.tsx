@@ -431,7 +431,26 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
           <div>
             <h2 style={{ fontSize: 15, fontWeight: 600, color: TEXT, margin: 0 }}>{agent.agentName}</h2>
             <p style={{ fontSize: 11, color: MUTED, marginTop: 4, lineHeight: 1.5 }}>{agent.purpose}</p>
-            <div style={{ marginTop: 8 }}><StageBadge stage={agent.lifecycleStage} /></div>
+            <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              <StageBadge stage={agent.lifecycleStage} />
+              {agent.riskType && (
+                <span style={{
+                  fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700,
+                  background: agent.riskType >= 3 ? 'rgba(220,38,38,.08)' : 'rgba(245,158,11,.08)',
+                  color: agent.riskType >= 3 ? '#DC2626' : '#B45309',
+                  border: `1px solid ${agent.riskType >= 3 ? 'rgba(220,38,38,.3)' : 'rgba(245,158,11,.3)'}`,
+                }}>
+                  위험유형 {agent.riskType}
+                  {agent.riskType === 1 ? ' · 단순보조' : agent.riskType === 2 ? ' · 판단보조' :
+                   agent.riskType === 3 ? ' · 자율실행' : ' · 완전자율'}
+                </span>
+              )}
+              {agent.isHighImpact && (
+                <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700, background: 'rgba(220,38,38,.12)', color: '#DC2626', border: '1px solid rgba(220,38,38,.4)' }}>
+                  고영향 AI
+                </span>
+              )}
+            </div>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: DIM, fontSize: 20, cursor: 'pointer', marginLeft: 12 }}>×</button>
         </div>
@@ -673,6 +692,7 @@ function RegisterModal({ approvedProjects, defaultProjectId, onClose, onCreated 
   const [form, setForm] = useState({
     agentName: '', agentKey: '', purpose: '', dataSource: '',
     projectId: defaultProjectId, lifecycleStage: 'DEVELOPING',
+    riskType: '',  // 거버넌스 위험 유형 1~4
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -756,6 +776,20 @@ function RegisterModal({ approvedProjects, defaultProjectId, onClose, onCreated 
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, marginBottom: 5, letterSpacing: '.04em', textTransform: 'uppercase' }}>데이터 소스</label>
             <input type="text" value={form.dataSource} onChange={e => setForm({ ...form, dataSource: e.target.value })}
               placeholder="예: KRX API, 내부 DB, Mock" style={inputSt} />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, marginBottom: 5, letterSpacing: '.04em', textTransform: 'uppercase' }}>
+              거버넌스 위험 유형 <span style={{ color: '#B94040' }}>*</span>
+              <span style={{ fontWeight: 400, color: DIM, marginLeft: 6, textTransform: 'none' }}>(AI-GUI-001 제16조 — 유형 3·4 AX팀 사전 승인 필수)</span>
+            </label>
+            <select value={form.riskType} onChange={e => setForm({ ...form, riskType: e.target.value })} required style={inputSt}>
+              <option value="">-- 선택 --</option>
+              <option value="1">유형 1 — 단순보조 (검색·요약·번역)</option>
+              <option value="2">유형 2 — 판단보조 (초안작성·분류·비교)</option>
+              <option value="3">유형 3 — 자율실행+메모리 (반복처리·장기계획)</option>
+              <option value="4">유형 4 — 완전자율 에이전트 (자율판단·외부시스템 직접조작)</option>
+            </select>
           </div>
 
           <div>
@@ -853,6 +887,16 @@ function ProjectView({ projects, onAgentClick }: { projects: any[]; onAgentClick
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                         <GateBar g1={agent.gate1Passed} g2={agent.gate2Passed} g3={agent.gate3Passed} />
                         <StageBadge stage={agent.lifecycleStage} />
+                        {agent.riskType && (
+                          <span style={{
+                            fontSize: 10, padding: '2px 7px', borderRadius: 4, fontWeight: 700, whiteSpace: 'nowrap',
+                            background: agent.riskType >= 3 ? 'rgba(220,38,38,.08)' : 'rgba(245,158,11,.08)',
+                            color: agent.riskType >= 3 ? '#DC2626' : '#B45309',
+                            border: `1px solid ${agent.riskType >= 3 ? 'rgba(220,38,38,.3)' : 'rgba(245,158,11,.3)'}`,
+                          }}>
+                            R{agent.riskType}
+                          </span>
+                        )}
                       </div>
                     </button>
                   )

@@ -33,6 +33,12 @@ export async function GET(
       lastUsedAt: true,
       createdAt: true,
       updatedAt: true,
+      // 거버넌스 필드
+      riskType: true,
+      isHighImpact: true,
+      transparencyMethod: true,
+      transparencyAppliedAt: true,
+      transparencyExceptionNote: true,
     },
   });
 
@@ -57,4 +63,63 @@ export async function GET(
   }
 
   return NextResponse.json({ ...agent, retireFlagReason, retireFlagMonths });
+}
+
+/**
+ * PATCH /api/registry/[id]
+ * AX_TEAM: riskType·isHighImpact·투명성 필드 등 메타데이터 업데이트
+ */
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await requireRole('AX_TEAM');
+  if ('error' in auth) return auth.error;
+
+  const { id } = await params;
+  const body = await req.json();
+
+  const agent = await prisma.agentRegistry.findUnique({ where: { id }, select: { id: true } });
+  if (!agent) return NextResponse.json({ error: '에이전트를 찾을 수 없습니다' }, { status: 404 });
+
+  const {
+    riskType,
+    isHighImpact,
+    transparencyMethod,
+    transparencyAppliedAt,
+    transparencyExceptionNote,
+    // 기존 필드
+    phase, devStage, prodStatus, trustScore, pilotKpiTarget, prodKpiTarget,
+    owner, projectId, lifecycleStage,
+  } = body;
+
+  const updated = await prisma.agentRegistry.update({
+    where: { id },
+    data: {
+      ...(riskType !== undefined && { riskType: riskType === null ? null : Number(riskType) }),
+      ...(isHighImpact !== undefined && { isHighImpact }),
+      ...(transparencyMethod !== undefined && { transparencyMethod }),
+      ...(transparencyAppliedAt !== undefined && {
+        transparencyAppliedAt: transparencyAppliedAt ? new Date(transparencyAppliedAt) : null,
+      }),
+      ...(transparencyExceptionNote !== undefined && { transparencyExceptionNote }),
+      ...(phase !== undefined && { phase }),
+      ...(devStage !== undefined && { devStage }),
+      ...(prodStatus !== undefined && { prodStatus }),
+      ...(trustScore !== undefined && { trustScore }),
+      ...(pilotKpiTarget !== undefined && { pilotKpiTarget }),
+      ...(prodKpiTarget !== undefined && { prodKpiTarget }),
+      ...(owner !== undefined && { owner }),
+      ...(projectId !== undefined && { projectId }),
+      ...(lifecycleStage !== undefined && { lifecycleStage }),
+    },
+    select: {
+      id: true, agentName: true, phase: true, devStage: true, prodStatus: true,
+      trustScore: true, lifecycleStage: true,
+      riskType: true, isHighImpact: true,
+      transparencyMethod: true, transparencyAppliedAt: true, transparencyExceptionNote: true,
+    },
+  });
+
+  return NextResponse.json(updated);
 }

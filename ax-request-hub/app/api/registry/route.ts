@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
     ...(data.description  !== undefined && { description: data.description }),
     ...(data.modelVersion !== undefined && { modelVersion: data.modelVersion }),
     ...(data.department   !== undefined && { department: data.department }),
+    ...(data.riskType     !== undefined && { riskType: data.riskType === null ? null : Number(data.riskType) }),
   }
   const agent = await prisma.agentRegistry.create({ data: safeData })
   return NextResponse.json(agent, { status: 201 })

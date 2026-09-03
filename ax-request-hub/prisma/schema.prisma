@@ -2,10 +2,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// 현재 dev는 SQLite. PostgreSQL 전환 시 provider 변경 + pgvector 익스텐션 활성화 필요
-// (governance_chunks 모델은 String[] · vector 타입으로 PostgreSQL 전용)
+// 메인 앱은 SQLite. governance_chunks는 embed_pipeline.py가 pgvector DB(포트 5438)에 직접 관리.
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -27,11 +26,13 @@ model Project {
   autoApproved         Boolean     @default(false)
   approvedBy           String?
   decisionNote         String?
-  // Gate 2: 기술 ?��? 체크리스??(ai-agent-standards 기�?)
+  // Gate 2: 기술표준 자가점검 체크리스트 (AI-GUI-001 제10조 / AI-REG-003 제8조)
   techHasApiSpec            Boolean @default(false)
   techHasDataClassification Boolean @default(false)
   techHasAuditLogging       Boolean @default(false)
   techHasTestCoverage       Boolean @default(false)
+  techHasDataQualityCheck   Boolean @default(false)  // R-07: 데이터 무결성 검증 (AI-REG-003 제8조④)
+  techHasHumanInLoop        Boolean @default(false)  // R-09: Human-in-the-loop 검토 절차 (AI-REG-003 제8조⑤)
   techStandardsPassed       Boolean @default(false)
   techStandardsFailedItems  String  @default("[]")
   createdAt            DateTime    @default(now())
@@ -437,20 +438,30 @@ model AgentRegistry {
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 
-  // v3 추�? ?�드: ?�중 ?�이?�사?�클 �??�이???�랫???�동
-  name           String?      // Agent.name 매칭??(?��? ???�수)
-  projectId      String?      // ?�계 Project (?��? ???�수)
+  // v3 추가 필드: 이중 라이프사이클 및 데이터플랫폼 연동
+  name           String?      // Agent.name 매칭용 (옵션, 비필수)
+  projectId      String?      // 연계 Project (옵션, 비필수)
   phase          String       @default("DEVELOPMENT") // AgentPhase: DEVELOPMENT|PRODUCTION|CLOSED
-  devStage       String?      // DevStage ??phase=DEVELOPMENT ?�용
-  prodStatus     String?      // ProdStatus ??phase=PRODUCTION ?�용
+  devStage       String?      // DevStage — phase=DEVELOPMENT 적용
+  prodStatus     String?      // ProdStatus — phase=PRODUCTION 적용
   trustScore     Int?         // (operatorTrustScore 별칭)
-  pilotKpiTarget String?      // JSON 4?�드 ???�환 근거
-  prodKpiTarget  String?      // JSON 4?�드 ???�의???�인 ???�정
+  pilotKpiTarget String?      // JSON 4필드 — 전환 근거
+  prodKpiTarget  String?      // JSON 4필드 — 의사결정 인수 조건
   retireFlag          Boolean      @default(false)
   lastUsedAt          DateTime?
-  productionAt        DateTime?    // ?�의???�인 ???�용 ?�환 ?�시
-  recommendedProvider String?      // Qwen 추천 벤더 (claude|gpt|gemini), null=미분류
+  productionAt        DateTime?    // 의사결정 인수 — 운용 전환 일시
+  recommendedProvider String?      // 추천 벤더 (claude|gpt|gemini), null=미분류
   providerOverride    String?      // AX_TEAM 수동 override
+
+  // 거버넌스 위험 분류 (AI-GUI-001 제16조 — 유형 3·4 등록 의무)
+  // 1=단순보조 2=판단보조 3=자율실행+메모리 4=완전자율에이전트
+  riskType            Int?         // 거버넌스 위험 유형 (1~4), null=미분류
+
+  // 고영향 AI 투명성 표시 (AI-GUI-002 제12조)
+  isHighImpact              Boolean   @default(false)
+  transparencyMethod        String?   // SYSTEM_NOTICE | SERVICE_DESC | PUBLIC_NOTICE
+  transparencyAppliedAt     DateTime?
+  transparencyExceptionNote String?
 
   legacyAgent      Agent?         @relation("AgentRegistryLink")
 
@@ -798,24 +809,5 @@ model ModelProvider {
   updatedAt          DateTime @updatedAt
 }
 
-// ── 거버넌스 문서 벡터 청크 (pgvector — PostgreSQL 전용) ────────────────────────
-// embed_pipeline.py 가 docs/governance/**/*.md 를 파싱해 upsert.
-// chunk_id = "{doc_id}#[부칙-]{article_no}"  (parser.py 기준)
-model GovernanceChunk {
-  chunk_id      String                       @id
-  doc_id        String
-  chapter       String?
-  article_no    String
-  article_title String
-  text          String
-  is_addendum   Boolean                      @default(false)
-  risk_level    String                       @default("해당없음")
-  references    String[]
-  version       String
-  is_latest     Boolean                      @default(true)
-  embedding     Unsupported("vector(768)")?   // paraphrase-multilingual-mpnet-base-v2
-  created_at    DateTime                     @default(now())
-
-  @@index([doc_id, is_latest])
-  @@map("governance_chunks")
-}
+// governance_chunks 테이블은 pgvector DB(ax_governance, 포트 5438)에서 embed_pipeline.py가 직접 관리.
+// Prisma SQLite 스키마에 포함하지 않음 — AX Hub는 /api/governance/search API(포트 8700)로 조회.
