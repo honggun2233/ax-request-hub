@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -582,9 +582,9 @@ export default function NewProjectPage() {
               <p style={{ fontSize: 11, color: DIM, marginBottom: 8 }}>G1=공개 · G2=대외비 · G3=기밀(극비)</p>
               <ToggleGroup
                 options={[
-                  { label: 'G1 — 공개', value: 'G1' },
-                  { label: 'G2 — 대외비', value: 'G2' },
-                  { label: 'G3 — 기밀', value: 'G3' },
+                  { label: 'G1 — 공개', value: 'PUBLIC' },
+                  { label: 'G2 — 대외비', value: 'RESTRICTED' },
+                  { label: 'G3 — 기밀', value: 'CONFIDENTIAL' },
                 ]}
                 value={confidentialityLevel}
                 onChange={v => setConfidentialityLevel(v)}

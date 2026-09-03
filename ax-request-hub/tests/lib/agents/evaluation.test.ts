@@ -1,4 +1,4 @@
-import { EvaluationAgent, ScoreCardResult } from '@/src/lib/agents/evaluation'
+﻿import { EvaluationAgent, ScoreCardResult } from '@/src/lib/agents/evaluation'
 import { ExtractedProject } from '@/src/lib/agents/consultation'
 
 // Mock the anthropic client so tests run without a real API key
@@ -23,7 +23,7 @@ const mockProject: ExtractedProject = {
   description: 'PDF 계약서를 AI로 자동 검토',
   asIs: '변호사가 수동으로 검토, 1건당 2시간',
   expectedBenefit: '주 10시간 절감, 비용 30% 감소',
-  confidentialityLevel: 'G2',
+  confidentialityLevel: 'RESTRICTED',
   championName: '김과장',
   estimatedUsers: 10,
 }
@@ -31,7 +31,7 @@ const mockProject: ExtractedProject = {
 const mockG3Project: ExtractedProject = {
   ...mockProject,
   title: '운용 포지션 AI 분석',
-  confidentialityLevel: 'G3',
+  confidentialityLevel: 'CONFIDENTIAL',
   description: '펀드 운용 포지션 데이터 AI 분석',
 }
 

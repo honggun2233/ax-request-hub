@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const VALID_CLASSIFICATIONS = ["G1", "G2", "G3"];
+  const VALID_CLASSIFICATIONS = ["PUBLIC", "RESTRICTED", "CONFIDENTIAL"];
   if (!VALID_CLASSIFICATIONS.includes(classification)) {
     return NextResponse.json(
       { error: `classification은 ${VALID_CLASSIFICATIONS.join(" | ")} 중 하나여야 합니다` },
@@ -187,7 +187,7 @@ export async function PATCH(req: Request) {
 
   // classification 유효성
   if (updateData.classification) {
-    if (!["G1", "G2", "G3"].includes(updateData.classification as string)) {
+    if (!["PUBLIC", "RESTRICTED", "CONFIDENTIAL"].includes(updateData.classification as string)) {
       return NextResponse.json({ error: "classification은 G1 | G2 | G3 중 하나여야 합니다" }, { status: 400 });
     }
   }

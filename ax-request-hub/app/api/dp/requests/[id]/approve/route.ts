@@ -40,7 +40,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
 
   // G3 데이터 승인 선결조건 (v3 §10-1)
-  if (decision === "APPROVED" && dr.classification === "G3") {
+  if (decision === "APPROVED" && dr.classification === "CONFIDENTIAL") {
     if (!(dr.project as any)?.isEssentialBusiness) {
       return NextResponse.json(
         { error: 'G3(기밀) 데이터 승인을 위해서는 과제가 "본질적 업무"로 지정되어야 합니다' },

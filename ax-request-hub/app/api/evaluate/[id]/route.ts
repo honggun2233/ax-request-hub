@@ -26,8 +26,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ message: '이미 처리된 AI 활용입니다.', status: project.status })
   }
 
-  // G3 기밀(극비) AI 활용은 Claude API 평가 생략 → 즉시 AX팀 수동 검토 에스컬레이션
-  if (project.confidentialityLevel === 'G3') {
+  // CONFIDENTIAL(기밀·극비) AI 활용은 Claude API 평가 생략 → 즉시 AX팀 수동 검토 에스컬레이션
+  if (project.confidentialityLevel === 'CONFIDENTIAL') {
     await prisma.project.update({
       where: { id: project.id },
       data: { status: 'evaluated', totalScore: null },
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
     return NextResponse.json({
       skipped: true,
-      reason: 'G3 기밀(극비) AI 활용 — Claude API 평가 생략, AX팀 수동 검토 필요',
+      reason: 'CONFIDENTIAL(기밀·극비) AI 활용 — Claude API 평가 생략, AX팀 수동 검토 필요',
       status: 'evaluated',
     })
   }
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       description: project.description,
       asIs: project.asIs,
       expectedBenefit: project.expectedBenefit,
-      confidentialityLevel: project.confidentialityLevel as 'G1' | 'G2' | 'G3',
+      confidentialityLevel: project.confidentialityLevel as 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL',
       championName: project.championName,
       estimatedUsers: project.estimatedUsers,
     }

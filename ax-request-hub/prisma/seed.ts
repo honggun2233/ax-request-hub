@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client"
+﻿import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
@@ -145,14 +145,14 @@ async function main() {
 
   // ── AI 과제 (Project) ──
   const projects = [
-    { title: "STT 회의록 자동 변환", department: "IT업무개발팀", requesterName: "한도윤", requesterEmail: "dyhan@samsungam.com", description: "회의 음성을 텍스트로 변환해 회의록 자동 생성", asIs: "수작업으로 회의록 작성, 시간 2시간 소요", expectedBenefit: "회의록 작성 시간 90% 절감", confidentialityLevel: "G1", estimatedUsers: 50, status: "production", totalScore: 88, autoApproved: true },
-    { title: "고객 문의 자동 분류", department: "고객지원팀", requesterName: "박서연", requesterEmail: "sypark@samsungam.com", description: "AI로 고객 문의를 자동 분류하고 답변 초안 생성", asIs: "담당자가 수동으로 분류, 응답 지연 발생", expectedBenefit: "응답 속도 60% 향상", confidentialityLevel: "G2", estimatedUsers: 20, status: "pilot", totalScore: 91, autoApproved: true },
-    { title: "펀드 공시 문서 자동화", department: "준법감시팀", requesterName: "정수연", requesterEmail: "syjung@samsungam.com", description: "펀드 정기 공시 문서 초안 자동 생성", asIs: "전문 인력이 수작업으로 작성, 오류 발생", expectedBenefit: "작성 시간 70% 단축, 오류율 감소", confidentialityLevel: "G3", estimatedUsers: 10, status: "evaluated", totalScore: 79, autoApproved: false },
-    { title: "리스크 리포트 자동 생성", department: "리스크관리팀", requesterName: "최재원", requesterEmail: "jwchoi@samsungam.com", description: "일일 리스크 지표를 자동 수집해 보고서 생성", asIs: "매일 2시간 소요, 주말 미생성", expectedBenefit: "리스크 모니터링 24/7 자동화", confidentialityLevel: "G2", estimatedUsers: 15, status: "submitted", totalScore: 82, autoApproved: true },
-    { title: "투자설명서 초안 작성", department: "운용본부", requesterName: "이민준", requesterEmail: "test@samsungam.com", description: "신규 펀드 투자설명서 AI 초안 생성", asIs: "법무팀과 협의해 수주일 소요", expectedBenefit: "초안 작성 기간 50% 단축", confidentialityLevel: "G3", estimatedUsers: 8, status: "submitted", totalScore: 58, autoApproved: false },
-    { title: "ESG 리포트 데이터 수집", department: "리서치팀", requesterName: "오현석", requesterEmail: "hsoh@samsungam.com", description: "외부 ESG 데이터 자동 수집 및 정제", asIs: "수동 크롤링으로 주 1회 업데이트", expectedBenefit: "일일 자동 업데이트, 데이터 정확도 향상", confidentialityLevel: "G2", estimatedUsers: 30, status: "pilot", totalScore: 65, autoApproved: false },
-    { title: "신규 직원 온보딩 챗봇", department: "HR팀", requesterName: "강민서", requesterEmail: "mskang@samsungam.com", description: "신입 직원을 위한 AI 챗봇 온보딩 시스템", asIs: "HR 담당자가 개별 안내, 반복 질문 많음", expectedBenefit: "온보딩 기간 2주→1주 단축", confidentialityLevel: "G1", estimatedUsers: 100, status: "production", totalScore: 74, autoApproved: true },
-    { title: "월간 경영 보고서 자동화", department: "경영기획팀", requesterName: "강민서", requesterEmail: "mskang@samsungam.com", description: "월간 KPI 데이터를 취합해 보고서 초안 생성", asIs: "기획팀 3명이 1주일 소요", expectedBenefit: "보고서 작성 시간 80% 절감", confidentialityLevel: "G2", estimatedUsers: 5, status: "closed", totalScore: 71, autoApproved: true },
+    { title: "STT 회의록 자동 변환", department: "IT업무개발팀", requesterName: "한도윤", requesterEmail: "dyhan@samsungam.com", description: "회의 음성을 텍스트로 변환해 회의록 자동 생성", asIs: "수작업으로 회의록 작성, 시간 2시간 소요", expectedBenefit: "회의록 작성 시간 90% 절감", confidentialityLevel: "PUBLIC", estimatedUsers: 50, status: "production", totalScore: 88, autoApproved: true },
+    { title: "고객 문의 자동 분류", department: "고객지원팀", requesterName: "박서연", requesterEmail: "sypark@samsungam.com", description: "AI로 고객 문의를 자동 분류하고 답변 초안 생성", asIs: "담당자가 수동으로 분류, 응답 지연 발생", expectedBenefit: "응답 속도 60% 향상", confidentialityLevel: "RESTRICTED", estimatedUsers: 20, status: "pilot", totalScore: 91, autoApproved: true },
+    { title: "펀드 공시 문서 자동화", department: "준법감시팀", requesterName: "정수연", requesterEmail: "syjung@samsungam.com", description: "펀드 정기 공시 문서 초안 자동 생성", asIs: "전문 인력이 수작업으로 작성, 오류 발생", expectedBenefit: "작성 시간 70% 단축, 오류율 감소", confidentialityLevel: "CONFIDENTIAL", estimatedUsers: 10, status: "evaluated", totalScore: 79, autoApproved: false },
+    { title: "리스크 리포트 자동 생성", department: "리스크관리팀", requesterName: "최재원", requesterEmail: "jwchoi@samsungam.com", description: "일일 리스크 지표를 자동 수집해 보고서 생성", asIs: "매일 2시간 소요, 주말 미생성", expectedBenefit: "리스크 모니터링 24/7 자동화", confidentialityLevel: "RESTRICTED", estimatedUsers: 15, status: "submitted", totalScore: 82, autoApproved: true },
+    { title: "투자설명서 초안 작성", department: "운용본부", requesterName: "이민준", requesterEmail: "test@samsungam.com", description: "신규 펀드 투자설명서 AI 초안 생성", asIs: "법무팀과 협의해 수주일 소요", expectedBenefit: "초안 작성 기간 50% 단축", confidentialityLevel: "CONFIDENTIAL", estimatedUsers: 8, status: "submitted", totalScore: 58, autoApproved: false },
+    { title: "ESG 리포트 데이터 수집", department: "리서치팀", requesterName: "오현석", requesterEmail: "hsoh@samsungam.com", description: "외부 ESG 데이터 자동 수집 및 정제", asIs: "수동 크롤링으로 주 1회 업데이트", expectedBenefit: "일일 자동 업데이트, 데이터 정확도 향상", confidentialityLevel: "RESTRICTED", estimatedUsers: 30, status: "pilot", totalScore: 65, autoApproved: false },
+    { title: "신규 직원 온보딩 챗봇", department: "HR팀", requesterName: "강민서", requesterEmail: "mskang@samsungam.com", description: "신입 직원을 위한 AI 챗봇 온보딩 시스템", asIs: "HR 담당자가 개별 안내, 반복 질문 많음", expectedBenefit: "온보딩 기간 2주→1주 단축", confidentialityLevel: "PUBLIC", estimatedUsers: 100, status: "production", totalScore: 74, autoApproved: true },
+    { title: "월간 경영 보고서 자동화", department: "경영기획팀", requesterName: "강민서", requesterEmail: "mskang@samsungam.com", description: "월간 KPI 데이터를 취합해 보고서 초안 생성", asIs: "기획팀 3명이 1주일 소요", expectedBenefit: "보고서 작성 시간 80% 절감", confidentialityLevel: "RESTRICTED", estimatedUsers: 5, status: "closed", totalScore: 71, autoApproved: true },
   ]
 
   for (const p of projects) {
@@ -174,7 +174,7 @@ async function main() {
             projectId: proj.id,
             impactScore: p.totalScore * 0.25,
             roiScore: p.totalScore * 0.25,
-            confidentialityScore: p.confidentialityLevel === "G1" ? 15 : p.confidentialityLevel === "G2" ? 10 : 5,
+            confidentialityScore: p.confidentialityLevel === "PUBLIC" ? 15 : p.confidentialityLevel === "RESTRICTED" ? 10 : 5,
             difficultyScore: p.totalScore * 0.15,
             readinessScore: p.totalScore * 0.10,
             strategyScore: p.totalScore * 0.10,

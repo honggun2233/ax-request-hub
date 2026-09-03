@@ -1,4 +1,4 @@
-import { gatewayCompleteRouted } from '@/src/lib/ai-gateway/routing'
+﻿import { gatewayCompleteRouted } from '@/src/lib/ai-gateway/routing'
 
 export interface ExtractedProject {
   title: string
@@ -8,7 +8,7 @@ export interface ExtractedProject {
   description: string
   asIs: string
   expectedBenefit: string
-  confidentialityLevel: 'G1' | 'G2' | 'G3'
+  confidentialityLevel: 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL'
   championName: string | null
   estimatedUsers: number
 }
@@ -38,7 +38,7 @@ const SYSTEM_PROMPT = `당신은 삼성자산운용 AX/PI팀의 AI 활용 신청
 
 모든 항목이 수집되면 응답 끝에 다음 JSON 블록을 추가하세요:
 <EXTRACTED>
-{"title":"...","department":"...","requesterName":"...","requesterEmail":"...","description":"...","asIs":"...","expectedBenefit":"...","confidentialityLevel":"G1","championName":"...","estimatedUsers":0}
+{"title":"...","department":"...","requesterName":"...","requesterEmail":"...","description":"...","asIs":"...","expectedBenefit":"...","confidentialityLevel":"PUBLIC","championName":"...","estimatedUsers":0}
 </EXTRACTED>
 
 항목이 불명확하면 계속 질문하세요. 한 번에 하나씩 물어보세요. 친절하고 간결하게 응답하세요.`
@@ -97,7 +97,7 @@ export class ConsultationAgent {
     const match = text.match(/<EXTRACTED>([\s\S]*?)<\/EXTRACTED>/)
     if (!match) return null
     try {
-      const VALID_LEVELS = ['G1', 'G2', 'G3'] as const
+      const VALID_LEVELS = ['PUBLIC', 'RESTRICTED', 'CONFIDENTIAL'] as const
       const parsed = JSON.parse(match[1].trim()) as ExtractedProject
       if (!VALID_LEVELS.includes(parsed.confidentialityLevel as any)) {
         console.warn('Invalid confidentialityLevel:', parsed.confidentialityLevel)

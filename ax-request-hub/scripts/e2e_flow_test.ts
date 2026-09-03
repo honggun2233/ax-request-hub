@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AI Request Hub — 전체 플로우 E2E 테스트
  * 신청 → 평가 → 승인/에스컬레이션 → 에이전트 등록 → 폐기 전 과정
  *
@@ -314,12 +314,12 @@ async function main() {
     await testChatFlow()
 
     // [3+4] 자동승인 케이스 (G1, 고점수 기대)
-    const proj1 = await createTestProject("자동승인케이스", "G1", "HIGH")
+    const proj1 = await createTestProject("자동승인케이스", "PUBLIC", "HIGH")
     projectIds.push(proj1.id)
     await testEvaluate(proj1.id, "G1 자동승인")
 
     // [3+4] 에스컬레이션 케이스 (G3)
-    const proj2 = await createTestProject("에스컬레이션케이스", "G3", "LOW")
+    const proj2 = await createTestProject("에스컬레이션케이스", "CONFIDENTIAL", "LOW")
     projectIds.push(proj2.id)
     const evalResult = await testEvaluate(proj2.id, "G3 에스컬레이션")
 

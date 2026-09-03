@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/authz";
 
@@ -26,7 +26,7 @@ export async function GET() {
     prisma.levelApplication.count({ where: { status: "PENDING" } }),
     prisma.toolAccount.count({ where: { status: "PENDING" } }),
     prisma.governanceDoc.count({ where: { status: "draft" } }),
-    prisma.project.count({ where: { confidentialityLevel: "G3", createdAt: { gte: monthStart } } }),
+    prisma.project.count({ where: { confidentialityLevel: "CONFIDENTIAL", createdAt: { gte: monthStart } } }),
     prisma.project.findMany({
       where: { status: { in: ["approved", "pilot"] } },
       select: { department: true },

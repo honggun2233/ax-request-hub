@@ -1,4 +1,4 @@
-// Snowflake INFORMATION_SCHEMA 조회 → DataAsset upsert
+﻿// Snowflake INFORMATION_SCHEMA 조회 → DataAsset upsert
 // snowflake-sdk는 선택적 의존성 — 런타임에 동적 로드
 import { prisma } from '@/lib/prisma'
 
@@ -79,7 +79,7 @@ export async function syncSnowflakeCatalog(): Promise<{ upserted: number; synced
           name: table.TABLE_NAME,
           description: table.COMMENT ?? table.TABLE_NAME,
           ownerDept: 'DATA_PLATFORM',
-          classification: 'G2',
+          classification: 'RESTRICTED',
           deliveryModes: 'DB',
           sourceSystem: 'SNOWFLAKE',
           externalId,

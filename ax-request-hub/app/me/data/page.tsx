@@ -15,7 +15,7 @@ interface DataRequest {
   id: string
   type: 'ACCESS' | 'NEW'
   status: string
-  classification: 'G1' | 'G2' | 'G3'
+  classification: 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL'
   periodMonths: number
   rejectReason?: string | null
   createdAt: string

@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           projectId: id,
           employeeId: project.requesterEmail,
           type: req.trackType ?? 'ACCESS',
-          classification: req.classification ?? 'G2',
+          classification: req.classification ?? 'RESTRICTED',
           purpose: req.purpose ?? project.description ?? '',
           periodMonths: req.periodMonths ?? 12,
           includesPII: req.includesPII ?? false,

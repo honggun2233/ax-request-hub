@@ -117,7 +117,7 @@ export async function GET(
       total:        deps.length,
       revokedCount,
       expiredCount,
-      g1Count:      deps.filter(d => d.classification === 'G1').length,
+      g1Count:      deps.filter(d => d.classification === 'PUBLIC').length,
     },
   })
 }

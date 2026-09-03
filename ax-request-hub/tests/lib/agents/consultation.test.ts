@@ -1,4 +1,4 @@
-import { ConsultationAgent, ExtractedProject } from '@/src/lib/agents/consultation'
+﻿import { ConsultationAgent, ExtractedProject } from '@/src/lib/agents/consultation'
 
 // Mock the anthropic client so tests run without a real API key
 jest.mock('@/src/lib/claude', () => ({
@@ -68,7 +68,7 @@ describe('ConsultationAgent', () => {
       description: '주간 PDF 10개 자동 요약',
       asIs: '수동으로 읽고 요약',
       expectedBenefit: '주 5시간 절감',
-      confidentialityLevel: 'G1',
+      confidentialityLevel: 'PUBLIC',
       championName: '김과장',
       estimatedUsers: 5,
     })
@@ -83,7 +83,7 @@ describe('ConsultationAgent', () => {
     expect(response.isComplete).toBe(true)
     expect(response.extracted).not.toBeNull()
     expect(response.extracted?.title).toBe('리서치 보고서 요약 자동화')
-    expect(response.extracted?.confidentialityLevel).toBe('G1')
+    expect(response.extracted?.confidentialityLevel).toBe('PUBLIC')
     // The EXTRACTED block should be stripped from the message
     expect(response.message).not.toContain('<EXTRACTED>')
   })

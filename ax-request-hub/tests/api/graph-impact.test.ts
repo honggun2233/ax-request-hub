@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+﻿import { NextRequest } from 'next/server'
 import { GET } from '@/app/api/graph/impact/route'
 import type { Graph, GraphNode, NodeKey } from '@/lib/graph/types'
 
@@ -104,7 +104,7 @@ describe('GET /api/graph/impact', () => {
   test('C_LEVEL role + G3 asset in graph → warnings contains G3 notice', async () => {
     mockUser('C_LEVEL')
     const agent = makeNode('agent', 'a1', { status: 'ACTIVE' })
-    const asset = makeNode('asset', 'g3-asset', { classification: 'G3', isActive: true })
+    const asset = makeNode('asset', 'g3-asset', { classification: 'CONFIDENTIAL', isActive: true })
     const graph: Graph = {
       nodes: new Map([
         [agent.key, agent],
@@ -119,6 +119,6 @@ describe('GET /api/graph/impact', () => {
     const data = await res.json()
     expect(data.warnings).toBeDefined()
     expect(Array.isArray(data.warnings)).toBe(true)
-    expect(data.warnings.some((w: string) => w.includes('G3'))).toBe(true)
+    expect(data.warnings.some((w: string) => w.includes('CONFIDENTIAL'))).toBe(true)
   })
 })

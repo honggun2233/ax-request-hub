@@ -19,7 +19,7 @@ model Project {
   description          String
   asIs                 String
   expectedBenefit      String
-  confidentialityLevel String      @default("G2")
+  confidentialityLevel String      @default("RESTRICTED")
   championName         String?
   estimatedUsers       Int         @default(0)
   totalScore           Float?
@@ -39,7 +39,7 @@ model Project {
   updatedAt            DateTime    @updatedAt
 
   // 데이터 거버넌스 정합성 (Phase 2 — 데이터취급지침 제5조)
-  isEssentialBusiness  Boolean  @default(false)  // 본질적 업무 여부 (G3 데이터 사용 선결 조건)
+  isEssentialBusiness  Boolean  @default(false)  // 본질적 업무 여부 (CONFIDENTIAL 데이터 사용 선결 조건)
 
   // Phase A — 과제 신청 시 데이터 요건 선언
   noDataRequired Boolean @default(false)  // true = "별도 데이터 불필요" 명시
@@ -532,7 +532,7 @@ model Skill {
   approvedAt    DateTime?
   status        String    @default("draft")   // active | draft | deprecated
   targetUsers   String    @default("[]")      // JSON array of roles
-  securityLevel String    @default("G1")      // G1(?�반) | G2(?��?) | G3(기�?)
+  securityLevel String    @default("PUBLIC")      // PUBLIC(공개정보) | RESTRICTED(대외비) | CONFIDENTIAL(기밀·극비)
   purpose       String    @default("")
   instructions  String    @default("")
   promptText    String    @default("")
@@ -558,7 +558,7 @@ model SkillRating {
 }
 
 // ?�?�?� v3: SQLite??enum 미�?????String ?�드 + 코드 ?�벨 ?�약 ?�?�?�?�?�?�?�?�?�?�
-// DataClassification: G1(공개) | G2(?��?) | G3(기�?)
+// DataClassification: PUBLIC(공개정보) | RESTRICTED(대외비) | CONFIDENTIAL(기밀·극비)
 // DataRequestType:    ACCESS(기존 ?�산 ?�용) | NEW(?�규 ?�집 ?�청)
 // DataRequestStatus:  REQUESTED | REVIEWING | SEC_REVIEW | APPROVED | COLLECTING | REJECTED | PROVISIONED | EXPIRED | REVOKED
 // AgentPhase:         DEVELOPMENT | PRODUCTION | CLOSED
@@ -600,7 +600,7 @@ model DataAsset {
   name           String
   description    String
   ownerDept      String
-  classification String    // DataClassification: G1|G2|G3
+  classification String    // DataClassification: PUBLIC|RESTRICTED|CONFIDENTIAL
   schemaMeta     String?
   deliveryModes  String    // "API,FILE,DB"
   updateCycle    String?
@@ -634,7 +634,7 @@ model DataRequest {
   requesterId    String
   purpose        String
   requestedSpec  String?
-  classification String    // DataClassification: G1|G2|G3
+  classification String    // DataClassification: PUBLIC|RESTRICTED|CONFIDENTIAL
   periodMonths   Int
   forProduction  Boolean   @default(false)
   rejectReason   String?
@@ -697,7 +697,7 @@ model GovernanceDoc {
   author        String    @default("")
   approvedBy    String    @default("")
   approvedAt    DateTime?
-  securityLevel String    @default("G2")  // G1|G2|G3
+  securityLevel String    @default("RESTRICTED")  // PUBLIC|RESTRICTED|CONFIDENTIAL
   status        String    @default("active")  // active|draft|deprecated
   description   String    @default("")
   relatedDocs   String    @default("[]")  // JSON: 관??문서 docId 배열

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
 
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       expectedBenefit: body.expectedBenefit,
       businessNeed: body.businessNeed ?? null,
       expectedEffect: body.expectedEffect ?? null,
-      confidentialityLevel: body.confidentialityLevel ?? 'G2',
+      confidentialityLevel: body.confidentialityLevel ?? 'RESTRICTED',
       source: body.source ?? 'ax_discovery',
       noDataRequired: !!noDataRequired,
     }
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
             projectId: project.id,
             requesterId: requester.id,
             type: req.trackType ?? 'ACCESS',
-            classification: req.classification ?? 'G2',
+            classification: req.classification ?? 'RESTRICTED',
             purpose: req.purpose ?? projectData.description ?? '',
             periodMonths: req.periodMonths ?? 12,
             includesPII: req.includesPII ?? false,

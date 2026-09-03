@@ -155,7 +155,7 @@ export default async function StatusPage({ params }: { params: Promise<{ id: str
                         </div>
                         <div style={{ fontSize: 11, color: '#8898BB', display: 'flex', gap: 10 }}>
                           <span>{dr.type === 'NEW' ? 'Track B' : 'Track A'}</span>
-                          <span style={{ color: dr.classification === 'G3' ? '#B94040' : dr.classification === 'G2' ? '#B45309' : '#059669' }}>
+                          <span style={{ color: dr.classification === 'CONFIDENTIAL' ? '#B94040' : dr.classification === 'RESTRICTED' ? '#B45309' : '#059669' }}>
                             {dr.classification}
                           </span>
                           <span>{dr.periodMonths}개월</span>

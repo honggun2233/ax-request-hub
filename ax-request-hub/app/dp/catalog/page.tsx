@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -7,7 +7,7 @@ import { AlertTriangle, ChevronRight, Database, X, Loader2 } from 'lucide-react'
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 interface DataAsset {
   id: string; name: string; description: string; ownerDept: string
-  classification: 'G1' | 'G2' | 'G3'; deliveryModes: string
+  classification: 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL'; deliveryModes: string
   updateCycle?: string; isActive: boolean; createdAt: string
   _count?: { requests: number }
 }
@@ -255,9 +255,9 @@ export default function DpCatalogPage() {
           onChange={e => setClsFilter(e.target.value)}
         >
           <option value="">전체 등급</option>
-          <option value="G1">G1 기밀</option>
-          <option value="G2">G2 내부</option>
-          <option value="G3">G3 공개</option>
+          <option value="PUBLIC">G1 기밀</option>
+          <option value="RESTRICTED">G2 내부</option>
+          <option value="CONFIDENTIAL">G3 공개</option>
         </select>
         <button
           onClick={fetchAssets}

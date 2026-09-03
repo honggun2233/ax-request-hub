@@ -1,18 +1,24 @@
-/** 데이터 기밀등급 — G1/G2/G3는 내부 식별자, 표시는 공식 용어 사용 (데이터관리규정 v1.2 기준) */
+/** 데이터 기밀등급 내부 코드 ↔ 표시명 매핑 (단일 소스)
+ *  표시명 변경 시 이 파일만 수정할 것 — 코드 전체 grep 불필요
+ *  근거: AI운영지침 v1.6 (G코드 폐지, 명칭만 사용)
+ */
+export const CONFIDENTIALITY_CODES = ['PUBLIC', 'RESTRICTED', 'CONFIDENTIAL'] as const
+export type ConfidentialityCode = (typeof CONFIDENTIALITY_CODES)[number]
+
 export const CONF_LABEL: Record<string, string> = {
-  G1: '공개정보',
-  G2: '대외비',
-  G3: '기밀(극비)',
+  PUBLIC: '공개정보',
+  RESTRICTED: '대외비',
+  CONFIDENTIAL: '기밀(극비)',
 }
 
 export const CONF_COLOR: Record<string, string> = {
-  G1: 'bg-green-100 text-green-800',
-  G2: 'bg-yellow-100 text-yellow-800',
-  G3: 'bg-red-100 text-red-800',
+  PUBLIC: 'bg-green-100 text-green-800',
+  RESTRICTED: 'bg-yellow-100 text-yellow-800',
+  CONFIDENTIAL: 'bg-red-100 text-red-800',
 }
 
 export const CONF_OPTIONS = [
-  { value: 'G1', label: 'G1 — 공개정보' },
-  { value: 'G2', label: 'G2 — 대외비' },
-  { value: 'G3', label: 'G3 — 기밀(극비)' },
+  { value: 'PUBLIC', label: '공개정보' },
+  { value: 'RESTRICTED', label: '대외비' },
+  { value: 'CONFIDENTIAL', label: '기밀(극비)' },
 ] as const

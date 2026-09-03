@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
 import { gatewayComplete } from '@/src/lib/ai-gateway/gateway'
@@ -25,7 +25,7 @@ const FIELD_MAP: Record<string, string> = {
 
 const VALID_AGENT_TYPES = ['SKILL', 'MCP', 'WEBAPP', 'CRAWLING']
 const VALID_SCOPES      = ['DEPT', 'DIVISION', 'COMPANY']
-const VALID_CONF        = ['G1', 'G2', 'G3']
+const VALID_CONF        = ['PUBLIC', 'RESTRICTED', 'CONFIDENTIAL']
 
 function parseStandardFormat(raw: string): Record<string, string> | null {
   if (!raw.includes('## AX_INTAKE_V1')) return null
@@ -63,9 +63,9 @@ function parseStandardFormat(raw: string): Record<string, string> | null {
   // confidentialityLevel 정규화
   if (result.confidentialityLevel) {
     const m = result.confidentialityLevel.match(/G[123]/)
-    result.confidentialityLevel = m ? m[0] : 'G2'
+    result.confidentialityLevel = m ? m[0] : 'RESTRICTED'
   } else {
-    result.confidentialityLevel = 'G2'
+    result.confidentialityLevel = 'RESTRICTED'
   }
 
   return result
@@ -151,7 +151,7 @@ ${rawText.slice(0, 3000)}
           extracted.scope = VALID_SCOPES.find(v => u.includes(v)) ?? null
         }
         if (!extracted.confidentialityLevel || !VALID_CONF.includes(extracted.confidentialityLevel)) {
-          extracted.confidentialityLevel = 'G2'
+          extracted.confidentialityLevel = 'RESTRICTED'
         }
         parsed = extracted
         tier = 1

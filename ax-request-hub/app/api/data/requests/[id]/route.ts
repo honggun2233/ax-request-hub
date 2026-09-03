@@ -64,7 +64,7 @@ export async function PATCH(
         where: { id },
         select: { classification: true, projectId: true },
       })
-      if (dr?.classification === 'G3' && dr.projectId) {
+      if (dr?.classification === 'CONFIDENTIAL' && dr.projectId) {
         const project = await prisma.project.findUnique({
           where: { id: dr.projectId },
           select: { isEssentialBusiness: true } as any,

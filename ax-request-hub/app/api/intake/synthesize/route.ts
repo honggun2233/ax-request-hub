@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -103,7 +103,7 @@ ${combinedText.slice(0, 6000)}
       expectedBenefit:        fields.expectedBenefit        ?? { value: null, confidence: 0, source: '' },
       agentType:              fields.agentType              ?? { value: null, confidence: 0, source: '' },
       scope:                  fields.scope                  ?? { value: null, confidence: 0, source: '' },
-      confidentialityEstimate: fields.confidentialityEstimate ?? { value: 'G2', confidence: 0, source: '' },
+      confidentialityEstimate: fields.confidentialityEstimate ?? { value: 'RESTRICTED', confidence: 0, source: '' },
       dataNote:               fields.dataNote               ?? { value: null, confidence: 0, source: '' },
     },
     prefilled: {

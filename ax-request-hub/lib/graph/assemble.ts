@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   GraphNode,
   TraversalHit,
   ImpactResult,
@@ -157,7 +157,7 @@ export function assembleResult(
 
   // warnings
   const warnings: string[] = []
-  const hasG3 = assets.some(a => a.classification === 'G3')
+  const hasG3 = assets.some(a => a.classification === 'CONFIDENTIAL')
   if (hasG3) {
     if (userRole === 'AX_TEAM' || userRole === 'DATA_PLATFORM') {
       warnings.push('G3 데이터 자산 접근 에이전트 존재: 보안 검토 필요')

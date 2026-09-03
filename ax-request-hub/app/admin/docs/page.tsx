@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 const DOC_TYPES = ['규정', '운영방안', '지침', '가이드라인', '매뉴얼', '개발표준', '기술문서']
 const LEVELS = ['L1', 'L2', 'L3', 'L4']
-const SEC_LEVELS = ['G1', 'G2', 'G3']
+const SEC_LEVELS = ['PUBLIC', 'RESTRICTED', 'CONFIDENTIAL']
 
 // docId 자동 생성 헬퍼
 const TYPE_CODE: Record<string, string> = {
@@ -19,7 +19,7 @@ function suggestDocId(type: string, seq: string) {
 const EMPTY_FORM = {
   docId: '', fileName: '', type: '지침', level: 'L2', title: '',
   version: 'v1.0', author: 'AX팀', approvedBy: '', approvedAt: '',
-  securityLevel: 'G2', status: 'active', description: '',
+  securityLevel: 'RESTRICTED', status: 'active', description: '',
 }
 
 interface DocMeta {

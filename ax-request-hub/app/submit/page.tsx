@@ -26,7 +26,7 @@ export default async function SubmitPage({
             description: project.description,
             asIs: project.asIs,
             expectedBenefit: project.expectedBenefit,
-            confidentialityLevel: project.confidentialityLevel as 'G1' | 'G2' | 'G3',
+            confidentialityLevel: project.confidentialityLevel as 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL',
             championName: project.championName ?? '',
             estimatedUsers: project.estimatedUsers,
           }}

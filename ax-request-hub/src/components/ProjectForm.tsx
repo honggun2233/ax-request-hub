@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -13,7 +13,7 @@ interface TechStandardsState {
 interface DataRequirement {
   assetDescription: string
   trackType: 'ACCESS' | 'NEW'
-  classification: 'G1' | 'G2' | 'G3'
+  classification: 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL'
   periodMonths: number
   includesPII: boolean
   purpose: string
@@ -28,7 +28,7 @@ interface ProjectFormData {
   description: string
   asIs: string
   expectedBenefit: string
-  confidentialityLevel: 'G1' | 'G2' | 'G3'
+  confidentialityLevel: 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL'
   championName: string
   estimatedUsers: number
   isEssentialBusiness?: boolean
@@ -54,7 +54,7 @@ export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
     setDataRequirements(prev => [...prev, {
       assetDescription: '',
       trackType: 'ACCESS',
-      classification: 'G2',
+      classification: 'RESTRICTED',
       periodMonths: 12,
       includesPII: false,
       purpose: '',
@@ -147,11 +147,11 @@ export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">데이터 기밀등급</label>
         <select value={data.confidentialityLevel}
-          onChange={(e) => setData({ ...data, confidentialityLevel: e.target.value as 'G1' | 'G2' | 'G3' })}
+          onChange={(e) => setData({ ...data, confidentialityLevel: e.target.value as 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL' })}
           className={inputCls}>
-          <option value="G1">G1 — 공개정보</option>
-          <option value="G2">G2 — 대외비</option>
-          <option value="G3">G3 — 기밀(극비)</option>
+          <option value="PUBLIC">G1 — 공개정보</option>
+          <option value="RESTRICTED">G2 — 대외비</option>
+          <option value="CONFIDENTIAL">G3 — 기밀(극비)</option>
         </select>
       </div>
       <div className="mb-4">
@@ -243,11 +243,11 @@ export function ProjectForm({ initialData }: { initialData: ProjectFormData }) {
                   <div>
                     <label className="text-xs text-gray-500 mb-1 block">기밀등급</label>
                     <select value={req.classification}
-                      onChange={(e) => updateDataRequirement(idx, { classification: e.target.value as 'G1' | 'G2' | 'G3' })}
+                      onChange={(e) => updateDataRequirement(idx, { classification: e.target.value as 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL' })}
                       className="w-full border border-gray-200 rounded px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-indigo-400">
-                      <option value="G1">G1 공개</option>
-                      <option value="G2">G2 대외비</option>
-                      <option value="G3">G3 기밀</option>
+                      <option value="PUBLIC">G1 공개</option>
+                      <option value="RESTRICTED">G2 대외비</option>
+                      <option value="CONFIDENTIAL">G3 기밀</option>
                     </select>
                   </div>
                   <div>

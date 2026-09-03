@@ -13,7 +13,7 @@ interface DataRequest {
   requesterId: string
   purpose: string
   requestedSpec?: string
-  classification: 'G1' | 'G2' | 'G3'
+  classification: 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL'
   periodMonths: number
   forProduction: boolean
   rejectReason?: string

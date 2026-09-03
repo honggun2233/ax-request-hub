@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const CATEGORIES = ['업무자동화', 'ETF운용', '리서치', '문서작성', '데이터분석', '기타']
-const SEC_LEVELS = ['G1', 'G2', 'G3']
+const SEC_LEVELS = ['PUBLIC', 'RESTRICTED', 'CONFIDENTIAL']
 
 const EMPTY_FORM = {
   skillId: '', name: '', category: '업무자동화', version: '1.0.0',
-  author: '', securityLevel: 'G1', status: 'draft',
+  author: '', securityLevel: 'PUBLIC', status: 'draft',
   purpose: '', instructions: '', promptText: '', examples: '', cautions: '',
 }
 
@@ -238,8 +238,8 @@ export default function AdminSkillsPage() {
                 <td className="px-4 py-2.5 text-gray-600">{skill.category}</td>
                 <td className="px-4 py-2.5">
                   <span className={`text-xs px-1.5 py-0.5 rounded ${
-                    skill.securityLevel === 'G1' ? 'bg-blue-50 text-blue-600' :
-                    skill.securityLevel === 'G2' ? 'bg-orange-50 text-orange-600' : 'bg-red-50 text-red-600'
+                    skill.securityLevel === 'PUBLIC' ? 'bg-blue-50 text-blue-600' :
+                    skill.securityLevel === 'RESTRICTED' ? 'bg-orange-50 text-orange-600' : 'bg-red-50 text-red-600'
                   }`}>{skill.securityLevel}</span>
                 </td>
                 <td className="px-4 py-2.5">

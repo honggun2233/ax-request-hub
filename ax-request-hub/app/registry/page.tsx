@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -61,7 +61,7 @@ function GateBar({ g1, g2, g3 }: { g1: boolean; g2: boolean; g3: boolean }) {
       {passed ? '✓' : '–'} {label}
     </span>
   )
-  return <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>{dot(g1, 'G1')}{dot(g2, 'G2')}{dot(g3, 'G3')}</div>
+  return <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>{dot(g1, 'PUBLIC')}{dot(g2, 'RESTRICTED')}{dot(g3, 'CONFIDENTIAL')}</div>
 }
 
 function FallbackBar({ rate }: { rate: number }) {

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     create: {
       docId, fileName, type, level: level || 'L2', title,
       version: version || 'v1.0', author: author || '',
-      approvedBy: approvedBy || '', securityLevel: securityLevel || 'G2',
+      approvedBy: approvedBy || '', securityLevel: securityLevel || 'RESTRICTED',
       status: status || 'active', description: description || '',
       relatedDocs: JSON.stringify(relatedDocs || []),
       approvedAt: approvedAt ? new Date(approvedAt) : null,
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     update: {
       fileName, type, level: level || 'L2', title,
       version: version || 'v1.0', author: author || '',
-      approvedBy: approvedBy || '', securityLevel: securityLevel || 'G2',
+      approvedBy: approvedBy || '', securityLevel: securityLevel || 'RESTRICTED',
       status: status || 'active', description: description || '',
       relatedDocs: JSON.stringify(relatedDocs || []),
       approvedAt: approvedAt ? new Date(approvedAt) : null,

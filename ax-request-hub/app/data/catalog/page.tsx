@@ -8,7 +8,7 @@ import { CONF_LABEL, CONF_COLOR } from '@/lib/confidentiality'
 interface DataAsset {
   id: string
   name: string
-  classification: 'G1' | 'G2' | 'G3'
+  classification: 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL'
   ownerDept: string
   updateCycle?: string
   deliveryModes?: string
@@ -338,7 +338,7 @@ export default function DataCatalogPage() {
   const [assets, setAssets] = useState<DataAsset[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [classFilter, setClassFilter] = useState<'' | 'G1' | 'G2' | 'G3'>('')
+  const [classFilter, setClassFilter] = useState<'' | 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL'>('')
   const [deptFilter, setDeptFilter] = useState('')
   const [modal, setModal] = useState<ModalState | null>(null)
 
@@ -415,7 +415,7 @@ export default function DataCatalogPage() {
       <div className="flex flex-wrap gap-3 items-center">
         {/* Classification chips */}
         <div className="flex gap-1.5">
-          {(['', 'G1', 'G2', 'G3'] as const).map(c => (
+          {(['', 'PUBLIC', 'RESTRICTED', 'CONFIDENTIAL'] as const).map(c => (
             <button
               key={c}
               onClick={() => setClassFilter(c)}

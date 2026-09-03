@@ -1,4 +1,4 @@
-export interface ApprovalDecision {
+﻿export interface ApprovalDecision {
   autoApproved: boolean
   reason: string
 }
@@ -31,10 +31,10 @@ const AUTO_APPROVE_THRESHOLD = 70
 const BORDERLINE_THRESHOLD = 68
 
 export function determineApproval(
-  confidentialityLevel: 'G1' | 'G2' | 'G3',
+  confidentialityLevel: 'PUBLIC' | 'RESTRICTED' | 'CONFIDENTIAL',
   totalScore: number
 ): ApprovalDecision {
-  if (confidentialityLevel === 'G3') {
+  if (confidentialityLevel === 'CONFIDENTIAL') {
     return {
       autoApproved: false,
       reason: 'G3 기밀(극비) AI 활용: 점수 무관 인표님 보고 필수',
