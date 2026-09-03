@@ -79,6 +79,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       hasDataClassification: project.techHasDataClassification,
       hasAuditLogging: project.techHasAuditLogging,
       hasTestCoverage: project.techHasTestCoverage,
+      hasDataQualityCheck: project.techHasDataQualityCheck,
+      hasHumanInLoop: project.techHasHumanInLoop,
     })
     await prisma.project.update({
       where: { id: project.id },
