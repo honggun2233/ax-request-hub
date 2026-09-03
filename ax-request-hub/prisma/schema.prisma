@@ -73,11 +73,13 @@ model ScoreCard {
 }
 
 model ChatSession {
-  id          String   @id @default(cuid())
-  projectId   String?  @unique
-  project     Project? @relation(fields: [projectId], references: [id])
+  id          String    @id @default(cuid())
+  projectId   String?   @unique
+  project     Project?  @relation(fields: [projectId], references: [id])
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id])
   messages    String
-  startedAt   DateTime @default(now())
+  startedAt   DateTime  @default(now())
   completedAt DateTime?
 }
 
@@ -121,6 +123,7 @@ model Employee {
   ownedAssets          DataAsset[]
   literacyEnrollments  LiteracyEnrollment[]
   policyLogs           PolicyDecisionLog[]
+  chatSessions         ChatSession[]
 }
 
 model DepartmentQuota {
