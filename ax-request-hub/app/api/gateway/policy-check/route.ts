@@ -33,14 +33,6 @@ export async function POST(request: Request) {
     }
 
     const cacheKey = `${agentId}:${employeeId}`
-    const cached = getCached(cacheKey)
-    if (cached) {
-      return NextResponse.json({
-        data: { decision: cached.decision, reason: cached.reason, warnings: [] },
-        message: "",
-        error: "",
-      })
-    }
 
     const agent = await prisma.agentRegistry.findUnique({ where: { id: agentId } })
 
@@ -161,6 +153,16 @@ export async function POST(request: Request) {
       })
     }
 
+    // 상태 체크 통과 — 비용 집계 전 캐시 확인 (사용량 집계 쿼리만 건너뜀)
+    const cached = getCached(cacheKey)
+    if (cached) {
+      return NextResponse.json({
+        data: { decision: cached.decision, reason: cached.reason, warnings: [] },
+        message: "",
+        error: "",
+      })
+    }
+
     const now = new Date()
     const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
 
@@ -180,8 +182,9 @@ export async function POST(request: Request) {
 
     if (tokenPolicy && tokenPolicy.monthlyLimit > 0) {
       const usagePct = Math.round((totalUsed / tokenPolicy.monthlyLimit) * 100)
-      if (usagePct >= 80) {
-        const reason = `사용량 ${usagePct}% 도달 (80% 경고)`
+      const warningThreshold = tokenPolicy.warningThreshold ?? 80
+      if (usagePct >= warningThreshold) {
+        const reason = `사용량 ${usagePct}% 도달 (${warningThreshold}% 경고)`
 
         prisma.policyDecisionLog
           .create({
