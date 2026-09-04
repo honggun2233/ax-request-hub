@@ -68,6 +68,25 @@ export async function POST(req: NextRequest) {
     },
   })
 
+  // riskType 3·4는 위원회 안건 자동 생성 (AI-GUI-001 제16조 — 고위험 등록 의무)
+  if (parsedRiskType !== null && parsedRiskType >= 3) {
+    await prisma.councilAgendaItem.create({
+      data: {
+        agentId: null,
+        projectId,
+        itemType: 'HIGH_RISK_REJECTION',
+        packageMeta: JSON.stringify({
+          reason: `riskType ${parsedRiskType} 고위험 에이전트 등록 신청`,
+          agentName,
+          description: description ?? '',
+          riskType: parsedRiskType,
+          requesterEmail: auth.user.email,
+          receivedAt: new Date().toISOString(),
+        }),
+      },
+    })
+  }
+
   return NextResponse.json(
     {
       message: '에이전트 등록 신청이 접수됐습니다. AX팀 검토 후 등록됩니다.',
