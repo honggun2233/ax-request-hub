@@ -48,6 +48,87 @@ function ProgressBar({ step }: { step: number }) {
   )
 }
 
+function PocRequestRow({ projectId }: { projectId: string }) {
+  const [open, setOpen] = useState(false)
+  const [agentId, setAgentId] = useState('')
+  const [sandboxEnv, setSandboxEnv] = useState('')
+  const [requestReason, setRequestReason] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null)
+
+  const submit = async (e: { preventDefault: () => void }) => {
+    e.preventDefault()
+    if (!agentId || !requestReason) return
+    setSubmitting(true); setResult(null)
+    try {
+      const res = await fetch(`/api/registry/${agentId}/sandbox-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sandboxEnv, requestReason }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? '요청 실패')
+      setResult({ ok: true, msg: json.message })
+      setOpen(false)
+    } catch (e: any) {
+      setResult({ ok: false, msg: e.message })
+    } finally { setSubmitting(false) }
+  }
+
+  const inputBase: React.CSSProperties = { width: '100%', fontSize: 12, padding: '6px 8px', border: '1px solid #E4E9F2', borderRadius: 4, boxSizing: 'border-box' }
+
+  return (
+    <div style={{ marginTop: -6, marginBottom: 4, paddingLeft: 2 }}>
+      {!open && (
+        <button onClick={() => setOpen(true)} style={{
+          fontSize: 11, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontWeight: 600,
+        }}>
+          + 샌드박스 PoC 요청 (GATE2 에이전트 연결)
+        </button>
+      )}
+      {result && !open && (
+        <p style={{ fontSize: 11, color: result.ok ? '#059669' : '#B94040', margin: '2px 0 0' }}>{result.msg}</p>
+      )}
+      {open && (
+        <form onSubmit={submit} style={{
+          background: 'rgba(79,70,229,.06)', border: '1px solid rgba(79,70,229,.2)',
+          borderRadius: 6, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8,
+        }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#4F46E5', margin: 0 }}>샌드박스 PoC 요청</p>
+          <p style={{ fontSize: 10, color: '#8898BB', margin: 0 }}>/registry에서 GATE2 상태 에이전트 ID를 확인 후 입력하세요.</p>
+          <div>
+            <label style={{ fontSize: 10, color: '#8898BB', display: 'block', marginBottom: 3 }}>에이전트 ID (AgentRegistry ID) *</label>
+            <input required value={agentId} onChange={e => setAgentId(e.target.value)}
+              placeholder="cuid 형식 ID" style={inputBase} />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, color: '#8898BB', display: 'block', marginBottom: 3 }}>샌드박스 환경 (선택)</label>
+            <input value={sandboxEnv} onChange={e => setSandboxEnv(e.target.value)}
+              placeholder="예: aws-landingzone-sandbox-01" style={inputBase} />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, color: '#8898BB', display: 'block', marginBottom: 3 }}>요청 사유 *</label>
+            <textarea required value={requestReason} onChange={e => setRequestReason(e.target.value)}
+              rows={2} placeholder="PoC를 통해 검증하려는 내용"
+              style={{ ...inputBase, resize: 'none' }} />
+          </div>
+          {result && <p style={{ fontSize: 11, color: '#B94040', margin: 0 }}>{result.msg}</p>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => setOpen(false)} style={{
+              flex: 1, padding: '7px', background: 'none', border: '1px solid #E4E9F2', borderRadius: 4, fontSize: 12, cursor: 'pointer', color: '#8898BB',
+            }}>취소</button>
+            <button type="submit" disabled={submitting} style={{
+              flex: 2, padding: '7px', background: '#4F46E5', color: '#fff', border: 'none', borderRadius: 4, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            }}>
+              {submitting ? '제출 중...' : 'PoC 요청 제출'}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
 export default function MyProjectsPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,34 +176,37 @@ export default function MyProjectsPage() {
         {projects.map((p) => {
           const info = STATUS_INFO[p.status] ?? { label: p.status, step: 0, color: MUTED }
           return (
-            <Link key={p.id} href={`/status/${p.id}`} style={{ textDecoration: 'none' }}>
-              <div
-                style={{ background: SURFACE, border: `1px solid ${LINE}`, borderRadius: 4, padding: '16px 20px', cursor: 'pointer', transition: 'border-color .15s' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(74,111,165,.35)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = LINE)}
-              >
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: TEXT, flex: 1, lineHeight: 1.4, margin: 0 }}>
-                    {p.title}
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                    {p.pendingAppeal && (
-                      <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 2, color: GOLD, background: 'rgba(184,149,106,.12)', border: '1px solid rgba(184,149,106,.3)' }}>
-                        이의제기
+            <div key={p.id}>
+              <Link href={`/status/${p.id}`} style={{ textDecoration: 'none' }}>
+                <div
+                  style={{ background: SURFACE, border: `1px solid ${LINE}`, borderRadius: 4, padding: '16px 20px', cursor: 'pointer', transition: 'border-color .15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(74,111,165,.35)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = LINE)}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                    <p style={{ fontSize: 14, fontWeight: 600, color: TEXT, flex: 1, lineHeight: 1.4, margin: 0 }}>
+                      {p.title}
+                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                      {p.pendingAppeal && (
+                        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 2, color: GOLD, background: 'rgba(184,149,106,.12)', border: '1px solid rgba(184,149,106,.3)' }}>
+                          이의제기
+                        </span>
+                      )}
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 2, color: info.color, background: `${info.color}1A`, border: `1px solid ${info.color}4D` }}>
+                        {info.label}
                       </span>
-                    )}
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 2, color: info.color, background: `${info.color}1A`, border: `1px solid ${info.color}4D` }}>
-                      {info.label}
-                    </span>
+                    </div>
                   </div>
+                  <ProgressBar step={info.step} />
+                  <p style={{ fontSize: 11, color: MUTED, marginTop: 10 }}>
+                    신청일 {new Date(p.createdAt).toLocaleDateString('ko-KR')}
+                    {p.department && <span style={{ marginLeft: 10 }}>· {p.department}</span>}
+                  </p>
                 </div>
-                <ProgressBar step={info.step} />
-                <p style={{ fontSize: 11, color: MUTED, marginTop: 10 }}>
-                  신청일 {new Date(p.createdAt).toLocaleDateString('ko-KR')}
-                  {p.department && <span style={{ marginLeft: 10 }}>· {p.department}</span>}
-                </p>
-              </div>
-            </Link>
+              </Link>
+              {['pilot', 'production'].includes(p.status) && <PocRequestRow projectId={p.id} />}
+            </div>
           )
         })}
       </div>

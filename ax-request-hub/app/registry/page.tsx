@@ -15,10 +15,11 @@ const DIM    = '#BEC8DC'
 const SB     = '#F7F9FC'
 
 const LIFECYCLE_STAGES = [
-  { key: 'DEVELOPING', label: '개발중',         color: 'rgba(136,152,187,.12)', text: '#5A6E8C',  border: 'rgba(136,152,187,.35)' },
-  { key: 'GATE1',      label: 'Gate1 QA',       color: 'rgba(74,111,165,.10)',  text: '#4A6FA5',  border: 'rgba(74,111,165,.35)' },
-  { key: 'GATE2',      label: 'Gate2 도메인',   color: 'rgba(217,119,6,.10)',   text: '#B45309',  border: 'rgba(217,119,6,.35)' },
-  { key: 'GATE3',      label: 'Gate3 스트레스', color: 'rgba(109,40,217,.10)',  text: '#7C3AED',  border: 'rgba(109,40,217,.30)' },
+  { key: 'DEVELOPING',  label: '개발중',         color: 'rgba(136,152,187,.12)', text: '#5A6E8C',  border: 'rgba(136,152,187,.35)' },
+  { key: 'GATE1',       label: 'Gate1 QA',       color: 'rgba(74,111,165,.10)',  text: '#4A6FA5',  border: 'rgba(74,111,165,.35)' },
+  { key: 'GATE2',       label: 'Gate2 도메인',   color: 'rgba(217,119,6,.10)',   text: '#B45309',  border: 'rgba(217,119,6,.35)' },
+  { key: 'SANDBOX_POC', label: 'Sandbox PoC',    color: 'rgba(79,70,229,.10)',   text: '#4F46E5',  border: 'rgba(79,70,229,.30)' },
+  { key: 'GATE3',       label: 'Gate3 스트레스', color: 'rgba(109,40,217,.10)',  text: '#7C3AED',  border: 'rgba(109,40,217,.30)' },
   { key: 'ACTIVE',     label: '운영중',          color: 'rgba(5,150,105,.10)',   text: '#059669',  border: 'rgba(5,150,105,.35)' },
   { key: 'DEGRADED',   label: '성능저하',        color: 'rgba(185,64,64,.10)',   text: '#B94040',  border: 'rgba(185,64,64,.35)' },
   { key: 'RETIRED',    label: '폐기',            color: 'rgba(190,200,220,.15)', text: '#8898BB',  border: '#E4E9F2' },
@@ -27,7 +28,8 @@ const LIFECYCLE_STAGES = [
 const STAGE_ACTIONS: Record<string, string> = {
   DEVELOPING: '개발 중. Gate1 진입 전 단계 — 기능 테스트 80% 이상, 데이터 플로우 다이어그램 작성 후 Gate1 신청.',
   GATE1:      'QA 검증 단계 — fallback율 ≤ 30%, 핵심 기능 정상 반환 확인 중.',
-  GATE2:      '도메인 리뷰 단계 — 담당 부서의 업무 적합성 검토 및 운용역/현업 신뢰점수 태깅 필요.',
+  GATE2:       '도메인 리뷰 단계 — 담당 부서의 업무 적합성 검토 및 운용역/현업 신뢰점수 태깅 필요. 완료 후 현업이 샌드박스 PoC를 요청합니다.',
+  SANDBOX_POC: 'AWS 샌드박스 환경에서 PoC 진행 중. 테스트 완료 후 결과 요약을 제출하면 GATE3로 자동 전환됩니다.',
   GATE3:      'QA 스트레스 테스트 단계 — 데이터 없음/이상값 처리 및 장시간 안정성 확인 중.',
   ACTIVE:     '정상 운영 중. 주간 KPI 및 fallback율 모니터링.',
   DEGRADED:   '⚠ 성능 저하 감지 — 즉시 점검 필요. fallback율 증가 또는 정확도 하락.',
@@ -35,7 +37,9 @@ const STAGE_ACTIONS: Record<string, string> = {
 }
 
 const NEXT_STAGE: Record<string, string> = {
-  DEVELOPING: 'GATE1', GATE1: 'GATE2', GATE2: 'GATE3', GATE3: 'ACTIVE', DEGRADED: 'RETIRED',
+  DEVELOPING: 'GATE1', GATE1: 'GATE2', GATE3: 'ACTIVE', DEGRADED: 'RETIRED',
+  // GATE2→SANDBOX_POC: sandbox-request API로 처리 (현업 요청 + AX팀 승인 흐름)
+  // SANDBOX_POC→GATE3: sandbox-complete API로 처리 (직접 advanceStage 불가)
 }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -349,6 +353,101 @@ function QwenRecommendPanel({ agentId, stage }: { agentId: string; stage: string
   )
 }
 
+// 샌드박스 심사 패널 (GATE2 단계 — 대기 중인 요청 승인/반려)
+function SandboxApprovePanel({ agentId, agent, onRefresh }: { agentId: string; agent: any; onRefresh: () => void }) {
+  const [rejectReason, setRejectReason] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const decide = async (decision: 'APPROVED' | 'REJECTED') => {
+    if (decision === 'REJECTED' && !rejectReason) { setError('반려 사유를 입력하세요.'); return }
+    setSaving(true); setError(null)
+    const res = await fetch(`/api/registry/${agentId}/sandbox-request`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision, rejectReason }),
+    })
+    setSaving(false)
+    if (!res.ok) { const err = await res.json(); setError(err.error ?? '처리 실패'); return }
+    onRefresh()
+  }
+
+  return (
+    <div>
+      <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 8 }}>샌드박스 PoC 요청 심사</p>
+      <div style={{ background: 'rgba(79,70,229,.06)', border: '1px solid rgba(79,70,229,.2)', borderRadius: 6, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: '#4F46E5', margin: 0 }}>심사 대기 중</p>
+        <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>요청 사유: {agent.sandboxRequestReason}</p>
+        {agent.sandboxEnv && <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>환경: {agent.sandboxEnv}</p>}
+        {error && <p style={{ fontSize: 11, color: '#B94040', margin: 0 }}>{error}</p>}
+        <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)}
+          placeholder="반려 시 사유 (승인 시 불필요)" rows={2}
+          style={{ fontSize: 12, padding: '6px 8px', border: `1px solid ${BDR}`, borderRadius: 4, resize: 'none' as const, width: '100%', boxSizing: 'border-box' as const }} />
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={() => decide('REJECTED')} disabled={saving} style={{
+            flex: 1, padding: '7px', background: 'none', border: '1px solid rgba(185,64,64,.4)', color: '#B94040', borderRadius: 4, fontSize: 11, cursor: 'pointer', fontWeight: 600,
+          }}>반려</button>
+          <button onClick={() => decide('APPROVED')} disabled={saving} style={{
+            flex: 2, padding: '7px', background: '#4F46E5', color: '#fff', border: 'none', borderRadius: 4, fontSize: 11, cursor: 'pointer', fontWeight: 600,
+          }}>{saving ? '처리 중...' : '승인 → SANDBOX_POC'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// PoC 완료 패널 (SANDBOX_POC 단계 — 결과 요약 제출 후 GATE3 전환)
+function SandboxCompletePanel({ agentId, agent, onRefresh }: { agentId: string; agent: any; onRefresh: () => void }) {
+  const [summary, setSummary] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const complete = async () => {
+    if (!summary) { setError('PoC 결과 요약은 필수입니다.'); return }
+    setSubmitting(true); setError(null)
+    const res = await fetch(`/api/registry/${agentId}/sandbox-complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pocResultSummary: summary }),
+    })
+    setSubmitting(false)
+    if (!res.ok) { const err = await res.json(); setError(err.error ?? '처리 실패'); return }
+    onRefresh()
+  }
+
+  return (
+    <div>
+      <p style={{ fontSize: 10, fontWeight: 700, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 8 }}>샌드박스 PoC 진행 중</p>
+      <div style={{ background: 'rgba(79,70,229,.06)', border: '1px solid rgba(79,70,229,.2)', borderRadius: 6, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div>
+          <p style={{ fontSize: 11, color: MUTED, margin: 0 }}>환경: {agent.sandboxEnv ?? '미지정'}</p>
+          <p style={{ fontSize: 11, color: MUTED, margin: '3px 0 0' }}>
+            승인: {agent.sandboxApprovedAt ? new Date(agent.sandboxApprovedAt).toLocaleDateString('ko-KR') : ''}
+          </p>
+          {agent.sandboxRequestReason && (
+            <p style={{ fontSize: 11, color: MUTED, margin: '3px 0 0' }}>요청 사유: {agent.sandboxRequestReason}</p>
+          )}
+        </div>
+        {error && <p style={{ fontSize: 11, color: '#B94040', margin: 0 }}>{error}</p>}
+        <div>
+          <label style={{ fontSize: 10, color: MUTED, display: 'block', marginBottom: 4 }}>PoC 결과 요약 *</label>
+          <textarea value={summary} onChange={e => setSummary(e.target.value)}
+            rows={3} placeholder="검증 결과, 발견된 이슈, GATE3 진입 근거"
+            style={{ width: '100%', fontSize: 12, padding: '6px 8px', border: `1px solid ${BDR}`, borderRadius: 4, resize: 'none' as const, boxSizing: 'border-box' as const }} />
+        </div>
+        <button onClick={complete} disabled={submitting || !summary} style={{
+          padding: '9px', background: submitting || !summary ? CARD2 : '#4F46E5',
+          color: submitting || !summary ? DIM : '#fff',
+          border: 'none', borderRadius: 4, fontSize: 12, fontWeight: 600,
+          cursor: submitting || !summary ? 'default' : 'pointer',
+        }}>
+          {submitting ? '처리 중...' : 'PoC 완료 선언 → GATE3 전환'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function SlideOver({ agent, allProjects, onClose, onStageChange }: {
   agent: any; allProjects: any[]; onClose: () => void; onStageChange: () => void
 }) {
@@ -607,6 +706,19 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
             </div>
           )}
 
+          {/* 샌드박스 PoC 패널 */}
+          {agent.lifecycleStage === 'GATE2' && isAxTeam && agent.sandboxRequestedAt && !agent.sandboxApprovedAt && (
+            <SandboxApprovePanel agentId={agent.id} agent={agent} onRefresh={onStageChange} />
+          )}
+          {agent.lifecycleStage === 'GATE2' && agent.sandboxRejectReason && (
+            <div style={{ background: 'rgba(185,64,64,.06)', border: '1px solid rgba(185,64,64,.3)', borderRadius: 6, padding: '10px 12px', fontSize: 11, color: '#B94040' }}>
+              샌드박스 반려: {agent.sandboxRejectReason}
+            </div>
+          )}
+          {agent.lifecycleStage === 'SANDBOX_POC' && (
+            <SandboxCompletePanel agentId={agent.id} agent={agent} onRefresh={onStageChange} />
+          )}
+
           {/* RETIRE_CANDIDATE 경고 배너 */}
           {agent.retireFlag && (
             <div style={{ borderRadius: 6, border: '1px solid rgba(185,64,64,.35)', background: 'rgba(185,64,64,.08)', padding: '12px 14px' }}>
@@ -649,7 +761,7 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
                 {saving ? '저장 중...' : '✓ ACTIVE 복구 (성능저하 해소)'}
               </button>
             )}
-            {nextStage && nextStage !== 'ACTIVE' && agent.lifecycleStage !== 'DEGRADED' && (
+            {nextStage && nextStage !== 'ACTIVE' && nextStage !== 'SANDBOX_POC' && agent.lifecycleStage !== 'SANDBOX_POC' && agent.lifecycleStage !== 'DEGRADED' && (
               <button disabled={saving} onClick={() => advanceStage(nextStage)} style={{
                 padding: '10px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
               }}>
