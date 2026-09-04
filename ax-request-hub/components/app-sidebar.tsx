@@ -5,7 +5,7 @@ import { signOut, useSession } from "next-auth/react";
 import {
   Home, Plus, ListChecks, Database, FileText, Star, Book,
   User, Wrench, Users, BarChart3, Cpu, Gavel, Coins,
-  Shield, LogOut, LayoutDashboard, Scale, GitFork,
+  Shield, LogOut, LayoutDashboard, GitFork,
   ChevronRight, MessageSquarePlus, FileSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -94,7 +94,6 @@ const NAV: NavGroup[] = [
       { href: "/executive",     label: "경영진 뷰",           icon: BarChart3 },
       { href: "/council",       label: "AI 위원회",           icon: Gavel },
       { href: "/registry",      label: "에이전트 레지스트리", icon: Cpu },
-      { href: "/admin/appeals", label: "이의제기",            icon: Scale },
       { href: "/admin/retired", label: "폐기 아카이브",       icon: Shield },
     ],
   },
@@ -112,10 +111,7 @@ const NAV: NavGroup[] = [
     title: "③ 토큰 관리",
     roles: ["AX_TEAM"],
     items: [
-      { href: "/admin/cost-dashboard",    label: "AI 비용 통합",    icon: BarChart3 },
-      { href: "/admin/tokens",            label: "토큰 현황",       icon: Coins },
-      { href: "/admin/distribution",      label: "서비스 배분",     icon: GitFork },
-      { href: "/admin/tools/quota-setup", label: "부서 계정 할당",  icon: Wrench },
+      { href: "/admin/token-management", label: "토큰 관리", icon: Coins },
     ],
   },
   // ── AX팀 — ④ 플랫폼 운영 ───────────────────────────
@@ -123,12 +119,10 @@ const NAV: NavGroup[] = [
     title: "④ 플랫폼 운영",
     roles: ["AX_TEAM"],
     items: [
-      { href: "/admin/employees", label: "직원 관리",   icon: Users },
-      { href: "/admin/literacy",  label: "리터러시 관리", icon: Star },
-      { href: "/admin/skills",    label: "스킬 관리",   icon: Star },
-      { href: "/admin/docs",          label: "문서 관리",     icon: Book },
-      { href: "/governance",          label: "감사 로그",     icon: Shield },
-      { href: "/governance/search",   label: "거버넌스 검색", icon: FileSearch },
+      { href: "/admin/employees",        label: "직원 관리",     icon: Users },
+      { href: "/admin/platform-settings",label: "플랫폼 설정",   icon: Star },
+      { href: "/governance",             label: "감사 로그",     icon: Shield },
+      { href: "/governance/search",      label: "거버넌스 검색", icon: FileSearch },
     ],
   },
 ];

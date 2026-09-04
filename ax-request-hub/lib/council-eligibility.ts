@@ -36,6 +36,7 @@ export async function checkProdEligibility(agentId: string): Promise<{ eligible:
     { key: "data", label: "과제 연결 + 데이터 제공 정상", passed: dataOk, detail: projectLinked ? `데이터 신청 ${dataRequests.length}건` : "과제 미연결" },
     { key: "gate2", label: "기밀등급 처리 이행 (Gate 2)", passed: gate2Ok },
     { key: "plan", label: "상용 운영 계획(KPI 목표) 등록", passed: planOk },
+    { key: "transparency", label: "고영향 AI 투명성 이행 (AI-GUI-002 제12조)", passed: !agent.isHighImpact || Boolean(agent.transparencyMethod) },
   ];
   return { eligible: checks.every((c) => c.passed), checks };
 }
