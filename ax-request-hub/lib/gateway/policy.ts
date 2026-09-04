@@ -53,7 +53,8 @@ export async function checkPolicy(agentId: string, employeeId: string): Promise<
       return { decision: 'BLOCK', reason: '폐기된 에이전트' }
     }
 
-    if (['GATE1', 'GATE2', 'GATE3'].includes(stage)) {
+    // SANDBOX_POC: 데이터 확보 후 PoC 진행 중인 단계 — 심의 미완료이므로 BLOCK (GATE2·GATE3와 동급)
+    if (['GATE1', 'GATE2', 'SANDBOX_POC', 'GATE3'].includes(stage)) {
       return { decision: 'BLOCK', reason: `심의 미통과 에이전트 (${stage})` }
     }
 
