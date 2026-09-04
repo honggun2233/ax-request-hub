@@ -55,6 +55,7 @@ model Project {
   dataRequests   DataRequest[]
   agentRegistries AgentRegistry[]
   appeals         ProjectAppeal[]
+  councilItems    CouncilAgendaItem[]
 }
 
 model ScoreCard {
@@ -589,13 +590,15 @@ model CouncilMeeting {
 }
 
 model CouncilAgendaItem {
-  id           String         @id @default(cuid())
-  meetingId    String
-  meeting      CouncilMeeting @relation(fields: [meetingId], references: [id])
-  agentId      String
-  agent        AgentRegistry  @relation(fields: [agentId], references: [id])
-  itemType     String         // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE | DATA_REQUEST
-  packageMeta  String         // 의회 패키지 스냅샷 (JSON)
+  id           String          @id @default(cuid())
+  meetingId    String?                                // nullable — 회의 배정 전 미할당 안건 허용
+  meeting      CouncilMeeting? @relation(fields: [meetingId], references: [id])
+  agentId      String?                                // nullable — Project 단계(AgentRegistry 생성 전) 안건 지원
+  agent        AgentRegistry?  @relation(fields: [agentId], references: [id])
+  projectId    String?                                // 신설 — HIGH_RISK_REJECTION 안건의 Project FK
+  project      Project?        @relation(fields: [projectId], references: [id])
+  itemType     String          // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE | DATA_REQUEST | HIGH_RISK_REJECTION
+  packageMeta  String          // 의회 패키지 스냅샷 (JSON)
   decision     String?        // CouncilDecision: APPROVED|CONDITIONAL|REMANDED|REJECTED|DEFERRED
   decisionNote String?
   conditions   String?        // JSON: [{condition, done, checkedBy}]
