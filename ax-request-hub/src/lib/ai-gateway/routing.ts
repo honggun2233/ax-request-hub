@@ -1,7 +1,19 @@
 import { gatewayComplete } from './gateway'
+import { checkPolicy } from '@/lib/gateway/policy'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import type { AIRequest, ProviderKey } from './types'
+
+/**
+ * Policy Gateway가 BLOCK 판정을 내렸을 때 던지는 에러.
+ * 호출부에서 catch { if (err instanceof PolicyBlockedError) ... } 로 처리.
+ */
+export class PolicyBlockedError extends Error {
+  constructor(public readonly reason: string) {
+    super(`[PolicyBlocked] ${reason}`)
+    this.name = 'PolicyBlockedError'
+  }
+}
 
 export type TaskType =
   | 'TIER1_PARSE'
@@ -48,6 +60,15 @@ function vendorToProvider(vendor: 'claude' | 'gpt' | 'gemini'): ProviderKey {
 }
 
 // 자동화 경로: classifyTask → Bedrock 실행 → GatewayCallLog 기록
+//
+// [신규 call site 컨벤션]
+// agentId + employeeId를 함께 넘기면 Policy Gateway 체크가 강제됨.
+// BLOCK 판정 시 PolicyBlockedError를 throw — 호출부에서 반드시 catch 처리할 것.
+//
+// [기존 4개 호출부 주의]
+// evaluation.ts, intake/synthesize: 거버넌스 프로세스 내부 → agentId 넘기지 말 것
+// consultation.ts ×2: /api/chat 라우트에서 이미 사전 체크됨 → agentId 넘기면
+//   callsSinceOverage 이중 카운트 버그 발생
 export async function gatewayCompleteRouted(
   req: AIRequest,
   options: {
@@ -55,9 +76,17 @@ export async function gatewayCompleteRouted(
     taskType?: TaskType
     projectId?: string
     employeeId?: string
+    agentId?: string       // 신규 — 있으면 Policy Gateway 체크 강제 (employeeId도 필수)
     overrideProvider?: ProviderKey  // 수동 override 시
   } = {}
 ) {
+  // Policy Gateway — agentId + employeeId 가 모두 있을 때만 체크
+  if (options.agentId && options.employeeId) {
+    const policy = await checkPolicy(options.agentId, options.employeeId)
+    if (policy.decision === 'BLOCK') {
+      throw new PolicyBlockedError(policy.reason)
+    }
+  }
   let provider: ProviderKey
 
   if (options.overrideProvider) {

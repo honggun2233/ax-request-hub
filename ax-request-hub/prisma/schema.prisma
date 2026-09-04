@@ -73,11 +73,13 @@ model ScoreCard {
 }
 
 model ChatSession {
-  id          String   @id @default(cuid())
-  projectId   String?  @unique
-  project     Project? @relation(fields: [projectId], references: [id])
+  id          String    @id @default(cuid())
+  projectId   String?   @unique
+  project     Project?  @relation(fields: [projectId], references: [id])
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id])
   messages    String
-  startedAt   DateTime @default(now())
+  startedAt   DateTime  @default(now())
   completedAt DateTime?
 }
 
@@ -120,6 +122,8 @@ model Employee {
   agentLinks           EmployeeAgentLink[]
   ownedAssets          DataAsset[]
   literacyEnrollments  LiteracyEnrollment[]
+  policyLogs           PolicyDecisionLog[]
+  chatSessions         ChatSession[]
 }
 
 model DepartmentQuota {
@@ -274,6 +278,13 @@ model UsageAlert {
   acknowledged Boolean  @default(false)
   sentAt       DateTime @default(now())
   createdAt    DateTime @default(now())
+
+  // Phase 2 — 유예·승인 관리
+  graceStartedAt      DateTime?
+  callsSinceOverage   Int       @default(0)
+  ownerApprovalStatus String    @default("PENDING") // PENDING | APPROVED | AUTO_BLOCKED
+  ownerRespondedAt    DateTime?
+  ownerRespondedBy    String?
 }
 
 // ?�?�?� Module 8: ?�기 ?�이?�트 거버?�스 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
@@ -471,6 +482,7 @@ model AgentRegistry {
   project       Project?            @relation(fields: [projectId], references: [id])
   dataLinks       AgentDataLink[]
   employeeLinks   EmployeeAgentLink[]
+  policyLogs    PolicyDecisionLog[]
 }
 
 // ?�?�?� ?�로?�트-?�이?�트 M:N 관�??�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
@@ -762,6 +774,22 @@ model GatewayCallLog {
 
   @@index([providerKey, createdAt])
   @@index([taskType, providerKey])
+}
+
+// 정책 판정 이력 (Policy Gateway Phase 2)
+model PolicyDecisionLog {
+  id         String   @id @default(cuid())
+  agentId    String
+  employeeId String
+  decision   String   // ALLOW | WARN | BLOCK
+  reason     String
+  checkedAt  DateTime @default(now())
+
+  agent    AgentRegistry @relation(fields: [agentId], references: [id])
+  employee Employee      @relation(fields: [employeeId], references: [id])
+
+  @@index([agentId, checkedAt])
+  @@index([employeeId, checkedAt])
 }
 
 // C트랙 — 비인간 호출자(배포 에이전트·배치) 인증 토큰
