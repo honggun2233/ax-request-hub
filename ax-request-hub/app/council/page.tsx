@@ -7,9 +7,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Gavel } from "lucide-react";
+import { Plus, Gavel, AlertTriangle } from "lucide-react";
 
 type Meeting = { id: string; meetingNo: number; heldAt: string; notes?: string; _count: { items: number } };
+type PendingItem = {
+  id: string;
+  itemType: string;
+  packageMeta: string;
+  project?: { id: string; title: string; requesterName: string; confidentialityLevel: string } | null;
+  createdAt?: string;
+};
 
 /**
  * AI 위원회 기록 (ADMIN 전용).
@@ -18,13 +25,21 @@ type Meeting = { id: string; meetingNo: number; heldAt: string; notes?: string; 
  */
 export default function CouncilPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
   const [open, setOpen] = useState(false);
   const [heldAt, setHeldAt] = useState("");
   const [notes, setNotes] = useState("");
 
   const load = async () => {
-    const res = await fetch("/api/council/meetings");
-    if (res.ok) setMeetings(await res.json());
+    const [meetRes, agendaRes] = await Promise.all([
+      fetch("/api/council/meetings"),
+      fetch("/api/council/agenda"),
+    ]);
+    if (meetRes.ok) setMeetings(await meetRes.json());
+    if (agendaRes.ok) {
+      const items: PendingItem[] = await agendaRes.json();
+      setPendingItems(items.filter((i) => i.itemType === "HIGH_RISK_REJECTION" && !("meetingId" in i && (i as any).meetingId)));
+    }
   };
   useEffect(() => { load(); }, []);
 
@@ -70,9 +85,52 @@ export default function CouncilPage() {
         </Dialog>
       </div>
 
-      {meetings.length === 0 && (
+      {/* 고위험 검토 대기 안건 */}
+      {pendingItems.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+            <AlertTriangle className="h-4 w-4" />
+            검토 대기 — CONFIDENTIAL / 고위험 안건 ({pendingItems.length}건)
+          </div>
+          {pendingItems.map((item) => {
+            const meta = (() => { try { return JSON.parse(item.packageMeta); } catch { return {}; } })();
+            return (
+              <Card key={item.id} className="border-destructive/40 bg-destructive/5">
+                <CardContent className="py-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-0.5">
+                      <p className="font-medium text-sm">
+                        {item.project?.title ?? meta.agentName ?? "제목 없음"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        신청자: {item.project?.requesterName ?? meta.requesterEmail ?? "—"}
+                        {meta.reason ? ` · 사유: ${meta.reason}` : ""}
+                      </p>
+                      {meta.receivedAt && (
+                        <p className="text-xs text-muted-foreground">
+                          접수: {new Date(meta.receivedAt).toLocaleString("ko-KR")}
+                        </p>
+                      )}
+                    </div>
+                    <span className="shrink-0 rounded-full bg-destructive/15 px-2 py-0.5 text-xs text-destructive font-medium">
+                      미배정
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {meetings.length === 0 && pendingItems.length === 0 && (
         <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">
           등록된 회의가 없습니다. 첫 회의를 등록하세요.
+        </CardContent></Card>
+      )}
+      {meetings.length === 0 && pendingItems.length > 0 && (
+        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">
+          등록된 회의가 없습니다. 위 안건을 회의에 배정하려면 회의를 먼저 등록하세요.
         </CardContent></Card>
       )}
 
