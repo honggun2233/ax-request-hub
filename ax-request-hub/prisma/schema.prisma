@@ -55,6 +55,7 @@ model Project {
   dataRequests   DataRequest[]
   agentRegistries AgentRegistry[]
   appeals         ProjectAppeal[]
+  councilItems    CouncilAgendaItem[]
 }
 
 model ScoreCard {
@@ -73,11 +74,13 @@ model ScoreCard {
 }
 
 model ChatSession {
-  id          String   @id @default(cuid())
-  projectId   String?  @unique
-  project     Project? @relation(fields: [projectId], references: [id])
+  id          String    @id @default(cuid())
+  projectId   String?   @unique
+  project     Project?  @relation(fields: [projectId], references: [id])
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id])
   messages    String
-  startedAt   DateTime @default(now())
+  startedAt   DateTime  @default(now())
   completedAt DateTime?
 }
 
@@ -120,6 +123,8 @@ model Employee {
   agentLinks           EmployeeAgentLink[]
   ownedAssets          DataAsset[]
   literacyEnrollments  LiteracyEnrollment[]
+  policyLogs           PolicyDecisionLog[]
+  chatSessions         ChatSession[]
 }
 
 model DepartmentQuota {
@@ -274,6 +279,13 @@ model UsageAlert {
   acknowledged Boolean  @default(false)
   sentAt       DateTime @default(now())
   createdAt    DateTime @default(now())
+
+  // Phase 2 — 유예·승인 관리
+  graceStartedAt      DateTime?
+  callsSinceOverage   Int       @default(0)
+  ownerApprovalStatus String    @default("PENDING") // PENDING | APPROVED | AUTO_BLOCKED
+  ownerRespondedAt    DateTime?
+  ownerRespondedBy    String?
 }
 
 // ?�?�?� Module 8: ?�기 ?�이?�트 거버?�스 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
@@ -471,6 +483,7 @@ model AgentRegistry {
   project       Project?            @relation(fields: [projectId], references: [id])
   dataLinks       AgentDataLink[]
   employeeLinks   EmployeeAgentLink[]
+  policyLogs    PolicyDecisionLog[]
 }
 
 // ?�?�?� ?�로?�트-?�이?�트 M:N 관�??�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�
@@ -577,13 +590,15 @@ model CouncilMeeting {
 }
 
 model CouncilAgendaItem {
-  id           String         @id @default(cuid())
-  meetingId    String
-  meeting      CouncilMeeting @relation(fields: [meetingId], references: [id])
-  agentId      String
-  agent        AgentRegistry  @relation(fields: [agentId], references: [id])
-  itemType     String         // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE | DATA_REQUEST
-  packageMeta  String         // 의회 패키지 스냅샷 (JSON)
+  id           String          @id @default(cuid())
+  meetingId    String?                                // nullable — 회의 배정 전 미할당 안건 허용
+  meeting      CouncilMeeting? @relation(fields: [meetingId], references: [id])
+  agentId      String?                                // nullable — Project 단계(AgentRegistry 생성 전) 안건 지원
+  agent        AgentRegistry?  @relation(fields: [agentId], references: [id])
+  projectId    String?                                // 신설 — HIGH_RISK_REJECTION 안건의 Project FK
+  project      Project?        @relation(fields: [projectId], references: [id])
+  itemType     String          // PROD_APPROVAL | RETIRE_APPROVAL | MAJOR_CHANGE | DATA_REQUEST | HIGH_RISK_REJECTION
+  packageMeta  String          // 의회 패키지 스냅샷 (JSON)
   decision     String?        // CouncilDecision: APPROVED|CONDITIONAL|REMANDED|REJECTED|DEFERRED
   decisionNote String?
   conditions   String?        // JSON: [{condition, done, checkedBy}]
@@ -762,6 +777,22 @@ model GatewayCallLog {
 
   @@index([providerKey, createdAt])
   @@index([taskType, providerKey])
+}
+
+// 정책 판정 이력 (Policy Gateway Phase 2)
+model PolicyDecisionLog {
+  id         String   @id @default(cuid())
+  agentId    String
+  employeeId String
+  decision   String   // ALLOW | WARN | BLOCK
+  reason     String
+  checkedAt  DateTime @default(now())
+
+  agent    AgentRegistry @relation(fields: [agentId], references: [id])
+  employee Employee      @relation(fields: [employeeId], references: [id])
+
+  @@index([agentId, checkedAt])
+  @@index([employeeId, checkedAt])
 }
 
 // C트랙 — 비인간 호출자(배포 에이전트·배치) 인증 토큰

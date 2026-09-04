@@ -38,6 +38,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       totalScore: 0,
       isAutoApproved: false,
     })
+
+    // 위원회 안건 자동 생성 — 미배정(meetingId: null) 상태로 접수
+    await prisma.councilAgendaItem.create({
+      data: {
+        agentId: null,
+        projectId: project.id,
+        itemType: 'HIGH_RISK_REJECTION',
+        packageMeta: JSON.stringify({
+          reason: 'CONFIDENTIAL 등급',
+          projectTitle: project.title,
+          requesterName: project.requesterName,
+          requesterEmail: project.requesterEmail,
+          receivedAt: new Date().toISOString(),
+        }),
+      },
+    })
+
     const axTeamMembers = await prisma.employee.findMany({
       where: { role: 'AX_TEAM', isActive: true },
       select: { email: true },
@@ -45,14 +62,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     for (const member of axTeamMembers) {
       await notify(
         member.email,
-        `[G3 수동검토 필요] ${project.title}`,
-        `G3(극비) 기밀 등급 AI 활용으로 자동 평가가 생략되었습니다. AX팀 수동 검토가 필요합니다.`,
+        `[CONFIDENTIAL 수동검토 필요] ${project.title}`,
+        `CONFIDENTIAL 등급 AI 활용으로 자동 평가가 생략되었습니다. AX팀 전체 수동 검토가 필요합니다.`,
         `/admin?projectId=${project.id}`
       )
     }
     return NextResponse.json({
       skipped: true,
-      reason: 'CONFIDENTIAL(기밀·극비) AI 활용 — Claude API 평가 생략, AX팀 수동 검토 필요',
+      reason: 'CONFIDENTIAL 등급: AI 평가 생략, AX팀 전체 수동 검토 필요',
       status: 'evaluated',
     })
   }

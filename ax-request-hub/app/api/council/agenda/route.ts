@@ -25,10 +25,13 @@ export async function GET(req: Request) {
   }
   const items = await prisma.councilAgendaItem.findMany({
     where: { decision: null },
-    include: { agent: true, meeting: true },
+    include: { agent: true, meeting: true, project: true },
   });
   return NextResponse.json(
-    items.map((i) => ({ ...i, agent: { ...i.agent, name: displayName(i.agent) } }))
+    items.map((i) => ({
+      ...i,
+      agent: i.agent ? { ...i.agent, name: displayName(i.agent) } : null,
+    }))
   );
 }
 
