@@ -88,9 +88,9 @@ export async function PATCH(
     transparencyMethod,
     transparencyAppliedAt,
     transparencyExceptionNote,
-    // 기존 필드
+    // 기존 필드 — lifecycleStage는 의도적으로 제외: 라이프사이클 전환은 PATCH /api/registry(게이트 검증 있음)로만 허용
     phase, devStage, prodStatus, trustScore, pilotKpiTarget, prodKpiTarget,
-    owner, projectId, lifecycleStage,
+    owner, projectId,
   } = body;
 
   const updated = await prisma.agentRegistry.update({
@@ -111,7 +111,6 @@ export async function PATCH(
       ...(prodKpiTarget !== undefined && { prodKpiTarget }),
       ...(owner !== undefined && { owner }),
       ...(projectId !== undefined && { projectId }),
-      ...(lifecycleStage !== undefined && { lifecycleStage }),
     },
     select: {
       id: true, agentName: true, phase: true, devStage: true, prodStatus: true,
