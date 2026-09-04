@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
 import { linkAgentToRegistry } from '@/src/lib/agent-registry-link'
+import { buildGate3UpdateData } from '@/src/lib/gate-transitions'
 
-const LIFECYCLE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'GATE3', 'ACTIVE', 'DEGRADED', 'RETIRED']
+const LIFECYCLE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'SANDBOX_POC', 'GATE3', 'ACTIVE', 'DEGRADED', 'RETIRED']
 
 export async function GET() {
   const auth = await requireRole()
@@ -104,8 +105,17 @@ export async function PATCH(req: NextRequest) {
     updateData.gate1PassedAt = now
   }
   if (lifecycleStage === 'GATE3') {
-    updateData.gate3Passed = true
-    updateData.gate3PassedAt = now
+    const current = await prisma.agentRegistry.findUnique({
+      where: { id },
+      select: { lifecycleStage: true, sandboxCompletedAt: true },
+    })
+    if (current?.lifecycleStage !== 'SANDBOX_POC' || !current.sandboxCompletedAt) {
+      return NextResponse.json(
+        { error: 'SANDBOX_POC 단계에서 PoC를 완료해야 GATE3로 전환할 수 있습니다.' },
+        { status: 422 }
+      )
+    }
+    Object.assign(updateData, buildGate3UpdateData(now))
   }
   if (lifecycleStage === 'DEGRADED') updateData.degradedSince = now
   if (lifecycleStage === 'RETIRED') { updateData.retiredAt = now; updateData.retireReason = retireReason }

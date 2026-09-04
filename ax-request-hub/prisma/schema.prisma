@@ -475,6 +475,16 @@ model AgentRegistry {
   transparencyAppliedAt     DateTime?
   transparencyExceptionNote String?
 
+  // 샌드박스 PoC (Phase 신규 — GATE2 이후 GATE3 진입 전 단계)
+  sandboxRequestedAt   DateTime?
+  sandboxRequestReason String?
+  sandboxEnv           String?    // 실제 AWS 계정/환경 식별자 (예: "aws-landingzone-sandbox-01")
+  sandboxApprovedBy    String?
+  sandboxApprovedAt    DateTime?
+  sandboxRejectReason  String?
+  sandboxCompletedAt   DateTime?
+  pocResultSummary     String?    // PoC 결과 요약 — GATE3 심사 근거
+
   legacyAgent      Agent?         @relation("AgentRegistryLink")
 
   scores        AgentScore[]
