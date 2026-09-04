@@ -37,7 +37,7 @@ export function determineApproval(
   if (confidentialityLevel === 'CONFIDENTIAL') {
     return {
       autoApproved: false,
-      reason: 'G3 기밀(극비) AI 활용: 점수 무관 인표님 보고 필수',
+      reason: 'CONFIDENTIAL 등급: AI 평가 생략, AX팀 전체 수동 검토 필요',
     }
   }
   if (totalScore >= AUTO_APPROVE_THRESHOLD) {
@@ -54,6 +54,6 @@ export function determineApproval(
   }
   return {
     autoApproved: false,
-    reason: `점수 미달 (${totalScore}점 < ${AUTO_APPROVE_THRESHOLD}점): 인표님 보고`,
+    reason: `점수 미달 (${totalScore}점 < ${AUTO_APPROVE_THRESHOLD}점): AX팀 검토 필요`,
   }
 }

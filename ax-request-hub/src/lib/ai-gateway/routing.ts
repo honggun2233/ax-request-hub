@@ -18,7 +18,6 @@ export class PolicyBlockedError extends Error {
 export type TaskType =
   | 'TIER1_PARSE'
   | 'CONSULTATION_CONTINUE'
-  | 'GATE1_REVIEW'
   | 'GATE2_REVIEW'
   | 'GATE3_RATIONALE'
   | 'KPI_EVAL'
