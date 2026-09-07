@@ -49,6 +49,94 @@ function ProgressBar({ step }: { step: number }) {
   )
 }
 
+function HandoverRequestRow({ projectId, projectTitle, onSuccess }: { projectId: string; projectTitle: string; onSuccess: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [note, setNote] = useState('')
+  const [demoUrl, setDemoUrl] = useState('')
+  const [inputOutputSpec, setInputOutputSpec] = useState('')
+  const [repoUrl, setRepoUrl] = useState('')
+  const [dataClassification, setDataClassification] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const inputBase: React.CSSProperties = { width: '100%', fontSize: 12, padding: '6px 8px', border: '1px solid #E4E9F2', borderRadius: 4, boxSizing: 'border-box' }
+
+  const submit = async (e: { preventDefault: () => void }) => {
+    e.preventDefault()
+    setSubmitting(true); setError(null)
+    try {
+      const artifacts = { demoUrl, inputOutputSpec, repoUrl, dataClassification }
+      const res = await fetch(`/api/projects/${projectId}/handover`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note, artifacts }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error ?? '요청 실패')
+      setOpen(false)
+      onSuccess()
+    } catch (e: any) {
+      setError(e.message)
+    } finally { setSubmitting(false) }
+  }
+
+  return (
+    <div style={{ marginTop: 8, paddingLeft: 2 }}>
+      {!open && (
+        <button onClick={() => setOpen(true)} style={{
+          fontSize: 11, color: '#059669', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontWeight: 600,
+        }}>
+          + 인수 신청 (PoC 완료 → AX팀 정식 검토 요청)
+        </button>
+      )}
+      {open && (
+        <form onSubmit={submit} style={{
+          background: 'rgba(5,150,105,.06)', border: '1px solid rgba(5,150,105,.25)',
+          borderRadius: 6, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 8,
+        }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#059669', margin: 0 }}>인수 신청 — {projectTitle}</p>
+          <p style={{ fontSize: 10, color: MUTED, margin: 0 }}>AI-STD-2026-006 Phase 1 완료 기준 제출물을 입력하세요.</p>
+          <div>
+            <label style={{ fontSize: 10, color: MUTED, display: 'block', marginBottom: 3 }}>기능 시연 링크/설명 *</label>
+            <input required value={demoUrl} onChange={e => setDemoUrl(e.target.value)}
+              placeholder="https://... 또는 시연 설명" style={inputBase} />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, color: MUTED, display: 'block', marginBottom: 3 }}>입출력 명세 문서 링크 *</label>
+            <input required value={inputOutputSpec} onChange={e => setInputOutputSpec(e.target.value)}
+              placeholder="https://..." style={inputBase} />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, color: MUTED, display: 'block', marginBottom: 3 }}>버전 관리 저장소 URL *</label>
+            <input required value={repoUrl} onChange={e => setRepoUrl(e.target.value)}
+              placeholder="https://github.com/..." style={inputBase} />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, color: MUTED, display: 'block', marginBottom: 3 }}>기밀등급 명시 문서 링크 *</label>
+            <input required value={dataClassification} onChange={e => setDataClassification(e.target.value)}
+              placeholder="https://... 또는 설명" style={inputBase} />
+          </div>
+          <div>
+            <label style={{ fontSize: 10, color: MUTED, display: 'block', marginBottom: 3 }}>인수 메모 (선택)</label>
+            <textarea value={note} onChange={e => setNote(e.target.value)}
+              rows={2} placeholder="추가 전달 사항"
+              style={{ ...inputBase, resize: 'none' }} />
+          </div>
+          {error && <p style={{ fontSize: 11, color: '#B94040', margin: 0 }}>{error}</p>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => setOpen(false)} style={{
+              flex: 1, padding: '7px', background: 'none', border: '1px solid #E4E9F2', borderRadius: 4, fontSize: 12, cursor: 'pointer', color: MUTED,
+            }}>취소</button>
+            <button type="submit" disabled={submitting} style={{
+              flex: 2, padding: '7px', background: '#059669', border: 'none', borderRadius: 4, fontSize: 12, fontWeight: 600, color: '#fff', cursor: submitting ? 'not-allowed' : 'pointer', opacity: submitting ? .6 : 1,
+            }}>{submitting ? '신청 중…' : '인수 신청하기'}</button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
 function PocRequestRow({ projectId }: { projectId: string }) {
   const [open, setOpen] = useState(false)
   const [agentId, setAgentId] = useState('')
@@ -143,13 +231,15 @@ export default function MyProjectsPage() {
     })
   }
 
-  useEffect(() => {
+  const loadProjects = () => {
     fetch("/api/projects?mine=1")
       .then((r) => r.ok ? r.json() : [])
       .then((data) => setProjects(Array.isArray(data) ? data : []))
       .catch(() => setProjects([]))
       .finally(() => setLoading(false));
-  }, []);
+  }
+
+  useEffect(() => { loadProjects() }, []);
 
   return (
     <div style={{ color: TEXT, maxWidth: 720, margin: '0 auto' }}>
@@ -242,6 +332,14 @@ export default function MyProjectsPage() {
                 </div>
               )}
               {['pilot', 'production'].includes(p.status) && <PocRequestRow projectId={p.id} />}
+              {p.status === 'pilot' && !p.handoverRequestedAt && (
+                <HandoverRequestRow projectId={p.id} projectTitle={p.title} onSuccess={loadProjects} />
+              )}
+              {p.handoverRequestedAt && (
+                <div style={{ fontSize: 11, color: '#059669', marginTop: 8, paddingLeft: 2 }}>
+                  ✓ 인수 신청 완료 ({new Date(p.handoverRequestedAt).toLocaleDateString('ko-KR')})
+                </div>
+              )}
             </div>
           )
         })}
