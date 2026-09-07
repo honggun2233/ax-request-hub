@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { ScoreCard } from '@/src/components/ScoreCard'
 
 const SURFACE = '#FFFFFF'
 const BG      = '#F7F9FC'
@@ -132,6 +133,15 @@ function PocRequestRow({ projectId }: { projectId: string }) {
 export default function MyProjectsPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedScores, setExpandedScores] = useState<Set<string>>(new Set())
+
+  function toggleScore(id: string) {
+    setExpandedScores(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   useEffect(() => {
     fetch("/api/projects?mine=1")
@@ -205,6 +215,32 @@ export default function MyProjectsPage() {
                   </p>
                 </div>
               </Link>
+              {p.scoreCard && (
+                <div style={{ marginTop: 2 }}>
+                  <button
+                    onClick={e => { e.preventDefault(); toggleScore(p.id) }}
+                    style={{ fontSize: 11, color: BLUE, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', fontWeight: 600 }}
+                  >
+                    {expandedScores.has(p.id) ? '▲ 평가 결과 닫기' : '▼ AI 평가 결과 보기'}
+                  </button>
+                  {expandedScores.has(p.id) && (
+                    <div style={{ marginTop: 6 }}>
+                      <ScoreCard
+                        impactScore={p.scoreCard.impactScore}
+                        roiScore={p.scoreCard.roiScore}
+                        confidentialityScore={p.scoreCard.confidentialityScore}
+                        difficultyScore={p.scoreCard.difficultyScore}
+                        readinessScore={p.scoreCard.readinessScore}
+                        strategyScore={p.scoreCard.strategyScore}
+                        totalScore={p.scoreCard.totalScore}
+                        evaluationRationale={p.scoreCard.evaluationRationale}
+                        techStandardsPassed={p.techStandardsPassed}
+                        techStandardsFailedItems={p.techStandardsFailedItems}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
               {['pilot', 'production'].includes(p.status) && <PocRequestRow projectId={p.id} />}
             </div>
           )
