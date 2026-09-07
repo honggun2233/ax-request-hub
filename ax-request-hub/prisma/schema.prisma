@@ -485,6 +485,10 @@ model AgentRegistry {
   sandboxCompletedAt   DateTime?
   pocResultSummary     String?    // PoC 결과 요약 — GATE3 심사 근거
 
+  // 공통 시스템 에이전트 분류
+  isSystemAgent    Boolean  @default(false)
+  commonAgentType  String?  // REQ_ANALYSIS | ARCH_DESIGN | CODE_GEN | CODE_REVIEW | TEST_GEN
+
   legacyAgent      Agent?         @relation("AgentRegistryLink")
 
   scores        AgentScore[]

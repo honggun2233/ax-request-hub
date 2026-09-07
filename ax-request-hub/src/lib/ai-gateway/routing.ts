@@ -23,6 +23,11 @@ export type TaskType =
   | 'KPI_EVAL'
   | 'SYNTHESIZE'
   | 'GENERAL'
+  | 'REQ_ANALYSIS'
+  | 'ARCH_DESIGN'
+  | 'CODE_GEN'
+  | 'CODE_REVIEW'
+  | 'TEST_GEN'
 
 export interface ClassifyResult {
   vendor: 'claude' | 'gpt' | 'gemini'
