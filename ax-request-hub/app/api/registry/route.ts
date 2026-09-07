@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
-import { linkAgentToRegistry } from '@/src/lib/agent-registry-link'
 import { buildGate3UpdateData } from '@/src/lib/gate-transitions'
+import { activateAgent } from '@/src/lib/agent-activation'
 
 const LIFECYCLE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'SANDBOX_POC', 'GATE3', 'ACTIVE', 'DEGRADED', 'RETIRED']
 
@@ -93,13 +94,6 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  if (lifecycleStage === 'ACTIVE' && operatorTrustScore) {
-    updateData.gate2Passed = true
-    updateData.gate2PassedAt = now
-    updateData.operatorTrustScore = operatorTrustScore
-    updateData.operatorComment = operatorComment
-    updateData.sam30dAccuracy = sam30dAccuracy
-  }
   if (lifecycleStage === 'GATE1') {
     updateData.gate1Passed = true
     updateData.gate1PassedAt = now
@@ -122,23 +116,11 @@ export async function PATCH(req: NextRequest) {
 
   const agent = await prisma.agentRegistry.update({ where: { id }, data: updateData })
 
-  // ACTIVE 전환 시 연결 과제 status → 'production' 동기화 + Agent.agentRegistryId 자동 세팅
-  if (lifecycleStage === 'ACTIVE' && agent.projectId) {
-    await prisma.project.update({
-      where: { id: agent.projectId },
-      data: { status: 'production' },
-    }).catch(() => {})
-
-    // 같은 이름의 Agent 레코드에 agentRegistryId 연결
-    const linkedAgent = await prisma.agent.findFirst({
-      where: { name: agent.agentName, agentRegistryId: null },
-    })
-    if (linkedAgent) {
-      await prisma.$transaction(async (tx) => {
-        await linkAgentToRegistry(tx, linkedAgent.id, agent.id)
-      }).catch(() => {})
-    }
+  // ACTIVE 전환 — activateAgent 공용 함수로 gate2Passed·project동기화·Agent연결 처리
+  if (lifecycleStage === 'ACTIVE') {
+    await activateAgent(prisma as unknown as Prisma.TransactionClient, id, { operatorTrustScore, operatorComment, sam30dAccuracy })
   }
+
   // RETIRED 전환 시 연결 과제 status → 'closed' 동기화 + 데이터 제공 전건 회수 (v3 §9-3)
   if (lifecycleStage === 'RETIRED' && agent.projectId) {
     await prisma.project.update({

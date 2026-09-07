@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/authz";
 import { notify, NotifyEvent } from "@/lib/notify";
 import { displayName } from "@/lib/council-eligibility";
+import { activateAgent } from "@/src/lib/agent-activation";
 
 /**
  * 오프라인 협의회 의결 결과 입력 (AX팀 간사).
@@ -28,27 +29,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   });
   if (!item) return NextResponse.json({ error: "안건을 찾을 수 없습니다" }, { status: 404 });
   if (item.decision) return NextResponse.json({ error: "이미 의결된 안건입니다" }, { status: 409 });
+  if (!item.agentId) return NextResponse.json({ error: "안건에 에이전트가 연결되지 않았습니다" }, { status: 422 });
+  // include: { agent: true } — agentId가 있으면 agent도 항상 존재
+  const agent = item.agent!;
+  const agentId = item.agentId;
 
   const now = new Date();
-  const agentUpdate = (() => {
-    if (item.itemType === "PROD_APPROVAL") {
-      switch (decision) {
-        case "APPROVED":
-          return { phase: "PRODUCTION", devStage: null, prodStatus: "ACTIVE",
-                   productionAt: now, ...(prodKpiTarget && { prodKpiTarget: JSON.stringify(prodKpiTarget) }) };
-        case "CONDITIONAL": return { devStage: "COND_APPROVED" };
-        case "REMANDED":    return { devStage: "GATE3" };
-        case "REJECTED":    return { phase: "CLOSED", devStage: "DEV_REJECTED" };
-        default:            return {}; // DEFERRED — COUNCIL_PENDING 유지
-      }
-    }
-    if (item.itemType === "RETIRE_APPROVAL" && decision === "APPROVED")
-      return { prodStatus: "DEPRECATED", retireFlag: false }; // 30일 예고 시작
-    return {};
-  })();
 
-  await prisma.$transaction([
-    prisma.councilAgendaItem.update({
+  await prisma.$transaction(async (tx) => {
+    await tx.councilAgendaItem.update({
       where: { id: item.id },
       data: {
         decision, decisionNote: decisionNote ?? null,
@@ -57,34 +46,59 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           : null,
         decidedAt: now,
       },
-    }),
-    ...(Object.keys(agentUpdate).length
-      ? [prisma.agentRegistry.update({ where: { id: item.agentId }, data: agentUpdate })]
-      : []),
-    // PROD_APPROVAL 승인 → 연결 과제 status 동기화
-    ...(item.itemType === "PROD_APPROVAL" && decision === "APPROVED" && item.agent.projectId
-      ? [prisma.project.update({ where: { id: item.agent.projectId }, data: { status: "production" } })]
-      : []),
-    // PROD_APPROVAL 최종 반려 → 연결 과제 status 동기화
-    ...(item.itemType === "PROD_APPROVAL" && decision === "REJECTED" && item.agent.projectId
-      ? [prisma.project.update({ where: { id: item.agent.projectId }, data: { status: "closed" } })]
-      : []),
-    prisma.auditLog.create({
+    });
+
+    if (item.itemType === "PROD_APPROVAL") {
+      switch (decision) {
+        case "APPROVED":
+          // activateAgent: lifecycleStage·gate2·project동기화·Agent연결 일괄 처리
+          await activateAgent(tx, agentId);
+          // activateAgent 범위 밖 필드(phase·devStage·prodStatus·productionAt·prodKpiTarget) 별도 갱신
+          await tx.agentRegistry.update({
+            where: { id: agentId },
+            data: {
+              phase: "PRODUCTION",
+              devStage: null,
+              prodStatus: "ACTIVE",
+              productionAt: now,
+              ...(prodKpiTarget && { prodKpiTarget: JSON.stringify(prodKpiTarget) }),
+            },
+          });
+          break;
+        case "CONDITIONAL":
+          await tx.agentRegistry.update({ where: { id: agentId }, data: { devStage: "COND_APPROVED" } });
+          break;
+        case "REMANDED":
+          await tx.agentRegistry.update({ where: { id: agentId }, data: { devStage: "GATE3" } });
+          break;
+        case "REJECTED":
+          await tx.agentRegistry.update({ where: { id: agentId }, data: { phase: "CLOSED", devStage: "DEV_REJECTED" } });
+          if (agent.projectId) {
+            await tx.project.update({ where: { id: agent.projectId }, data: { status: "closed" } });
+          }
+          break;
+        // DEFERRED — COUNCIL_PENDING 유지, 변경 없음
+      }
+    } else if (item.itemType === "RETIRE_APPROVAL" && decision === "APPROVED") {
+      await tx.agentRegistry.update({ where: { id: agentId }, data: { prodStatus: "DEPRECATED", retireFlag: false } }); // 30일 예고 시작
+    }
+
+    await tx.auditLog.create({
       data: {
         entityType: "AgentRegistry",
-        entityId: item.agentId,
+        entityId: agentId,
         action: "COUNCIL_DECISION",
         actorEmail: auth.user.email,
         detail: JSON.stringify({ agendaItemId: item.id, itemType: item.itemType, decision, decisionNote }),
       },
-    }),
-  ]);
+    });
+  });
 
   // 신청자 알림 — Project.requesterEmail 기준. 상용 전환 시 데이터 상용 재승인 안내 (v3 §10-4)
-  if (item.agent.projectId) {
-    const project = await prisma.project.findUnique({ where: { id: item.agent.projectId } });
+  if (agent.projectId) {
+    const project = await prisma.project.findUnique({ where: { id: agent.projectId } });
     if (project?.requesterEmail) {
-      const agentLabel = displayName(item.agent);
+      const agentLabel = displayName(agent);
       const msg: Record<string, [string, string]> = {
         APPROVED: ["정식 운영 승인", `'${agentLabel}'이(가) 협의회 승인으로 정식 운영으로 전환되었습니다. 데이터 사용 중이라면 상용 재승인 신청이 필요합니다.`],
         CONDITIONAL: ["조건부 승인", `'${agentLabel}'이(가) 조건부 승인되었습니다. 조건 이행 후 정식 운영으로 전환됩니다.`],
