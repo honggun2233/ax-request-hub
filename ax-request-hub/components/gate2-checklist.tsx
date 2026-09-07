@@ -2,10 +2,12 @@
 import { useState } from 'react'
 
 const ITEMS = [
-  { key: 'techHasApiSpec',            label: 'API 명세서',          hint: 'OpenAPI / Swagger 또는 동등한 명세 존재' },
-  { key: 'techHasDataClassification', label: '데이터 분류',          hint: '사용 데이터의 기밀등급 분류 완료' },
-  { key: 'techHasAuditLogging',       label: '감사 로그',            hint: '입력 · 출력 · 오류 로그 기록 구조 존재' },
-  { key: 'techHasTestCoverage',       label: '테스트 커버리지',      hint: '핵심 경로 70% 이상 커버' },
+  { key: 'techHasApiSpec',            label: 'API 명세서',               hint: 'OpenAPI / Swagger 또는 동등한 명세 존재' },
+  { key: 'techHasDataClassification', label: '데이터 분류',               hint: '사용 데이터의 기밀등급 분류 완료' },
+  { key: 'techHasAuditLogging',       label: '감사 로그',                 hint: '입력 · 출력 · 오류 로그 기록 구조 존재' },
+  { key: 'techHasTestCoverage',       label: '테스트 커버리지',           hint: '핵심 경로 70% 이상 커버' },
+  { key: 'techHasDataQualityCheck',   label: '데이터 무결성 (R-07)',      hint: '입출력 데이터 유효성 검증 절차 수립' },
+  { key: 'techHasHumanInLoop',        label: 'Human-in-the-loop (R-09)', hint: 'AI 결과 검토·승인 절차 정의' },
 ] as const
 
 type TechKey = typeof ITEMS[number]['key']
@@ -92,7 +94,7 @@ export function Gate2Checklist({ projectId, initialValues, passed, failedItems }
           {saving ? '저장 중…' : '저장'}
         </button>
         {allPassed && (
-          <span style={{ fontSize: 11, color: '#059669' }}>✓ 4개 항목 모두 충족 — Gate3 채점 가능</span>
+          <span style={{ fontSize: 11, color: '#059669' }}>✓ 6개 항목 모두 충족 — Gate3 채점 가능</span>
         )}
         {saved && <span style={{ fontSize: 11, color: '#059669' }}>저장됐습니다.</span>}
       </div>
