@@ -258,6 +258,14 @@ export default function NewProjectPage() {
   const [dataNote, setDataNote] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
 
+  // 기술 표준 자가 점검
+  const [techHasApiSpec, setTechHasApiSpec] = useState(false)
+  const [techHasDataClassification, setTechHasDataClassification] = useState(false)
+  const [techHasAuditLogging, setTechHasAuditLogging] = useState(false)
+  const [techHasTestCoverage, setTechHasTestCoverage] = useState(false)
+  const [techHasDataQualityCheck, setTechHasDataQualityCheck] = useState(false)
+  const [techHasHumanInLoop, setTechHasHumanInLoop] = useState(false)
+
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (status === 'loading') return <div style={{ padding: 40, color: MUTED, fontSize: 13 }}>로그인 확인 중…</div>
@@ -337,6 +345,12 @@ export default function NewProjectPage() {
       aiConfidence: computeAvgConfidence(fields),
       noDataRequired,
       dataRequirements,
+      techHasApiSpec,
+      techHasDataClassification,
+      techHasAuditLogging,
+      techHasTestCoverage,
+      techHasDataQualityCheck,
+      techHasHumanInLoop,
     }
 
     try {
@@ -639,6 +653,39 @@ export default function NewProjectPage() {
                 <p style={{ fontSize: 11, color: RED }}>데이터 요건을 선택해야 합니다.</p>
               )}
             </div>
+          </div>
+
+          {/* 기술 표준 자가 점검 */}
+          <div style={{ ...card, padding: '16px 20px' }}>
+            <label style={labelSt}>기술 표준 자가 점검</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+              {([
+                { key: 'techHasApiSpec', label: 'API 명세 완료', desc: '입력·출력 인터페이스를 문서화했나요?', value: techHasApiSpec, set: setTechHasApiSpec },
+                { key: 'techHasDataClassification', label: '데이터 기밀등급 처리 계획', desc: '사용 데이터의 등급 분류 및 처리 계획을 작성했나요?', value: techHasDataClassification, set: setTechHasDataClassification },
+                { key: 'techHasAuditLogging', label: '감사로그 설계', desc: '주요 이벤트 로그 구조와 보존 기간을 설계했나요?', value: techHasAuditLogging, set: setTechHasAuditLogging },
+                { key: 'techHasTestCoverage', label: '테스트 커버리지 계획', desc: '비즈니스 로직 단위 테스트 80% 이상 달성 계획이 있나요?', value: techHasTestCoverage, set: setTechHasTestCoverage },
+                { key: 'techHasDataQualityCheck', label: '데이터 무결성 검증 (R-07)', desc: '입출력 데이터 유효성 검증 절차를 수립했나요?', value: techHasDataQualityCheck, set: setTechHasDataQualityCheck },
+                { key: 'techHasHumanInLoop', label: 'Human-in-the-loop 절차 (R-09)', desc: 'AI 결과를 사람이 검토·승인하는 절차를 정의했나요?', value: techHasHumanInLoop, set: setTechHasHumanInLoop },
+              ] as const).map(item => (
+                <label key={item.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={item.value}
+                    onChange={e => item.set(e.target.checked)}
+                    style={{ marginTop: 2, accentColor: BLUE }}
+                  />
+                  <span>
+                    <span style={{ fontSize: 13, color: TEXT, fontWeight: 500 }}>{item.label}</span>
+                    <span style={{ fontSize: 11, color: MUTED, marginLeft: 6 }}>{item.desc}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            {![techHasApiSpec, techHasDataClassification, techHasAuditLogging, techHasTestCoverage, techHasDataQualityCheck, techHasHumanInLoop].every(Boolean) && (
+              <p style={{ fontSize: 11, color: YELLOW, marginTop: 10, marginBottom: 0 }}>
+                체크되지 않은 항목은 AX팀 검토 단계에서 보완 요청이 올 수 있습니다.
+              </p>
+            )}
           </div>
 
           {submitError && (
