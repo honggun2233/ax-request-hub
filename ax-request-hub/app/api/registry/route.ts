@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
 import { buildGate3UpdateData } from '@/src/lib/gate-transitions'
@@ -76,6 +75,15 @@ export async function PATCH(req: NextRequest) {
   if ('error' in auth) return auth.error
   const { id, lifecycleStage, operatorTrustScore, operatorComment, sam30dAccuracy, retireReason } = await req.json()
   const now = new Date()
+
+  // ACTIVE 전환 — activateAgent가 단일 트랜잭션 내에서 모든 필드를 원자적으로 처리
+  if (lifecycleStage === 'ACTIVE') {
+    const agent = await prisma.$transaction(async (tx) => {
+      return activateAgent(tx, id, { operatorTrustScore, operatorComment, sam30dAccuracy })
+    })
+    return NextResponse.json(agent)
+  }
+
   const updateData: any = { lifecycleStage, updatedAt: now }
 
   // GATE1 → GATE2 전환 시: 과제에 DataRequest가 있으면 전건 PROVISIONED 여야 함 (v3 §10-4)
@@ -115,11 +123,6 @@ export async function PATCH(req: NextRequest) {
   if (lifecycleStage === 'RETIRED') { updateData.retiredAt = now; updateData.retireReason = retireReason }
 
   const agent = await prisma.agentRegistry.update({ where: { id }, data: updateData })
-
-  // ACTIVE 전환 — activateAgent 공용 함수로 gate2Passed·project동기화·Agent연결 처리
-  if (lifecycleStage === 'ACTIVE') {
-    await activateAgent(prisma as unknown as Prisma.TransactionClient, id, { operatorTrustScore, operatorComment, sam30dAccuracy })
-  }
 
   // RETIRED 전환 시 연결 과제 status → 'closed' 동기화 + 데이터 제공 전건 회수 (v3 §9-3)
   if (lifecycleStage === 'RETIRED' && agent.projectId) {

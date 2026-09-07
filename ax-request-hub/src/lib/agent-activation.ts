@@ -48,14 +48,14 @@ export async function activateAgent(
     await tx.project.update({
       where: { id: agent.projectId },
       data: { status: 'production' },
-    }).catch(() => {})
+    })
   }
 
   const linkedAgent = await tx.agent.findFirst({
     where: { name: agent.agentName, agentRegistryId: null },
   })
   if (linkedAgent) {
-    await linkAgentToRegistry(tx, linkedAgent.id, agent.id).catch(() => {})
+    await linkAgentToRegistry(tx, linkedAgent.id, agent.id)
   }
 
   return agent
