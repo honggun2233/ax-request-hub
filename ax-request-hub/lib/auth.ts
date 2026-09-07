@@ -1,17 +1,8 @@
 ﻿import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
-import { timingSafeEqual } from "crypto"
 import { prisma } from "@/lib/prisma"
 import type { Employee } from "@prisma/client"
-
-/** 타이밍 어택 방지 — TEMP_AUTH_PASSWORD 평문 비교에 사용 */
-function safeCompare(a: string, b: string): boolean {
-  const bufA = Buffer.from(a)
-  const bufB = Buffer.from(b)
-  if (bufA.length !== bufB.length) return false
-  return timingSafeEqual(bufA, bufB)
-}
 
 function toSessionUser(emp: Employee) {
   return {
@@ -56,19 +47,9 @@ export const authOptions: NextAuthOptions = {
         const emp = await prisma.employee.findUnique({ where: { email } })
         if (!emp || !emp.isActive) return null
 
-        // 비밀번호 검증 (3단계 fallback)
-        const tempPassword = process.env.TEMP_AUTH_PASSWORD
-        if (tempPassword) {
-          // 과도기: 전직원 동일 임시 비밀번호 (SSO/LDAP 연동 전)
-          if (!safeCompare(password, tempPassword)) return null
-        } else if (emp.password) {
-          // 개인 bcrypt 해시 검증
-          const valid = await bcrypt.compare(password, emp.password)
-          if (!valid) return null
-        } else {
-          // 비밀번호 미설정 계정 — 로그인 거부 (빈 문자열 통과 방지)
-          return null
-        }
+        if (!emp.password) return null
+        const valid = await bcrypt.compare(password, emp.password)
+        if (!valid) return null
 
         return toSessionUser(emp)
       },
