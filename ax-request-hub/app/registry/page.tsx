@@ -768,7 +768,7 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
         </div>
 
         {/* 액션 버튼 — AX_TEAM 전용 */}
-        {isAxTeam && (nextStage || agent.lifecycleStage === 'GATE3' || agent.lifecycleStage === 'DEGRADED') && (
+        {isAxTeam && !agent.isSystemAgent && (nextStage || agent.lifecycleStage === 'GATE3' || agent.lifecycleStage === 'DEGRADED') && (
           <div style={{ padding: '14px 20px', borderTop: `1px solid ${BDR}`, background: SB, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {stageError && (
               <div style={{ fontSize: 11, color: '#B94040', background: 'rgba(239,68,68,.06)', border: '1px solid rgba(239,68,68,.25)', borderRadius: 6, padding: '6px 10px' }}>
@@ -1057,7 +1057,7 @@ function RegistryPageContent() {
   const [approvedProjects, setApprovedProjects] = useState<any[]>([])
   const [selectedStage, setSelectedStage] = useState<string | null>(null)
   const [selectedAgent, setSelectedAgent] = useState<any | null>(null)
-  const [viewMode, setViewMode]           = useState<'agent' | 'project'>('agent')
+  const [viewMode, setViewMode]           = useState<'agent' | 'project' | 'system'>('agent')
   const [loading, setLoading]             = useState(true)
   const [loadError, setLoadError]         = useState<string | null>(null)
   const [showRegister, setShowRegister]   = useState(!!defaultProjectId)
@@ -1090,7 +1090,13 @@ function RegistryPageContent() {
     }
   }, [highlightAgentId, agentData.agents])
 
-  const filtered     = selectedStage ? agentData.agents.filter(a => a.lifecycleStage === selectedStage) : agentData.agents
+  const filtered = viewMode === 'system'
+    ? agentData.agents.filter((a: any) => a.isSystemAgent)
+    : viewMode === 'agent'
+      ? (selectedStage
+          ? agentData.agents.filter((a: any) => !a.isSystemAgent && a.lifecycleStage === selectedStage)
+          : agentData.agents.filter((a: any) => !a.isSystemAgent))
+      : agentData.agents
   const stageAction  = selectedStage ? STAGE_ACTIONS[selectedStage] : null
   const openAgent    = (agent: any) => setSelectedAgent(agentData.agents.find(a => a.id === agent.id) ?? agent)
 
@@ -1128,6 +1134,7 @@ function RegistryPageContent() {
           <div style={{ display: 'flex', gap: 4, background: CARD2, borderRadius: 8, padding: 3, border: `1px solid ${BDR}` }}>
             <button onClick={() => setViewMode('agent')} style={btnTabSt(viewMode === 'agent')}>에이전트 뷰</button>
             <button onClick={() => setViewMode('project')} style={btnTabSt(viewMode === 'project')}>AI 활용 뷰</button>
+            <button onClick={() => setViewMode('system')} style={btnTabSt(viewMode === 'system')}>공통 에이전트</button>
           </div>
         </div>
       </div>
@@ -1143,7 +1150,7 @@ function RegistryPageContent() {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: DIM, fontSize: 13 }}>로딩 중...</div>
-      ) : viewMode === 'agent' ? (
+      ) : viewMode !== 'project' ? (
         <>
           {/* 라이프사이클 파이프라인 바 */}
           <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: '14px 18px' }}>
@@ -1207,9 +1214,18 @@ function RegistryPageContent() {
                     textAlign: 'left', cursor: isRetired ? 'default' : 'pointer', opacity: isRetired ? .4 : 1,
                   }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.3 }}>
-                      {isDegraded && '⚠ '}{agent.agentName}
-                    </p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: TEXT, margin: 0, lineHeight: 1.3 }}>
+                        {isDegraded && '⚠ '}{agent.agentName}
+                      </p>
+                      {agent.isSystemAgent && (
+                        <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 4,
+                          background: 'rgba(109,40,217,.1)', color: '#7C3AED',
+                          border: '1px solid rgba(109,40,217,.25)', fontWeight: 600 }}>
+                          시스템 에이전트
+                        </span>
+                      )}
+                    </div>
                     <StageBadge stage={agent.lifecycleStage} />
                   </div>
                   <p style={{ fontSize: 11, color: MUTED, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' as any }}>
