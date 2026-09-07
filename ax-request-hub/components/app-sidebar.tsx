@@ -6,7 +6,7 @@ import {
   Home, Plus, ListChecks, Database, FileText, Star, Book,
   User, Wrench, Users, BarChart3, Cpu, Gavel, Coins,
   Shield, LogOut, LayoutDashboard, GitFork,
-  ChevronRight, MessageSquarePlus, FileSearch,
+  ChevronRight, MessageSquarePlus, FileSearch, Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/authz";
@@ -37,6 +37,7 @@ const NAV: NavGroup[] = [
   {
     title: "에이전트 신청",
     items: [
+      { href: "/guide",        label: "시작 가이드",        icon: Map },
       { href: "/chat",         label: "과제 신청 (대화형)", icon: MessageSquarePlus },
       { href: "/projects/new", label: "에이전트 등록 신청", icon: Plus },
       { href: "/me/projects",  label: "내 신청 현황",       icon: ListChecks },
@@ -91,7 +92,7 @@ const NAV: NavGroup[] = [
     adminDivider: true,
     items: [
       { href: "/admin",         label: "전체 대시보드",       icon: LayoutDashboard },
-      { href: "/executive",     label: "경영진 뷰",           icon: BarChart3 },
+      { href: "/executive",     label: "경영 대시보드",        icon: BarChart3 },
       { href: "/council",       label: "AI 위원회",           icon: Gavel },
       { href: "/registry",      label: "에이전트 레지스트리", icon: Cpu },
       { href: "/admin/retired", label: "폐기 아카이브",       icon: Shield },
