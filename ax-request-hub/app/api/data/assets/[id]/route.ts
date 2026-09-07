@@ -13,6 +13,7 @@ export async function GET(
       where: { id },
       include: {
         _count: { select: { requests: true } },
+        derivedFrom: { select: { id: true, name: true } },
       },
     })
 
@@ -41,15 +42,21 @@ export async function PATCH(
     const { id } = await params
     const body = await req.json()
 
-    const { name, description, ownerDept, classification, deliveryModes, updateCycle, schemaMeta, isActive } = body
-    const data = Object.fromEntries(
+    const { name, description, ownerDept, classification, deliveryModes, updateCycle, schemaMeta, isActive, derivedFromIds } = body
+    const scalar = Object.fromEntries(
       Object.entries({ name, description, ownerDept, classification, deliveryModes, updateCycle, schemaMeta, isActive })
         .filter(([, v]) => v !== undefined)
     )
 
     const asset = await prisma.dataAsset.update({
       where: { id },
-      data,
+      data: {
+        ...scalar,
+        ...(Array.isArray(derivedFromIds)
+          ? { derivedFrom: { set: derivedFromIds.map((aid: string) => ({ id: aid })) } }
+          : {}),
+      },
+      include: { derivedFrom: { select: { id: true, name: true } } },
     })
 
     return NextResponse.json(asset)

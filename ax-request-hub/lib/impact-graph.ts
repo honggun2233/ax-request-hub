@@ -13,7 +13,7 @@ export interface AffectedAgent {
   agentId:        string
   agentName:      string
   lifecycleStage: string
-  connectionType: 'DIRECT' | 'VIA_PROJECT'
+  connectionType: 'DIRECT' | 'VIA_PROJECT' | 'VIA_DERIVED_ASSET'
   projectName:    string | null
   riskLevel:      'HIGH' | 'MEDIUM' | 'LOW'
 }
@@ -73,6 +73,32 @@ export async function getAffectedAgents(assetId: string): Promise<AffectedAgent[
         lifecycleStage: a.lifecycleStage ?? 'UNKNOWN',
         connectionType: 'VIA_PROJECT',
         projectName:    req.project.title,
+        riskLevel:      riskLevel(a.lifecycleStage ?? ''),
+      })
+    }
+  }
+
+  // ── Path 3: DataAsset → derivedAssets → (Path 1 재귀) ──────────────────────
+  const derivedAssets = await prisma.dataAsset.findMany({
+    where: { derivedFrom: { some: { id: assetId } } },
+    select: { id: true },
+  })
+  for (const derived of derivedAssets) {
+    const derivedLinks = await prisma.agentDataLink.findMany({
+      where: { dataAssetId: derived.id },
+      include: {
+        agent: { select: { id: true, agentName: true, lifecycleStage: true } },
+      },
+    })
+    for (const link of derivedLinks) {
+      const a = link.agent
+      if (seen.has(a.id)) continue
+      seen.set(a.id, {
+        agentId:        a.id,
+        agentName:      a.agentName,
+        lifecycleStage: a.lifecycleStage ?? 'UNKNOWN',
+        connectionType: 'VIA_DERIVED_ASSET',
+        projectName:    null,
         riskLevel:      riskLevel(a.lifecycleStage ?? ''),
       })
     }
