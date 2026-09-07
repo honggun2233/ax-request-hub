@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
 import { buildGate3UpdateData } from '@/src/lib/gate-transitions'
 import { activateAgent } from '@/src/lib/agent-activation'
+import { checkProdEligibility } from '@/lib/council-eligibility'
 
 const LIFECYCLE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'SANDBOX_POC', 'GATE3', 'ACTIVE', 'DEGRADED', 'RETIRED']
 
@@ -78,6 +79,19 @@ export async function PATCH(req: NextRequest) {
 
   // ACTIVE 전환 — activateAgent가 단일 트랜잭션 내에서 모든 필드를 원자적으로 처리
   if (lifecycleStage === 'ACTIVE') {
+    // [B-1b] 5요건 사전 검증 — 위원회 경로와 동일 기준 (예방적 조치, 직행 옆문 차단)
+    const { eligible, checks } = await checkProdEligibility(id)
+    if (!eligible) {
+      return NextResponse.json(
+        {
+          error: '상용전환 요건 미충족 — ACTIVE 전환 불가',
+          checks,
+          guide: '위원회 상용전환 상정(/council)을 통한 정식 승인 경로를 이용하세요.',
+        },
+        { status: 422 }
+      )
+    }
+
     const agent = await prisma.$transaction(async (tx) => {
       return activateAgent(tx, id, { operatorTrustScore, operatorComment, sam30dAccuracy })
     })
