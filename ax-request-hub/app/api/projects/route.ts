@@ -83,6 +83,9 @@ export async function POST(req: NextRequest) {
       confidentialityLevel: body.confidentialityLevel ?? 'RESTRICTED',
       source: body.source ?? 'ax_discovery',
       noDataRequired: !!noDataRequired,
+      ...(body.selectedCommonAgents && Array.isArray(body.selectedCommonAgents) && body.selectedCommonAgents.length > 0
+        ? { selectedCommonAgents: JSON.stringify(body.selectedCommonAgents) }
+        : {}),
     }
 
     const project = await prisma.project.create({

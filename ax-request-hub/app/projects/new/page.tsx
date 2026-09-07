@@ -1,5 +1,5 @@
 ﻿'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 
@@ -257,6 +257,8 @@ export default function NewProjectPage() {
   const [dataRequired, setDataRequired] = useState<boolean | null>(null)
   const [dataNote, setDataNote] = useState('')
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [systemAgents, setSystemAgents] = useState<any[]>([])
+  const [selectedAgentKeys, setSelectedAgentKeys] = useState<string[]>([])
 
   // 기술 표준 자가 점검
   const [techHasApiSpec, setTechHasApiSpec] = useState(false)
@@ -267,6 +269,13 @@ export default function NewProjectPage() {
   const [techHasHumanInLoop, setTechHasHumanInLoop] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    fetch('/api/registry?systemOnly=1')
+      .then(r => r.json())
+      .then(d => setSystemAgents(d.agents?.filter((a: any) => a.isSystemAgent) ?? []))
+      .catch(() => {})
+  }, [])
 
   if (status === 'loading') return <div style={{ padding: 40, color: MUTED, fontSize: 13 }}>로그인 확인 중…</div>
   if (status === 'unauthenticated') { router.push('/login'); return null }
@@ -351,6 +360,7 @@ export default function NewProjectPage() {
       techHasTestCoverage,
       techHasDataQualityCheck,
       techHasHumanInLoop,
+      selectedCommonAgents: selectedAgentKeys,
     }
 
     try {
@@ -687,6 +697,39 @@ export default function NewProjectPage() {
               </p>
             )}
           </div>
+
+          {systemAgents.length > 0 && (
+            <div style={{ background: SURFACE, border: `1px solid ${LINE}`, borderRadius: 8, padding: '16px 20px' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 10 }}>
+                공통 에이전트 선택{' '}
+                <span style={{ fontSize: 11, color: MUTED, fontWeight: 400 }}>(선택 사항)</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {systemAgents.map(agent => (
+                  <label key={agent.agentKey} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px', borderRadius: 8,
+                    border: `1px solid ${selectedAgentKeys.includes(agent.agentKey) ? '#7C3AED55' : LINE}`,
+                    cursor: 'pointer',
+                    background: selectedAgentKeys.includes(agent.agentKey) ? 'rgba(109,40,217,.04)' : SURFACE,
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedAgentKeys.includes(agent.agentKey)}
+                      onChange={e => {
+                        if (e.target.checked) setSelectedAgentKeys(p => [...p, agent.agentKey])
+                        else setSelectedAgentKeys(p => p.filter(k => k !== agent.agentKey))
+                      }}
+                    />
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{agent.agentName}</div>
+                      <div style={{ fontSize: 11, color: MUTED }}>{agent.purpose}</div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {submitError && (
             <div style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 6, padding: '10px 14px', fontSize: 13, color: RED }}>

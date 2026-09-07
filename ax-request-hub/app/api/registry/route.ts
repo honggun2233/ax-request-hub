@@ -6,12 +6,16 @@ import { activateAgent } from '@/src/lib/agent-activation'
 
 const LIFECYCLE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'SANDBOX_POC', 'GATE3', 'ACTIVE', 'DEGRADED', 'RETIRED']
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const auth = await requireRole()
   if ('error' in auth) return auth.error
 
   try {
+    const url = new URL(req.url)
+    const systemOnly = url.searchParams.get('systemOnly') === '1'
+
     const agents = await prisma.agentRegistry.findMany({
+      where: systemOnly ? { isSystemAgent: true } : undefined,
       include: {
         scores: { orderBy: { recordedAt: 'desc' }, take: 5 },
         projects: { include: { project: true } },
