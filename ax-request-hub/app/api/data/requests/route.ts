@@ -21,8 +21,9 @@ export async function GET(req: NextRequest) {
         ...(status ? { status } : {}),
       },
       include: {
-        asset: { select: { name: true, classification: true } },
+        asset: { select: { name: true, classification: true, sourceSystem: true } },
         project: { select: { title: true } },
+        ...(isAdmin ? { provision: { select: { id: true, externalGranted: true, externalGrantedAt: true, externalGrantedBy: true } } } : {}),
       },
       orderBy: { createdAt: 'desc' },
     })

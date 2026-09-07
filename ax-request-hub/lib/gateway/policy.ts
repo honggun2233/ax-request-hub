@@ -63,6 +63,30 @@ export async function checkPolicy(agentId: string, employeeId: string): Promise<
       return { decision: 'WARN', reason: '성능 저하 상태 (제한적 운영 중)' }
     }
 
+    // 외부 데이터 소스(Snowflake/Glue) 접근 권한 미확인 → WARN
+    const agentDataLinks = await prisma.agentDataLink.findMany({
+      where: { agentId },
+      include: {
+        dataAsset: {
+          include: {
+            requests: {
+              where: { status: 'PROVISIONED' },
+              include: { provision: true },
+            },
+          },
+        },
+      },
+    })
+    const hasUnconfirmedExternal = agentDataLinks.some(link =>
+      ['SNOWFLAKE', 'AWS_GLUE'].includes(link.dataAsset.sourceSystem) &&
+      link.dataAsset.requests.some(r => r.provision && !r.provision.externalGranted)
+    )
+    if (hasUnconfirmedExternal) {
+      const reason = '외부 데이터 소스(Snowflake/Glue) 접근 권한이 확인되지 않았습니다.'
+      logDecision(agentId, employeeId, 'WARN', reason)
+      return { decision: 'WARN', reason }
+    }
+
     const autoBlockedAlert = await prisma.usageAlert.findFirst({
       where: { employeeId, alertType: 'OVER_LIMIT', ownerApprovalStatus: 'AUTO_BLOCKED' },
       orderBy: { createdAt: 'desc' },

@@ -20,12 +20,13 @@ interface DataRequest {
   reviewerId?: string
   createdAt: string
   updatedAt: string
-  asset?: { name: string; classification: string }
+  asset?: { name: string; classification: string; sourceSystem?: string }
   project?: { title: string }
   trackType?: string
   accessType?: string
   isAnonymized?: boolean
   anonNote?: string
+  provision?: { id: string; externalGranted: boolean; externalGrantedAt?: string; externalGrantedBy?: string }
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -220,10 +221,12 @@ function RevokeConfirmModal({
 
 function RequestSheet({
   req,
+  role,
   onClose,
   onDone,
 }: {
   req: DataRequest
+  role?: string
   onClose: () => void
   onDone: () => void
 }) {
@@ -235,6 +238,29 @@ function RequestSheet({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [showRevokeModal, setShowRevokeModal] = useState(false)
+  const [externalGranting, setExternalGranting] = useState(false)
+  const [externalGranted, setExternalGranted] = useState(req.provision?.externalGranted ?? false)
+
+  const isExternalSource = ['SNOWFLAKE', 'AWS_GLUE'].includes(req.asset?.sourceSystem ?? '')
+  const showExternalGrantBtn = role === 'DATA_PLATFORM' && isExternalSource && req.provision && !externalGranted
+
+  const handleExternalGrant = async () => {
+    if (!req.provision) return
+    setExternalGranting(true)
+    try {
+      const res = await fetch(`/api/dp/provisions/${req.provision.id}/external-grant`, { method: 'POST' })
+      if (!res.ok) {
+        const json = await res.json()
+        throw new Error(json.error ?? '처리 실패')
+      }
+      setExternalGranted(true)
+      onDone()
+    } catch (err: any) {
+      setError(err.message ?? '오류가 발생했습니다.')
+    } finally {
+      setExternalGranting(false)
+    }
+  }
 
   const showProvisionForm = newStatus === 'APPROVED'
   const showRejectReason = newStatus === 'REJECTED'
@@ -487,6 +513,29 @@ function RequestSheet({
             </div>
           )}
 
+          {/* 외부 데이터 소스 권한 처리 (DATA_PLATFORM 전용) */}
+          {isExternalSource && req.provision && (
+            <div className={`rounded-xl border p-4 space-y-2 ${externalGranted ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-200'}`}>
+              <p className={`text-xs font-semibold ${externalGranted ? 'text-green-700' : 'text-orange-700'}`}>
+                {externalGranted ? '✓ 외부 권한 처리 완료' : `⚠ ${req.asset?.sourceSystem} 외부 권한 처리 필요`}
+              </p>
+              {!externalGranted && (
+                <p className="text-xs text-orange-600">
+                  {req.asset?.sourceSystem}의 접근 권한을 수동으로 부여한 후 아래 버튼을 눌러 확인해 주세요.
+                </p>
+              )}
+              {showExternalGrantBtn && (
+                <button
+                  onClick={handleExternalGrant}
+                  disabled={externalGranting}
+                  className="w-full py-2 bg-orange-600 text-white text-xs font-semibold rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
+                >
+                  {externalGranting ? '처리 중...' : '외부 권한 처리 완료'}
+                </button>
+              )}
+            </div>
+          )}
+
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
               {error}
@@ -621,7 +670,14 @@ export default function DPRequestsPage() {
                   className="border-b last:border-0 cursor-pointer hover:bg-blue-50 transition-colors"
                 >
                   <td className="px-4 py-3 font-medium text-gray-900">
-                    {req.asset?.name ?? '(자산 없음)'}
+                    <div className="flex items-center gap-2">
+                      <span>{req.asset?.name ?? '(자산 없음)'}</span>
+                      {req.asset?.sourceSystem && ['SNOWFLAKE', 'AWS_GLUE'].includes(req.asset.sourceSystem) && req.provision && !req.provision.externalGranted && (
+                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-700 font-medium whitespace-nowrap">
+                          ⚠ Snowflake 권한 처리 필요
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-[var(--muted)] font-mono text-xs">
                     {req.requesterId.slice(0, 8)}…
@@ -651,6 +707,7 @@ export default function DPRequestsPage() {
       {selected && (
         <RequestSheet
           req={selected}
+          role={role}
           onClose={() => setSelected(null)}
           onDone={() => {
             setSelected(null)
