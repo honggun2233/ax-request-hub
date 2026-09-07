@@ -44,6 +44,11 @@ model Project {
   // Phase A — 과제 신청 시 데이터 요건 선언
   noDataRequired Boolean @default(false)  // true = "별도 데이터 불필요" 명시
 
+  // B-2: 인수 신청 (Phase 1 완료 후 AX팀 정식 검토 요청)
+  handoverRequestedAt DateTime?  // 인수 신청 시각
+  handoverNote        String?    // 인수 신청 메모
+  handoverArtifacts   String?    // 4개 제출물 URL/설명 (JSON)
+
   // 인테이크 채널 (v24)
   intakeMethod   String?  // "DIRECT" | "STANDARD_FORMAT" | "FILE" | "CHAT"
   aiConfidence   Float?   // Tier0=100, Tier1=0~80 (LLM 추출 신뢰도)
