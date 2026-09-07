@@ -655,6 +655,10 @@ model DataAsset {
   // 데이터 거버넌스 정합성 (Phase 2 — 데이터관리규정 v1.2: 데이터 오너 = 현업 부서장)
   dataOwnerId     String?                           // FK to Employee (데이터 오너)
   dataOwner       Employee? @relation(fields: [dataOwnerId], references: [id])
+
+  // DataAsset-to-DataAsset 파생 관계 (멀티홉 영향도 지원)
+  derivedFrom    DataAsset[]  @relation("DataAssetDerivation")
+  derivedAssets  DataAsset[]  @relation("DataAssetDerivation")
 }
 
 model DataRequest {

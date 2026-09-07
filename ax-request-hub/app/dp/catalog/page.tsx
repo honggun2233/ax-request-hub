@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, ChevronRight, Database, X, Loader2 } from 'lucide-react'
+import { AlertTriangle, ChevronRight, Database, X, Loader2, GitFork } from 'lucide-react'
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 interface DataAsset {
@@ -14,7 +14,7 @@ interface DataAsset {
 
 interface AffectedAgent {
   agentId: string; agentName: string; lifecycleStage: string
-  connectionType: 'DIRECT' | 'VIA_PROJECT'; projectName?: string
+  connectionType: 'DIRECT' | 'VIA_PROJECT' | 'VIA_DERIVED_ASSET'; projectName?: string
   riskLevel: 'HIGH' | 'MEDIUM' | 'LOW'
 }
 
@@ -171,7 +171,11 @@ function ImpactSlideOver({
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-800 truncate">{a.agentName}</p>
                         <p className="text-xs text-gray-400 mt-0.5">
-                          {a.connectionType === 'DIRECT' ? '직접 연결' : `과제 경유 — ${a.projectName ?? ''}`}
+                          {a.connectionType === 'DIRECT'
+                            ? '직접 연결'
+                            : a.connectionType === 'VIA_DERIVED_ASSET'
+                              ? '파생 자산 경유'
+                              : `과제 경유 — ${a.projectName ?? ''}`}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
@@ -194,6 +198,103 @@ function ImpactSlideOver({
   )
 }
 
+// ── 파생 관계 편집 SlideOver (DATA_PLATFORM 전용) ────────────────────────────
+function DerivationSlideOver({
+  assetId, allAssets, onClose, onSaved,
+}: {
+  assetId: string | null
+  allAssets: DataAsset[]
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [currentIds, setCurrentIds] = useState<string[]>([])
+  const [saving, setSaving] = useState(false)
+  const [assetName, setAssetName] = useState('')
+
+  useEffect(() => {
+    if (!assetId) return
+    setCurrentIds([])
+    fetch(`/api/data/assets/${assetId}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d) return
+        setAssetName(d.name)
+        setCurrentIds((d.derivedFrom ?? []).map((a: { id: string }) => a.id))
+      })
+      .catch(() => {})
+  }, [assetId])
+
+  const toggle = (id: string) =>
+    setCurrentIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+
+  const handleSave = async () => {
+    if (!assetId) return
+    setSaving(true)
+    try {
+      await fetch(`/api/data/assets/${assetId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ derivedFromIds: currentIds }),
+      })
+      onSaved()
+    } catch {
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!assetId) return null
+
+  const choices = allAssets.filter(a => a.id !== assetId)
+
+  return (
+    <div className="fixed inset-0 z-[60] flex justify-end">
+      <div className="flex-1 bg-black/30" onClick={onClose} />
+      <div className="w-[420px] bg-white h-full shadow-xl flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+          <div>
+            <h2 className="text-base font-bold text-gray-800">기반 데이터 편집</h2>
+            <p className="text-sm text-gray-500 mt-0.5 truncate">{assetName}</p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 p-1"><X size={18} /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <p className="text-xs text-gray-500 mb-3">이 데이터가 파생된 기반 데이터 자산을 선택하세요.</p>
+          {choices.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-8">다른 데이터 자산이 없습니다.</p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {choices.map(a => (
+                <label key={a.id} className="flex items-center gap-3 rounded-lg border border-gray-100 px-3 py-2.5 cursor-pointer hover:bg-blue-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={currentIds.includes(a.id)}
+                    onChange={() => toggle(a.id)}
+                    className="accent-blue-600"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">{a.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{a.ownerDept} · {a.deliveryModes}</p>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="px-6 py-4 border-t">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {saving ? '저장 중...' : '저장'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── 메인 페이지 ───────────────────────────────────────────────────────────────
 export default function DpCatalogPage() {
   const { data: session, status } = useSession()
@@ -204,6 +305,7 @@ export default function DpCatalogPage() {
   const [search, setSearch]       = useState('')
   const [clsFilter, setClsFilter] = useState('')
   const [impactAssetId, setImpactAssetId] = useState<string | null>(null)
+  const [derivationAssetId, setDerivationAssetId] = useState<string | null>(null)
 
   const role = (session?.user as any)?.role
 
@@ -300,13 +402,24 @@ export default function DpCatalogPage() {
                   </div>
                 </div>
 
-                {/* 우측: 영향도 열기 버튼 */}
-                <button
-                  onClick={() => setImpactAssetId(asset.id)}
-                  className="text-xs text-gray-400 hover:text-blue-600 flex items-center gap-0.5 shrink-0"
-                >
-                  영향도 <ChevronRight size={14} />
-                </button>
+                {/* 우측: 버튼 그룹 */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {role === 'DATA_PLATFORM' && (
+                    <button
+                      onClick={() => setDerivationAssetId(asset.id)}
+                      className="text-xs text-gray-400 hover:text-purple-600 flex items-center gap-0.5"
+                      title="기반 데이터 편집"
+                    >
+                      <GitFork size={13} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setImpactAssetId(asset.id)}
+                    className="text-xs text-gray-400 hover:text-blue-600 flex items-center gap-0.5"
+                  >
+                    영향도 <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -315,6 +428,14 @@ export default function DpCatalogPage() {
 
       {/* 영향도 SlideOver */}
       <ImpactSlideOver assetId={impactAssetId} onClose={() => setImpactAssetId(null)} />
+
+      {/* 파생 관계 편집 SlideOver */}
+      <DerivationSlideOver
+        assetId={derivationAssetId}
+        allAssets={assets}
+        onClose={() => setDerivationAssetId(null)}
+        onSaved={() => { setDerivationAssetId(null); fetchAssets() }}
+      />
     </div>
   )
 }
