@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import RetireConfirmModal from './components/RetireConfirmModal'
+import { Gate2Checklist } from '@/components/gate2-checklist'
 
 const CARD   = '#FFFFFF'
 const CARD2  = '#F7F9FC'
@@ -705,6 +706,26 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
               </div>
             </div>
           )}
+
+          {/* Gate2 기술 표준 체크리스트 — AX_TEAM 전용 */}
+          {agent.lifecycleStage === 'GATE2' && isAxTeam && agent.projects?.[0]?.project && (() => {
+            const proj = agent.projects[0].project
+            return (
+              <Gate2Checklist
+                projectId={proj.id}
+                initialValues={{
+                  techHasApiSpec:            proj.techHasApiSpec,
+                  techHasDataClassification: proj.techHasDataClassification,
+                  techHasAuditLogging:       proj.techHasAuditLogging,
+                  techHasTestCoverage:       proj.techHasTestCoverage,
+                  techHasDataQualityCheck:   proj.techHasDataQualityCheck,
+                  techHasHumanInLoop:        proj.techHasHumanInLoop,
+                }}
+                passed={proj.techStandardsPassed}
+                failedItems={proj.techStandardsFailedItems}
+              />
+            )
+          })()}
 
           {/* 샌드박스 PoC 패널 */}
           {agent.lifecycleStage === 'GATE2' && isAxTeam && agent.sandboxRequestedAt && !agent.sandboxApprovedAt && (
