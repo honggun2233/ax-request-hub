@@ -86,16 +86,40 @@ export async function PATCH(req: NextRequest) {
 
   const updateData: any = { lifecycleStage, updatedAt: now }
 
-  // GATE1 → GATE2 전환 시: 과제에 DataRequest가 있으면 전건 PROVISIONED 여야 함 (v3 §10-4)
+  // GATE2 전환 가드 (GATE1에서만, 단계 점프 불허)
   if (lifecycleStage === 'GATE2') {
     const current = await prisma.agentRegistry.findUnique({ where: { id }, select: { projectId: true, lifecycleStage: true } })
-    if (current?.lifecycleStage === 'GATE1' && current.projectId) {
-      const unprovisionedCount = await prisma.dataRequest.count({
-        where: { projectId: current.projectId, status: { notIn: ['PROVISIONED', 'REJECTED', 'REVOKED'] } },
-      })
-      if (unprovisionedCount > 0) {
+    if (current?.lifecycleStage === 'GATE1') {
+      // 데이터 하드블록 — projectId 있을 때만 (데이터 신청은 projectId 필수)
+      if (current.projectId) {
+        const unprovisionedCount = await prisma.dataRequest.count({
+          where: { projectId: current.projectId, status: { notIn: ['PROVISIONED', 'REJECTED', 'REVOKED'] } },
+        })
+        if (unprovisionedCount > 0) {
+          return NextResponse.json(
+            { error: `데이터 신청 ${unprovisionedCount}건이 미제공(PROVISIONED 미완료) 상태입니다. 데이터 제공 완료 후 GATE2로 전환하세요.` },
+            { status: 422 }
+          )
+        }
+      }
+
+      // [B-1] 기술표준 하드블록 — projectId 없으면 검증 불가 → 차단
+      const project = current.projectId
+        ? await prisma.project.findUnique({
+            where: { id: current.projectId },
+            select: { techStandardsPassed: true, techStandardsFailedItems: true },
+          })
+        : null
+      if (!project?.techStandardsPassed) {
+        const failedItems: string[] = project?.techStandardsFailedItems
+          ? JSON.parse(project.techStandardsFailedItems)
+          : []
         return NextResponse.json(
-          { error: `데이터 신청 ${unprovisionedCount}건이 미제공(PROVISIONED 미완료) 상태입니다. 데이터 제공 완료 후 GATE2로 전환하세요.` },
+          {
+            error: 'GATE2 전환 불가 — 기술표준 미충족',
+            failedItems,
+            guide: 'AX팀 검토 화면(/registry)에서 Gate2 체크리스트를 완료하거나, 신청자가 /projects/new에서 항목을 보완 후 재제출하세요.',
+          },
           { status: 422 }
         )
       }
