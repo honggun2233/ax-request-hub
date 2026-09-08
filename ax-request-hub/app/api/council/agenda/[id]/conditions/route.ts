@@ -12,6 +12,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const item = await prisma.councilAgendaItem.findUnique({ where: { id } });
   if (!item || item.decision !== "CONDITIONAL" || !item.conditions)
     return NextResponse.json({ error: "조건부 승인 안건이 아닙니다" }, { status: 400 });
+  if (!item.agentId)
+    return NextResponse.json({ error: "에이전트 정보 없음" }, { status: 400 });
 
   const conds: { condition: string; done: boolean; checkedBy: string | null }[] = JSON.parse(item.conditions);
   if (index < 0 || index >= conds.length)
@@ -37,7 +39,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               entityType: "AgentRegistry",
               entityId: item.agentId,
               action: "COUNCIL_CONDITIONS_FULFILLED",
-              actorEmail: auth.user.email,
+              actorEmail: auth.user.email ?? "",
               detail: JSON.stringify({ agendaItemId: item.id }),
             },
           }),

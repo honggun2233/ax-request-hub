@@ -46,9 +46,9 @@ export default async function AgendaDetailPage({
     },
   });
 
-  if (!item || item.meetingId !== meetingId) notFound();
+  if (!item || item.meetingId !== meetingId || !item.agent || !item.meeting) notFound();
 
-  const { eligible, checks } = await checkProdEligibility(item.agentId);
+  const { eligible, checks } = await checkProdEligibility(item.agentId!);
 
   let parsedConditions: { condition: string; done: boolean; checkedBy: string | null }[] | null = null;
   if (item.conditions) {
