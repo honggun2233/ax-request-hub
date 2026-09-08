@@ -20,7 +20,9 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@ssam/ai-gateway": ["./packages/@ssam/ai-gateway/src/index"]
+      "@ssam/ai-gateway": ["./packages/@ssam/ai-gateway/src/index"],
+      "@ssam/scoring": ["./packages/@ssam/scoring/src/index"],
+      "@ssam/gate-transitions": ["./packages/@ssam/gate-transitions/src/index"]
     }
   },
   "include": [

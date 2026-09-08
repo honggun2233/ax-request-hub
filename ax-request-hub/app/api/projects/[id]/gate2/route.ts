@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/authz'
 import { prisma } from '@/lib/prisma'
-import { checkTechStandards } from '@/src/lib/scoring'
+import { checkTechStandards } from '@ssam/scoring'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   await requireRole('AX_TEAM')

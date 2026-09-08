@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
-import { buildGate3UpdateData } from '@/src/lib/gate-transitions'
+import { buildGate3UpdateData } from '@ssam/gate-transitions'
 import { activateAgent } from '@/src/lib/agent-activation'
 
 const LIFECYCLE_ORDER = ['DEVELOPING', 'GATE1', 'GATE2', 'SANDBOX_POC', 'GATE3', 'ACTIVE', 'DEGRADED', 'RETIRED']

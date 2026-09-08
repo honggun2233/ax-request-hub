@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
-import { buildGate3UpdateData } from '@/src/lib/gate-transitions'
+import { buildGate3UpdateData } from '@ssam/gate-transitions'
 
 type Params = { params: Promise<{ id: string }> }
 
