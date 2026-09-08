@@ -1,4 +1,4 @@
-import { gatewayCompleteRouted } from '@/src/lib/ai-gateway/routing'
+﻿import { gatewayCompleteRouted } from '@ssam/ai-gateway'
 import { ExtractedProject } from '@/src/lib/agents/consultation'
 
 export interface ScoreCardResult {

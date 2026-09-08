@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getAdapter, VALID_PROVIDERS } from '@/src/lib/ai-gateway/registry'
-import { checkQuota, recordUsage } from '@/src/lib/ai-gateway/quota'
-import type { ProviderKey } from '@/src/lib/ai-gateway/types'
+import { getAdapter, VALID_PROVIDERS, checkQuota, recordUsage } from '@ssam/ai-gateway'
+import type { ProviderKey } from '@ssam/ai-gateway'
 
 export async function POST(
   req: NextRequest,

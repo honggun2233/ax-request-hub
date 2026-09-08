@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { gatewayComplete } from '@/src/lib/ai-gateway/gateway'
+import { gatewayComplete } from '@ssam/ai-gateway'
 import { prisma } from '@/lib/prisma'
 
 const SCHEMA = `

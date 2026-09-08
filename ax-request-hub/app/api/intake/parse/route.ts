@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
-import { gatewayComplete } from '@/src/lib/ai-gateway/gateway'
+import { gatewayComplete } from '@ssam/ai-gateway'
 
 // AX_INTAKE_V1 Tier0 파서
 // 표준 포맷이 감지되면 LLM 호출 없이 룰 기반으로 파싱 (aiConfidence=100)

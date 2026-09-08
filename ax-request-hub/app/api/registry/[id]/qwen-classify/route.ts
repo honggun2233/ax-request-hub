@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/authz'
-import { classifyTask } from '@/src/lib/ai-gateway/routing'
+import { classifyTask } from '@ssam/ai-gateway'
 
 // GET /api/registry/[id]/qwen-classify
 // Qwen으로 에이전트 용도 분류 → recommendedProvider 저장 + 결과 반환

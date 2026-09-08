@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { requireRole } from '@/lib/authz'
-import { getProviderStatus } from '@/src/lib/ai-gateway/registry'
+import { getProviderStatus } from '@ssam/ai-gateway'
 
 export async function GET() {
   const auth = await requireRole('AX_TEAM')
