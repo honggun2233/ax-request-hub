@@ -1,0 +1,8 @@
+﻿{
+  "name": "@ssam/agent-registry",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AX Hub 에이전트 등록·활성화",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
+}

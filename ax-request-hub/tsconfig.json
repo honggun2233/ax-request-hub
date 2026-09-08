@@ -22,7 +22,10 @@
       "@/*": ["./*"],
       "@ssam/ai-gateway": ["./packages/@ssam/ai-gateway/src/index"],
       "@ssam/scoring": ["./packages/@ssam/scoring/src/index"],
-      "@ssam/gate-transitions": ["./packages/@ssam/gate-transitions/src/index"]
+      "@ssam/gate-transitions": ["./packages/@ssam/gate-transitions/src/index"],
+      "@ssam/notifications": ["./packages/@ssam/notifications/src/index"],
+      "@ssam/agents": ["./packages/@ssam/agents/src/index"],
+      "@ssam/agent-registry": ["./packages/@ssam/agent-registry/src/index"]
     }
   },
   "include": [

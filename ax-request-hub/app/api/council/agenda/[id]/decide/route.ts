@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/authz";
 import { notify, NotifyEvent } from "@/lib/notify";
 import { displayName } from "@/lib/council-eligibility";
-import { activateAgent } from "@/src/lib/agent-activation";
+import { activateAgent } from "@ssam/agent-registry";
 
 /**
  * 오프라인 협의회 의결 결과 입력 (AX팀 간사).

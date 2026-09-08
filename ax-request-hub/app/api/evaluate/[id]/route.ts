@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { EvaluationAgent } from '@/src/lib/agents/evaluation'
+import { EvaluationAgent } from '@ssam/agents'
 import { determineApproval, checkTechStandards } from '@ssam/scoring'
 import { prisma } from '@/lib/prisma'
-import { sendApprovalEmail } from '@/src/lib/notifications/email'
-import { ExtractedProject } from '@/src/lib/agents/consultation'
+import { sendApprovalEmail } from '@ssam/notifications'
+import { ExtractedProject } from '@ssam/agents'
 import { notify } from '@/lib/notify'
 
 // P1-2: Telegram 알림 제거 — 외부 개인 메신저 사용 불가 (금융회사 망분리·기록보존 컴플라이언스)

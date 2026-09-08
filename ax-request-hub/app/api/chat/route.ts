@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { ConsultationAgent } from '@/src/lib/agents/consultation'
+import { ConsultationAgent } from '@ssam/agents'
 import { checkPolicy } from '@/lib/gateway/policy'
 import { prisma } from '@/lib/prisma'
 

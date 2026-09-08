@@ -1,0 +1,8 @@
+﻿{
+  "name": "@ssam/notifications",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AX Hub 알림 (이메일/텔레그램)",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
+}

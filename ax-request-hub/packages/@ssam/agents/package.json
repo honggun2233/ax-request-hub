@@ -1,0 +1,8 @@
+﻿{
+  "name": "@ssam/agents",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AX Hub AI 에이전트 (ConsultationAgent, EvaluationAgent)",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
+}
