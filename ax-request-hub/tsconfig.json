@@ -20,7 +20,7 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@ssam/ai-gateway": ["./packages/ai-gateway/src/index.ts"]
+      "@ssam/ai-gateway": ["./packages/@ssam/ai-gateway/src/index"]
     }
   },
   "include": [
