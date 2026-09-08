@@ -1,5 +1,5 @@
 import { prisma as db } from '@/lib/prisma'
-import type { QuotaCheckResult, ProviderKey } from './types'
+import type { QuotaCheckResult, ProviderKey } from '@ssam/ai-gateway'
 
 const SERVICE_MAP: Record<ProviderKey, string> = {
   anthropic: 'Claude',

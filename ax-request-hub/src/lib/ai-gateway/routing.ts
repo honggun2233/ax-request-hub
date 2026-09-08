@@ -1,8 +1,8 @@
-import { gatewayComplete } from './gateway'
+import { gatewayComplete } from '@ssam/ai-gateway'
 import { checkPolicy } from '@/lib/gateway/policy'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import type { AIRequest, ProviderKey } from './types'
+import type { AIRequest, ProviderKey } from '@ssam/ai-gateway'
 
 /**
  * Policy Gateway가 BLOCK 판정을 내렸을 때 던지는 에러.

@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@ssam/ai-gateway": ["./packages/ai-gateway/src/index.ts"]
     }
   },
   "include": [
