@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma"
 
 export async function GET(
   req: Request,
-  { params }: { params: Promise<{ employeeId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
@@ -13,7 +13,7 @@ export async function GET(
   }
 
   const user = session.user as any
-  const { employeeId } = await params
+  const { id: employeeId } = await params
 
   const employee = await prisma.employee.findUnique({
     where: { employeeId },

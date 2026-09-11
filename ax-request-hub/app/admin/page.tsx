@@ -50,6 +50,7 @@ export default function AdminConsolePage() {
     else alert((await res.json()).error ?? "처리에 실패했습니다");
   };
   if (!s) return <p className="p-6 text-sm text-muted-foreground">불러오는 중…</p>;
+  if (!s.queue) return <p className="p-6 text-sm text-muted-foreground">데이터를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.</p>;
 
   const q = s.queue;
   const queueItems = [

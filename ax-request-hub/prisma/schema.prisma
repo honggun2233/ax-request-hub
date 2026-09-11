@@ -2,9 +2,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// 메인 앱은 SQLite. governance_chunks는 embed_pipeline.py가 pgvector DB(포트 5438)에 직접 관리.
+// PostgreSQL (로컬 5433, 내부 서버 이관 시 URL만 교체). governance_chunks는 pgvector DB(포트 5438)에 별도 관리.
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
