@@ -3,6 +3,7 @@
  * route.ts와 서버 사이드 내부 호출 양쪽에서 공유 — self-HTTP call 방지
  */
 import { prisma } from '@/lib/prisma'
+import { getMonthlyTokenUsed } from './usage-utils'
 
 export type PolicyDecision = 'ALLOW' | 'WARN' | 'BLOCK'
 
@@ -128,14 +129,13 @@ export async function checkPolicy(agentId: string, employeeId: string): Promise<
 
     // Policy Gateway는 전사 통합 사용량 기준 — service='ALL' 정책 행만 참조
     // (checkQuota는 서비스별 행 참조, 두 시스템이 다른 행을 봄으로써 혼용 방지)
-    const [usageRecords, tokenPolicy] = await Promise.all([
-      prisma.usageRecord.findMany({ where: { employeeId, yearMonth } }),
+    // service 미지정 = 전사 전체 집계 (service='ALL' tokenPolicy와 대응)
+    const [totalUsed, tokenPolicy] = await Promise.all([
+      getMonthlyTokenUsed(employeeId, yearMonth),
       prisma.tokenPolicy
         .findFirst({ where: { scope: 'LEVEL', level: currentLevel, service: 'ALL', isActive: true } })
         .then(p => p ?? prisma.tokenPolicy.findFirst({ where: { scope: 'COMPANY', service: 'ALL', isActive: true } })),
     ])
-
-    const totalUsed = usageRecords.reduce((s, r) => s + r.tokenUsed, 0)
 
     if (tokenPolicy && tokenPolicy.monthlyLimit > 0) {
       const usagePct = Math.round((totalUsed / tokenPolicy.monthlyLimit) * 100)
