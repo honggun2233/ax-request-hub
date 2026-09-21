@@ -120,5 +120,23 @@ export async function PATCH(
     },
   });
 
+  // 예외 사유서 작성 시 AuditLog 기록
+  if (transparencyExceptionNote !== undefined && transparencyExceptionNote) {
+    await prisma.auditLog.create({
+      data: {
+        entityType: 'AGENT',
+        entityId: id,
+        action: 'TRANSPARENCY_EXCEPTION_NOTE',
+        actorEmail: auth.email,
+        detail: JSON.stringify({
+          agentName: updated.agentName,
+          note: transparencyExceptionNote,
+          isHighImpact: updated.isHighImpact,
+          transparencyMethod: updated.transparencyMethod,
+        }),
+      },
+    });
+  }
+
   return NextResponse.json(updated);
 }
