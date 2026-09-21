@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { invalidateGraph } from '@/lib/graph/cache'
+import { invalidateGraph } from '@ssam/data-graph'
 
 // POST: 에이전트-프로젝트 링크 추가
 export async function POST(req: NextRequest) {

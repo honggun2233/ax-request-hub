@@ -1,6 +1,6 @@
-import { traverse } from '@/lib/graph/traverse'
-import { severityOf } from '@/lib/graph/assemble'
-import type { Graph, GraphNode, NodeKey } from '@/lib/graph/types'
+import { traverse } from '@ssam/data-graph'
+import { severityOf } from '@ssam/data-graph'
+import type { Graph, GraphNode, NodeKey } from '@ssam/data-graph'
 
 function makeNode(type: GraphNode['type'], id: string, meta: Record<string, unknown> = {}): GraphNode {
   return { key: `${type}:${id}` as NodeKey, type, id, label: `${type}-${id}`, meta }

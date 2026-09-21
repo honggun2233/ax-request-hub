@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma'
+import type { PrismaClient } from '@prisma/client'
 import type { Graph, GraphNode, NodeKey } from './types'
 
 function makeNode(
@@ -10,7 +10,7 @@ function makeNode(
   return { key: `${type}:${id}` as NodeKey, type, id, label, meta }
 }
 
-export async function buildGraph(): Promise<Graph> {
+export async function buildGraph(db: PrismaClient): Promise<Graph> {
   const [
     agents,
     assets,
@@ -21,24 +21,24 @@ export async function buildGraph(): Promise<Graph> {
     agentProjectLinks,
     employeeAgentLinks,
   ] = await Promise.all([
-    prisma.agentRegistry.findMany({
+    db.agentRegistry.findMany({
       select: { id: true, agentName: true, status: true, lifecycleStage: true, retiredAt: true, projectId: true },
     }),
-    prisma.dataAsset.findMany({
+    db.dataAsset.findMany({
       select: { id: true, name: true, classification: true, isActive: true, dataOwnerId: true, ownerDept: true },
     }),
-    prisma.aXProject.findMany({
+    db.aXProject.findMany({
       select: { id: true, name: true, domain: true, status: true },
     }),
-    prisma.project.findMany({
+    db.project.findMany({
       select: { id: true, title: true, department: true, status: true },
     }),
-    prisma.employee.findMany({
+    db.employee.findMany({
       select: { id: true, name: true, email: true, department: true, isActive: true },
     }),
-    prisma.agentDataLink.findMany({ select: { agentId: true, dataAssetId: true } }),
-    prisma.agentProjectLink.findMany({ select: { agentId: true, projectId: true } }),
-    prisma.employeeAgentLink.findMany({ select: { employeeId: true, agentId: true } }),
+    db.agentDataLink.findMany({ select: { agentId: true, dataAssetId: true } }),
+    db.agentProjectLink.findMany({ select: { agentId: true, projectId: true } }),
+    db.employeeAgentLink.findMany({ select: { employeeId: true, agentId: true } }),
   ])
 
   const nodes = new Map<NodeKey, GraphNode>()

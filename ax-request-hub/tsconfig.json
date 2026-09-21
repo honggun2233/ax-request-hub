@@ -25,7 +25,8 @@
       "@ssam/gate-transitions": ["./packages/@ssam/gate-transitions/src/index"],
       "@ssam/notifications": ["./packages/@ssam/notifications/src/index"],
       "@ssam/agents": ["./packages/@ssam/agents/src/index"],
-      "@ssam/agent-registry": ["./packages/@ssam/agent-registry/src/index"]
+      "@ssam/agent-registry": ["./packages/@ssam/agent-registry/src/index"],
+      "@ssam/data-graph": ["./packages/@ssam/data-graph/src/index"]
     }
   },
   "include": [
