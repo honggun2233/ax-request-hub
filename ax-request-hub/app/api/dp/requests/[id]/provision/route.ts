@@ -98,7 +98,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       body: `'${dr.project?.title ?? ""}' 과제의 데이터가 제공되었습니다. 이용 기한: ${expDate.toLocaleDateString("ko-KR")}`,
       link: "/me/data",
     };
-    await notify(event, [email]).catch(() => {});
+    await notify(prisma, event, [email]).catch(() => {});
   }
 
   return NextResponse.json(provision, { status: 201 });

@@ -50,7 +50,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     select: { email: true },
   })
   for (const member of axTeamMembers) {
-    await notify(
+    await notify(prisma, 
       member.email,
       `[샌드박스 PoC 요청] ${agent.agentName}`,
       `${agent.agentName} 에이전트의 샌드박스 PoC 사용 요청이 접수됐습니다. AX팀 심사가 필요합니다.`,

@@ -29,6 +29,14 @@ export default async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
+  // dev 환경 seed 엔드포인트 통과 (일회성 운영 작업, NODE_ENV=development 한정)
+  if (
+    process.env.NODE_ENV === "development" &&
+    pathname === "/api/governance-docs/seed"
+  ) {
+    return NextResponse.next()
+  }
+
   // 2. C트랙 서비스 토큰 — /api/internal/* 전용 (Bearer) + 레거시 x-service-token
   if (isApi) {
     // /api/internal/* → Authorization: Bearer 필수. 실제 검증은 route handler에서 verifyServiceToken()

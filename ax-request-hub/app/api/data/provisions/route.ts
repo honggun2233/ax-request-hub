@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         .findMany({ where: { role: 'DATA_PLATFORM' }, select: { email: true } })
         .then((r) => r.map((e) => e.email))
       if (dpEmails.length > 0) {
-        await notify(
+        await notify(prisma, 
           {
             type: 'DATA_REQUEST_UPDATE',
             title: `외부 데이터 접근 권한 처리 필요 — ${asset.name}`,

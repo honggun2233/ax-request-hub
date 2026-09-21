@@ -60,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       select: { email: true },
     })
     for (const member of axTeamMembers) {
-      await notify(
+      await notify(prisma, 
         member.email,
         `[CONFIDENTIAL 수동검토 필요] ${project.title}`,
         `CONFIDENTIAL 등급 AI 활용으로 자동 평가가 생략되었습니다. AX팀 전체 수동 검토가 필요합니다.`,

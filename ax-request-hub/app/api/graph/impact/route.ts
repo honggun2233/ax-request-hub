@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSessionUser, Role } from '@/lib/authz'
-import { getGraph } from '@/lib/graph/cache'
-import { traverse } from '@/lib/graph/traverse'
-import { assembleResult } from '@/lib/graph/assemble'
+import { getGraph, traverse, assembleResult } from '@ssam/data-graph'
 import { prisma } from '@/lib/prisma'
-import type { NodeType, EdgeType, NodeKey } from '@/lib/graph/types'
+import type { NodeType, EdgeType, NodeKey } from '@ssam/data-graph'
 
 const ALLOWED_ROLES: Role[] = ['DEPT_HEAD', 'AX_TEAM', 'C_LEVEL', 'EXECUTIVE', 'DATA_PLATFORM']
 
@@ -43,7 +41,7 @@ export async function GET(req: NextRequest) {
     ? DEFAULT_HOPS
     : Math.min(MAX_HOPS, Math.max(MIN_HOPS, rawHops))
 
-  const graph = await getGraph()
+  const graph = await getGraph(prisma)
   const nodeKey: NodeKey = `${type}:${id}`
   const originNode = graph.nodes.get(nodeKey)
 

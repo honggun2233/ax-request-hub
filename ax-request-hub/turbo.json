@@ -1,0 +1,41 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "package.json", "tsconfig.json"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "build:app": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "app/**", "components/**", "lib/**", "pages/**",
+        "public/**", "styles/**", "next.config.*",
+        "tailwind.config.*", "postcss.config.*",
+        "tsconfig.json", "package.json"
+      ],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "inputs": ["src/**", "app/**", "lib/**", "components/**", "tsconfig.json"],
+      "outputs": []
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "inputs": ["src/**", "app/**", "lib/**", "components/**"],
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "app/**", "lib/**", "tests/**", "jest.config.*"],
+      "outputs": ["coverage/**"],
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

@@ -108,7 +108,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       };
       const [title, body] = msg[decision];
       const event: NotifyEvent = { type: 'GATE_TRANSITION', title, body, link: '/me/projects' };
-      await notify(event, [project.requesterEmail]);
+      await notify(prisma, event, [project.requesterEmail]);
     }
   }
 

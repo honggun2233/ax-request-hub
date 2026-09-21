@@ -1,6 +1,6 @@
 ﻿import { NextRequest } from 'next/server'
 import { GET } from '@/app/api/graph/impact/route'
-import type { Graph, GraphNode, NodeKey } from '@/lib/graph/types'
+import type { Graph, GraphNode, NodeKey } from '@ssam/data-graph'
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
@@ -10,7 +10,7 @@ jest.mock('@/lib/authz', () => ({
 }))
 
 const mockGetGraph = jest.fn()
-jest.mock('@/lib/graph/cache', () => ({
+jest.mock('@ssam/data-graph', () => ({
   getGraph: (...args: unknown[]) => mockGetGraph(...args),
 }))
 

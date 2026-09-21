@@ -2,11 +2,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 import {
   Home, Plus, ListChecks, Database, FileText, Star, Book,
   User, Wrench, Users, BarChart3, Cpu, Gavel, Coins,
   Shield, LogOut, LayoutDashboard, GitFork,
-  ChevronRight, MessageSquarePlus, FileSearch, Map,
+  ChevronRight, MessageSquarePlus, FileSearch, Map, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@/lib/authz";
@@ -48,9 +49,10 @@ const NAV: NavGroup[] = [
   {
     title: "내 정보",
     items: [
-      { href: "/me",       label: "프로필 · 교육", icon: User },
-      { href: "/me/tools", label: "도구 & 서비스",  icon: Wrench },
-      { href: "/docs",     label: "규정 · 문서",   icon: Book },
+      { href: "/me",       label: "프로필 · 교육",       icon: User },
+      { href: "/me/tools", label: "도구 & 서비스",        icon: Wrench },
+      { href: "/skills",   label: "GPT 프롬프트 카탈로그", icon: Sparkles },
+      { href: "/docs",     label: "규정 · 문서",          icon: Book },
     ],
   },
 
@@ -132,6 +134,14 @@ export function AppSidebar({ role }: { role: Role }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const level = (session?.user as any)?.currentLevel ?? "L0";
+  const [skillCount, setSkillCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/skills?status=active&limit=1")
+      .then((r) => r.json())
+      .then((d) => { if (typeof d.total === "number") setSkillCount(d.total); })
+      .catch(() => {});
+  }, []);
 
   // 역할에 맞는 그룹만 표시
   const visible = NAV.filter((g) => !g.roles || g.roles.includes(role));
@@ -196,6 +206,14 @@ export function AppSidebar({ role }: { role: Role }) {
                       )}
                       <Icon className={cn("h-4 w-4 shrink-0", active ? "text-[#B8956A]" : "")} />
                       <span className="flex-1 truncate">{item.label}</span>
+                      {item.href === "/skills" && skillCount !== null && (
+                        <span className={cn(
+                          "ml-1 min-w-[18px] h-[18px] rounded-full text-[10px] font-bold flex items-center justify-center px-1 leading-none",
+                          active ? "bg-[#B8956A]/30 text-[#B8956A]" : "bg-white/10 text-white/50"
+                        )}>
+                          {skillCount}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

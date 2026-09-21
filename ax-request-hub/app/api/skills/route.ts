@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     ratings: undefined,
   }))
 
-  return NextResponse.json({ skills: result })
+  return NextResponse.json({ skills: result, total: result.length })
 }
 
 // POST /api/skills  (Admin only: 스킬 등록)
