@@ -28,7 +28,8 @@
       "@ssam/agent-registry": ["./packages/@ssam/agent-registry/src/index"],
       "@ssam/data-graph": ["./packages/@ssam/data-graph/src/index"],
       "@ssam/llm-usage": ["./packages/@ssam/llm-usage/src/index"],
-      "@ssam/authz": ["./packages/@ssam/authz/src/index"]
+      "@ssam/authz": ["./packages/@ssam/authz/src/index"],
+      "@ssam/ui": ["./packages/@ssam/ui/src/index"]
     }
   },
   "include": [

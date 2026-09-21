@@ -322,6 +322,8 @@ function AdminTab() {
   const [jsonError, setJsonError] = useState<string | null>(null)
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkMsg, setBulkMsg] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -351,6 +353,28 @@ function AdminTab() {
       setPatchMsg(`❌ ${data.error ?? '오류'}`)
     }
     setPatchLoading(false)
+  }
+
+  async function bulkSave() {
+    setBulkLoading(true); setBulkMsg(null); setJsonError(null)
+    try {
+      const parsed = JSON.parse(jsonInput)
+      const items: any[] = Array.isArray(parsed) ? parsed : [parsed]
+      let ok = 0; let fail = 0
+      for (const item of items) {
+        const res = await fetch('/api/skills', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item),
+        })
+        if (res.ok) ok++; else fail++
+      }
+      setBulkMsg(`✅ ${ok}개 저장 완료${fail ? ` / ❌ ${fail}개 실패` : ''}`)
+      if (ok > 0) { setJsonInput(''); load() }
+    } catch (e: any) {
+      setJsonError(`JSON 파싱 오류: ${e.message}`)
+    } finally {
+      setBulkLoading(false)
+    }
   }
 
   function parseJson() {
@@ -499,11 +523,20 @@ function AdminTab() {
                   rows={10} placeholder={'{\n  "skillId": "skill-xxx",\n  "name": "스킬 이름",\n  "category": "업무자동화",\n  "promptText": "..."\n}'}
                   style={{ ...inputStyle, fontFamily: 'monospace', resize: 'vertical' }} />
                 {jsonError && <p style={{ fontSize: 12, color: '#DC2626', margin: 0 }}>{jsonError}</p>}
-                <button onClick={parseJson}
-                  style={{ alignSelf: 'flex-start', fontSize: 13, padding: '6px 16px', borderRadius: 6,
-                    background: BLUE, color: '#fff', border: 'none', cursor: 'pointer' }}>
-                  폼에 적용
-                </button>
+                {bulkMsg && <p style={{ fontSize: 12, color: bulkMsg.startsWith('✅') ? '#059669' : '#DC2626', margin: 0 }}>{bulkMsg}</p>}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={parseJson}
+                    style={{ fontSize: 13, padding: '6px 16px', borderRadius: 6,
+                      background: BLUE, color: '#fff', border: 'none', cursor: 'pointer' }}>
+                    폼에 적용 (첫 항목)
+                  </button>
+                  <button onClick={bulkSave} disabled={bulkLoading}
+                    style={{ fontSize: 13, padding: '6px 16px', borderRadius: 6, fontWeight: 500,
+                      background: bulkLoading ? DIM : '#059669', color: '#fff', border: 'none',
+                      cursor: bulkLoading ? 'default' : 'pointer' }}>
+                    {bulkLoading ? '저장 중...' : '배열 전체 일괄 저장'}
+                  </button>
+                </div>
               </div>
             )}
 
