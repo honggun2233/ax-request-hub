@@ -1,4 +1,5 @@
 import { prisma as db } from '@/lib/prisma'
+import { getMonthlyTokenUsed } from '@/lib/gateway/usage-utils'
 import type { QuotaCheckResult, ProviderKey } from './types'
 
 const SERVICE_MAP: Record<ProviderKey, string> = {
@@ -16,7 +17,7 @@ export async function checkQuota(
   const yearMonth = new Date().toISOString().slice(0, 7)
   const service = SERVICE_MAP[provider]
 
-  const [policy, usageRecords] = await Promise.all([
+  const [policy, used] = await Promise.all([
     db.tokenPolicy.findFirst({
       where: {
         isActive: true,
@@ -28,12 +29,8 @@ export async function checkQuota(
       },
       orderBy: { scope: 'asc' }, // COMPANY < LEVEL — LEVEL 우선
     }),
-    db.usageRecord.findMany({
-      where: { employeeId, yearMonth },
-    }),
+    getMonthlyTokenUsed(employeeId, yearMonth, service),
   ])
-
-  const used = usageRecords.reduce((s: number, r: { tokenUsed: number }) => s + r.tokenUsed, 0)
   const limit = policy?.monthlyLimit ?? 0
 
   if (limit === 0) {
@@ -81,10 +78,7 @@ export async function recordUsage(params: {
   })
 
   // 80% / 100% 경고 알림 생성
-  const afterUsage = await db.usageRecord.findMany({
-    where: { employeeId: params.employeeId, yearMonth },
-  })
-  const totalUsed = afterUsage.reduce((s: number, r: { tokenUsed: number }) => s + r.tokenUsed, 0)
+  const totalUsed = await getMonthlyTokenUsed(params.employeeId, yearMonth, service)
   const policy = await db.tokenPolicy.findFirst({
     where: {
       isActive: true,
