@@ -103,7 +103,7 @@ export default function SkillsPage() {
     <div style={{ display: 'flex', height: 'calc(100vh - 48px)', gap: 16, color: TEXT }}>
       {/* 좌: 스킬 목록 */}
       <div style={{ width: 288, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: NAVY, margin: 0 }}>AI 스킬 카탈로그</h1>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: NAVY, margin: 0 }}>GPT 프롬프트 카탈로그</h1>
         <input
           type="text"
           placeholder="검색..."
