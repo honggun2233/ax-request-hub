@@ -818,6 +818,178 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
   )
 }
 
+// ── 신청 검토 패널 (AX_TEAM 전용) ────────────────────────────────
+function PendingRequestsPanel() {
+  const [requests, setRequests] = useState<any[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [open, setOpen]         = useState(false)
+
+  useEffect(() => {
+    fetch('/api/registry/request')
+      .then(r => r.ok ? r.json() : { requests: [] })
+      .then(d => { setRequests(d.requests ?? []); setLoading(false) })
+      .catch(() => setLoading(false))
+  }, [])
+
+  if (loading || requests.length === 0) return null
+
+  return (
+    <div style={{ background: 'rgba(79,70,229,.06)', border: '1px solid rgba(79,70,229,.25)', borderRadius: 8, padding: '12px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10,
+            background: 'rgba(79,70,229,.12)', color: '#4F46E5', border: '1px solid rgba(79,70,229,.3)' }}>
+            {requests.length}건 대기
+          </span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: '#4F46E5' }}>에이전트 등록 신청 — 검토 필요</span>
+        </div>
+        <button onClick={() => setOpen(o => !o)} style={{ fontSize: 11, color: '#4F46E5', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+          {open ? '접기 ▲' : '펼치기 ▼'}
+        </button>
+      </div>
+      {open && (
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {requests.map((r: any) => (
+            <div key={r.id} style={{ background: '#fff', border: '1px solid rgba(79,70,229,.2)', borderRadius: 6, padding: '10px 12px', fontSize: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontWeight: 600, color: '#18243D' }}>{r.agentName}</span>
+                {r.riskType && (
+                  <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4,
+                    background: r.riskType >= 3 ? 'rgba(220,38,38,.08)' : 'rgba(245,158,11,.08)',
+                    color: r.riskType >= 3 ? '#DC2626' : '#B45309',
+                    border: `1px solid ${r.riskType >= 3 ? 'rgba(220,38,38,.3)' : 'rgba(245,158,11,.3)'}`,
+                  }}>R{r.riskType}</span>
+                )}
+              </div>
+              <div style={{ color: '#8898BB', marginBottom: 4 }}>{r.projectTitle}</div>
+              {r.description && <div style={{ color: '#5A6E8C', marginBottom: 4 }}>{r.description}</div>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
+                <span style={{ fontSize: 10, color: '#BEC8DC' }}>{r.actorEmail} · {new Date(r.createdAt).toLocaleDateString('ko-KR')}</span>
+                <span style={{ fontSize: 10, color: '#4F46E5', fontWeight: 600 }}>→ /registry에서 에이전트 등록 후 Agent ID 부여</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── 등록 신청 모달 (EMPLOYEE/DEPT_HEAD 전용) ─────────────────────
+function RequestRegisterModal({ myProjects, onClose }: { myProjects: any[]; onClose: () => void }) {
+  const [form, setForm] = useState({ projectId: '', agentName: '', description: '', riskType: '' })
+  const [saving, setSaving]   = useState(false)
+  const [error, setError]     = useState<string | null>(null)
+  const [done, setDone]       = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.projectId || !form.agentName || !form.riskType) {
+      setError('과제, 에이전트 이름, 위험 유형은 필수입니다.'); return
+    }
+    setSaving(true); setError(null)
+    try {
+      const res = await fetch('/api/registry/request', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, riskType: Number(form.riskType) }),
+      })
+      if (!res.ok) { const err = await res.json(); throw new Error(err.error ?? '신청 오류') }
+      setDone(true)
+    } catch (e: any) { setError(e.message); setSaving(false) }
+  }
+
+  const approvedProjects = myProjects.filter((p: any) => ['pilot', 'production'].includes(p.status))
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.55)', backdropFilter: 'blur(4px)' }} onClick={onClose} />
+      <div style={{ position: 'relative', background: '#fff', border: `1px solid ${BDR}`, borderRadius: 12, width: '100%', maxWidth: 460, margin: 16, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: `1px solid ${BDR}`, background: SB }}>
+          <div>
+            <h2 style={{ fontSize: 14, fontWeight: 600, color: TEXT, margin: 0 }}>에이전트 등록 신청</h2>
+            <p style={{ fontSize: 11, color: MUTED, marginTop: 3 }}>AI-GUI-001 제16조 — 유형 3·4는 AX팀 사전 승인 필수</p>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: DIM, fontSize: 20, cursor: 'pointer' }}>×</button>
+        </div>
+
+        {done ? (
+          <div style={{ padding: '32px 24px', textAlign: 'center' }}>
+            <div style={{ fontSize: 36, marginBottom: 12 }}>✓</div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#059669', marginBottom: 8 }}>신청이 접수됐습니다.</p>
+            <p style={{ fontSize: 12, color: MUTED, lineHeight: 1.6 }}>AX팀이 검토 후 Agent ID를 부여합니다.<br/>유형 3·4는 위원회 의결 후 등록됩니다.</p>
+            <button onClick={onClose} style={{ marginTop: 16, padding: '8px 24px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              닫기
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                연결 AI 활용 <span style={{ color: '#B94040' }}>*</span>
+              </label>
+              {approvedProjects.length === 0 ? (
+                <div style={{ background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.3)', borderRadius: 6, padding: '10px 12px', fontSize: 12, color: '#92400E' }}>
+                  승인된 AI 활용이 없습니다.{' '}
+                  <Link href="/me/projects" style={{ color: ACCENT, fontWeight: 600 }}>내 AI 활용</Link>에서 먼저 신청하세요.
+                </div>
+              ) : (
+                <select value={form.projectId} onChange={e => setForm({ ...form, projectId: e.target.value })} required style={inputSt}>
+                  <option value="">-- 선택 --</option>
+                  {approvedProjects.map(p => <option key={p.id} value={p.id}>{p.title} · {p.department}</option>)}
+                </select>
+              )}
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                에이전트 이름 <span style={{ color: '#B94040' }}>*</span>
+              </label>
+              <input type="text" required value={form.agentName} onChange={e => setForm({ ...form, agentName: e.target.value })}
+                placeholder="예: ETF-Rebalance-Agent" style={inputSt} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.04em' }}>목적·기능 설명</label>
+              <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
+                rows={2} placeholder="에이전트가 하는 일을 1~2문장으로 설명하세요"
+                style={{ ...inputSt, resize: 'none' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, marginBottom: 5, textTransform: 'uppercase', letterSpacing: '.04em' }}>
+                거버넌스 위험 유형 <span style={{ color: '#B94040' }}>*</span>
+              </label>
+              <select value={form.riskType} onChange={e => setForm({ ...form, riskType: e.target.value })} required style={inputSt}>
+                <option value="">-- 선택 --</option>
+                <option value="1">유형 1 — 단순보조 (검색·요약·번역)</option>
+                <option value="2">유형 2 — 판단보조 (초안작성·분류·비교)</option>
+                <option value="3">유형 3 — 자율실행+메모리 (반복처리·장기계획)</option>
+                <option value="4">유형 4 — 완전자율 에이전트 (자율판단·외부시스템 직접조작)</option>
+              </select>
+              {form.riskType && Number(form.riskType) >= 3 && (
+                <p style={{ fontSize: 11, color: '#B45309', marginTop: 4 }}>⚠ 유형 3·4는 위원회 의결 후 AX팀이 등록합니다.</p>
+              )}
+            </div>
+            {error && (
+              <div style={{ background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 6, padding: '8px 12px', fontSize: 12, color: '#B94040' }}>
+                {error}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button type="button" onClick={onClose} style={{
+                flex: 1, padding: '9px', background: 'none', border: `1px solid ${BDR}`, color: MUTED, borderRadius: 8, fontSize: 13, cursor: 'pointer',
+              }}>취소</button>
+              <button type="submit" disabled={saving || approvedProjects.length === 0} style={{
+                flex: 1, padding: '9px', background: saving || approvedProjects.length === 0 ? CARD2 : ACCENT,
+                border: 'none', color: '#fff', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              }}>
+                {saving ? '신청 중...' : '등록 신청'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── 에이전트 등록 모달 ──────────────────────────────────────────
 function RegisterModal({ approvedProjects, defaultProjectId, onClose, onCreated }: {
   approvedProjects: any[]; defaultProjectId: string; onClose: () => void; onCreated: () => void
@@ -1061,6 +1233,7 @@ function RegistryPageContent() {
   const [loading, setLoading]             = useState(true)
   const [loadError, setLoadError]         = useState<string | null>(null)
   const [showRegister, setShowRegister]   = useState(!!defaultProjectId)
+  const [showRequestModal, setShowRequestModal] = useState(false)
 
   const load = useCallback(async () => {
     setLoadError(null)
@@ -1124,11 +1297,17 @@ function RegistryPageContent() {
           }}>
             폐기 거버넌스
           </Link>
-          {isAxTeam && (
+          {isAxTeam ? (
             <button onClick={() => setShowRegister(true)} style={{
               padding: '8px 16px', background: ACCENT, color: '#fff', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
             }}>
               + 에이전트 등록
+            </button>
+          ) : (
+            <button onClick={() => setShowRequestModal(true)} style={{
+              padding: '8px 16px', background: 'none', color: ACCENT, border: `1px solid ${ACCENT}`, borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer',
+            }}>
+              등록 신청
             </button>
           )}
           <div style={{ display: 'flex', gap: 4, background: CARD2, borderRadius: 8, padding: 3, border: `1px solid ${BDR}` }}>
@@ -1138,6 +1317,9 @@ function RegistryPageContent() {
           </div>
         </div>
       </div>
+
+      {/* AX_TEAM: 신청 대기 목록 */}
+      {isAxTeam && <PendingRequestsPanel />}
 
       {/* 로드 에러 */}
       {loadError && (
@@ -1279,6 +1461,9 @@ function RegistryPageContent() {
       )}
       {showRegister && isAxTeam && (
         <RegisterModal approvedProjects={approvedProjects} defaultProjectId={defaultProjectId} onClose={() => setShowRegister(false)} onCreated={load} />
+      )}
+      {showRequestModal && !isAxTeam && (
+        <RequestRegisterModal myProjects={approvedProjects} onClose={() => setShowRequestModal(false)} />
       )}
     </div>
   )
