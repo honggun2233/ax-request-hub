@@ -1226,7 +1226,19 @@ function RegistryPageContent() {
                         </span>
                       )}
                     </div>
-                    <StageBadge stage={agent.lifecycleStage} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                      {agent.riskType && (
+                        <span style={{
+                          fontSize: 10, padding: '2px 6px', borderRadius: 4, fontWeight: 700,
+                          background: agent.riskType >= 3 ? 'rgba(220,38,38,.08)' : 'rgba(245,158,11,.08)',
+                          color: agent.riskType >= 3 ? '#DC2626' : '#B45309',
+                          border: `1px solid ${agent.riskType >= 3 ? 'rgba(220,38,38,.3)' : 'rgba(245,158,11,.3)'}`,
+                        }}>
+                          R{agent.riskType}
+                        </span>
+                      )}
+                      <StageBadge stage={agent.lifecycleStage} />
+                    </div>
                   </div>
                   <p style={{ fontSize: 11, color: MUTED, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' as any }}>
                     {agent.purpose}
