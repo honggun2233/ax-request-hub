@@ -1,0 +1,8 @@
+{
+  "name": "@ssam/authz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AX Hub 공통 권한 타입(Role, SessionUser) 및 기밀등급 코드",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
+}

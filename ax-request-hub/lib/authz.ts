@@ -3,14 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth"; // TODO: 실제 authOptions 경로만 확인
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-// Employee.role 실제 허용값 (schema.prisma 주석 기준)
-export type Role = "EMPLOYEE" | "DEPT_HEAD" | "AX_TEAM" | "C_LEVEL" | "EXECUTIVE" | "DATA_PLATFORM";
-
-export type SessionUser = {
-  id: string; employeeId: string; email: string; name: string;
-  role: Role; department: string;
-};
+export type { Role, SessionUser } from '@ssam/authz'
+import type { Role, SessionUser } from '@ssam/authz'
 
 export async function getSessionUser(): Promise<SessionUser | null> {
   const session = await getServerSession(authOptions);
