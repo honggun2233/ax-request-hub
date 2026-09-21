@@ -2,13 +2,21 @@
   "name": "ax-request-hub",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@11.13.0",
+  "workspaces": [
+    "packages/@ssam/*"
+  ],
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "turbo run build",
+    "build:app": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "collect-usage": "ts-node -r tsconfig-paths/register scripts/collect-llm-usage.ts",
-    "test": "jest"
+    "lint": "turbo run lint",
+    "lint:app": "eslint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:app": "jest",
+    "collect-usage": "ts-node -r tsconfig-paths/register scripts/collect-llm-usage.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.109.0",
@@ -58,6 +66,7 @@
     "tailwindcss": "^4",
     "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2",
+    "turbo": "^2.11.2",
     "typescript": "^5"
   }
 }

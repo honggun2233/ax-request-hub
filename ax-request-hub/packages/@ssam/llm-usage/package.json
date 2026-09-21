@@ -1,8 +1,13 @@
-{
-  "name": "@ssam/llm-usage",
-  "version": "1.0.0",
-  "private": true,
-  "description": "AX Hub LLM 사용량 수집 어댑터 — Anthropic·OpenAI·Gemini",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts"
+﻿{
+    "name":  "@ssam/llm-usage",
+    "version":  "1.0.0",
+    "private":  true,
+    "description":  "AX Hub LLM 사용량 수집 어댑터 — Anthropic·OpenAI·Gemini",
+    "main":  "./src/index.ts",
+    "types":  "./src/index.ts",
+    "scripts":  {
+                    "typecheck": "tsc --noEmit --project ../../../tsconfig.json",
+                    "lint":  "true",
+                    "build":  "true"
+                }
 }
