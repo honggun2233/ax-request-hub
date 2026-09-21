@@ -48,14 +48,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   if (body.status === "APPROVED" && toLevel) {
-    await notify(
+    await notify(prisma, 
       application.employee.email,
       `L${toLevel} 승급 완료`,
       `레벨 신청이 승인되었습니다. ${toLevel}로 승급되었습니다.`,
       "/me/level"
     )
   } else if (body.status === "REJECTED") {
-    await notify(
+    await notify(prisma, 
       application.employee.email,
       "레벨 신청 반려",
       body.reviewNote || "레벨 신청이 반려되었습니다.",

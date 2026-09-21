@@ -85,7 +85,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         : `'${dr.project?.title ?? ""}' 과제의 데이터 신청이 반려되었습니다. 사유: ${rejectReason}`,
       link: "/me/data",
     };
-    await notify(event, [email]).catch(() => {});
+    await notify(prisma, event, [email]).catch(() => {});
   }
 
   return NextResponse.json({ ok: true, nextStatus });

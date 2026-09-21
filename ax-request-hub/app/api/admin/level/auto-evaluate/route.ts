@@ -128,7 +128,7 @@ export async function POST() {
       }),
     ]);
 
-    await notify(
+    await notify(prisma, 
       app.employee.email,
       `${toLevel} 자동 승급 완료`,
       `리터러시 필수 과정 전건 이수가 확인되어 ${toLevel}로 자동 승급되었습니다.`,

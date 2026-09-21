@@ -91,7 +91,7 @@ export async function POST() {
       body: `'${prov.request.project?.title ?? ""}' 과제의 데이터 제공이 ${daysLeft}일 후 만료됩니다. 연장 신청을 검토하세요.`,
       link: "/me/data",
     };
-    await notify(event, [email]).catch(() => {});
+    await notify(prisma, event, [email]).catch(() => {});
   }
 
   return NextResponse.json({

@@ -41,7 +41,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     select: { email: true },
   }).then(r => r.map(e => e.email))
 
-  await notify(
+  await notify(prisma, 
     {
       type: 'TASK_ESCALATED',
       title: `인수 신청 — ${project.title}`,
