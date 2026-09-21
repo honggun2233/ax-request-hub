@@ -355,6 +355,83 @@ function QwenRecommendPanel({ agentId, stage }: { agentId: string; stage: string
 }
 
 // 샌드박스 심사 패널 (GATE2 단계 — 대기 중인 요청 승인/반려)
+// ── 투명성 표시 관리 패널 (AI-GUI-002 제12조) — AX_TEAM 전용 ──────────────
+function TransparencyPanel({ agentId, agent, onRefresh }: { agentId: string; agent: any; onRefresh: () => void }) {
+  const [isHighImpact, setIsHighImpact]       = useState<boolean>(agent.isHighImpact ?? false)
+  const [method, setMethod]                   = useState<string>(agent.transparencyMethod ?? '')
+  const [appliedAt, setAppliedAt]             = useState<string>(
+    agent.transparencyAppliedAt ? agent.transparencyAppliedAt.slice(0, 10) : ''
+  )
+  const [exceptionNote, setExceptionNote]     = useState<string>(agent.transparencyExceptionNote ?? '')
+  const [saving, setSaving]                   = useState(false)
+  const [saved, setSaved]                     = useState(false)
+  const [error, setError]                     = useState<string | null>(null)
+
+  const handleSave = async () => {
+    setSaving(true); setError(null); setSaved(false)
+    const res = await fetch(`/api/registry/${agentId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        isHighImpact,
+        transparencyMethod: method || null,
+        transparencyAppliedAt: appliedAt || null,
+        transparencyExceptionNote: exceptionNote || null,
+      }),
+    })
+    setSaving(false)
+    if (!res.ok) { setError('저장 실패'); return }
+    setSaved(true)
+    onRefresh()
+    setTimeout(() => setSaved(false), 2500)
+  }
+
+  const panelSt: React.CSSProperties = { borderRadius: 6, border: '1px solid rgba(220,38,38,.2)', background: 'rgba(220,38,38,.04)', padding: 14 }
+  const labelSt: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: '#888', textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 4, display: 'block' }
+  const inputSt: React.CSSProperties = { width: '100%', fontSize: 12, padding: '6px 10px', borderRadius: 6, border: '1px solid rgba(100,100,120,.25)', background: 'rgba(30,30,50,.6)', color: '#E2E8F0', boxSizing: 'border-box' as const }
+
+  return (
+    <div style={panelSt}>
+      <p style={{ fontSize: 11, fontWeight: 700, color: '#DC2626', marginBottom: 12, letterSpacing: '.04em' }}>
+        🔴 AI-GUI-002 제12조 · 투명성 표시
+      </p>
+      {/* 고영향 AI 체크 */}
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#E2E8F0', marginBottom: 12, cursor: 'pointer' }}>
+        <input type="checkbox" checked={isHighImpact} onChange={e => setIsHighImpact(e.target.checked)} />
+        고영향 AI 해당
+      </label>
+      {/* 고지 방법 */}
+      <label style={labelSt}>고지 방법</label>
+      <select value={method} onChange={e => setMethod(e.target.value)} style={{ ...inputSt, marginBottom: 10 }}>
+        <option value="">-- 선택 --</option>
+        <option value="SYSTEM_NOTICE">시스템 공지 (SYSTEM_NOTICE)</option>
+        <option value="SERVICE_DESC">서비스 설명서 (SERVICE_DESC)</option>
+        <option value="PUBLIC_NOTICE">대외 공시 (PUBLIC_NOTICE)</option>
+      </select>
+      {/* 적용일 */}
+      <label style={labelSt}>표시 적용일</label>
+      <input type="date" value={appliedAt} onChange={e => setAppliedAt(e.target.value)} style={{ ...inputSt, marginBottom: 10 }} />
+      {/* 예외 사유서 */}
+      <label style={labelSt}>예외 사유서 (면제 시 작성)</label>
+      <textarea
+        value={exceptionNote}
+        onChange={e => setExceptionNote(e.target.value)}
+        placeholder="컴플라이언스 협의 내용 및 예외 승인 근거"
+        rows={3}
+        style={{ ...inputSt, resize: 'vertical' as const, marginBottom: 10 }}
+      />
+      {error && <div style={{ fontSize: 11, color: '#B94040', marginBottom: 8 }}>{error}</div>}
+      <button
+        disabled={saving}
+        onClick={handleSave}
+        style={{ width: '100%', padding: '8px', background: saving ? '#555' : '#DC2626', color: '#fff', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+      >
+        {saving ? '저장 중...' : saved ? '✓ 저장됨' : '투명성 정보 저장'}
+      </button>
+    </div>
+  )
+}
+
 function SandboxApprovePanel({ agentId, agent, onRefresh }: { agentId: string; agent: any; onRefresh: () => void }) {
   const [rejectReason, setRejectReason] = useState('')
   const [saving, setSaving] = useState(false)
@@ -753,6 +830,11 @@ function SlideOver({ agent, allProjects, onClose, onStageChange }: {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* 투명성 표시 관리 — AX_TEAM 전용 (AI-GUI-002 제12조) */}
+          {isAxTeam && (
+            <TransparencyPanel agentId={agent.id} agent={agent} onRefresh={onStageChange} />
           )}
 
           {/* ACTIVE 상태 월별 KPI 실적 입력 — AX_TEAM 전용 */}
