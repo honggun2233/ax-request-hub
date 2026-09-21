@@ -311,10 +311,10 @@ function AdminTab() {
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('all')
   const [selected, setSelected] = useState<Skill | null>(null)
-  const [patchLoading, setPatchLoading] = useState(false)
+  const [patchingId, setPatchingId] = useState<string | null>(null)
   const [patchMsg, setPatchMsg] = useState<string | null>(null)
 
-  // 신규 등록 폼 상태
+  // 신규 등록 모달 상태
   const [showForm, setShowForm] = useState(false)
   const [formMode, setFormMode] = useState<'manual' | 'json'>('manual')
   const [form, setForm] = useState({ ...EMPTY_FORM })
@@ -339,20 +339,20 @@ function AdminTab() {
   const draftCount = skills.filter(s => s.status === 'draft').length
 
   async function patchStatus(skill: Skill, status: string) {
-    setPatchLoading(true); setPatchMsg(null)
+    setPatchingId(skill.id); setPatchMsg(null)
     const res = await fetch('/api/skills', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: skill.id, status }),
     })
     const data = await res.json()
     if (res.ok) {
-      setPatchMsg(`✅ ${status === 'active' ? '승인' : '아카이브'} 완료`)
+      setPatchMsg(`✅ "${skill.name}" ${status === 'active' ? '승인' : status === 'deprecated' ? '아카이브' : '복원'} 완료`)
       setSelected(data.skill)
       load()
     } else {
       setPatchMsg(`❌ ${data.error ?? '오류'}`)
     }
-    setPatchLoading(false)
+    setPatchingId(null)
   }
 
   async function bulkSave() {
@@ -429,77 +429,194 @@ function AdminTab() {
   const labelStyle: React.CSSProperties = { fontSize: 12, color: MUTED, display: 'block', marginBottom: 3 }
 
   return (
-    <div style={{ display: 'flex', flex: 1, gap: 16, overflow: 'hidden' }}>
-      {/* 좌: 목록 */}
-      <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {/* 헤더 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: NAVY }}>스킬 관리</span>
-            {draftCount > 0 && (
-              <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 9999,
-                background: 'rgba(208,123,58,.15)', color: '#D97706', fontWeight: 700 }}>
-                승인 대기 {draftCount}
-              </span>
-            )}
+    <>
+      {/* ── 메인 2컬럼 레이아웃 ── */}
+      <div style={{ display: 'flex', flex: 1, gap: 16, overflow: 'hidden' }}>
+
+        {/* 좌: 목록 */}
+        <div style={{ width: 360, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+
+          {/* 헤더 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 15, fontWeight: 700, color: NAVY }}>스킬 관리</span>
+              {draftCount > 0 && (
+                <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 9999,
+                  background: 'rgba(208,123,58,.15)', color: '#D97706', fontWeight: 700 }}>
+                  승인 대기 {draftCount}
+                </span>
+              )}
+            </div>
+            <button onClick={() => { setShowForm(true); setSaveMsg(null); setBulkMsg(null); setJsonError(null); setForm({...EMPTY_FORM}); setJsonInput('') }}
+              style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6,
+                background: BLUE, color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
+              + 새 스킬
+            </button>
           </div>
-          <button onClick={() => { setShowForm(true); setSelected(null); setSaveMsg(null) }}
-            style={{ fontSize: 12, padding: '5px 12px', borderRadius: 6,
-              background: BLUE, color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 500 }}>
-            + 새 스킬
-          </button>
-        </div>
 
-        {/* status 필터 */}
-        <div style={{ display: 'flex', gap: 4 }}>
-          {['all','draft','active','deprecated'].map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)}
-              style={{ fontSize: 11, padding: '3px 10px', borderRadius: 9999, cursor: 'pointer',
-                border: `1px solid ${statusFilter === s ? BLUE : LINE}`,
-                background: statusFilter === s ? BLUE : SURFACE,
-                color: statusFilter === s ? '#fff' : MUTED }}>
-              {s === 'all' ? '전체' : s}
-            </button>
-          ))}
-        </div>
+          {/* status 필터 */}
+          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            {['all','draft','active','deprecated'].map(s => (
+              <button key={s} onClick={() => setStatusFilter(s)}
+                style={{ fontSize: 11, padding: '3px 10px', borderRadius: 9999, cursor: 'pointer',
+                  border: `1px solid ${statusFilter === s ? BLUE : LINE}`,
+                  background: statusFilter === s ? BLUE : SURFACE,
+                  color: statusFilter === s ? '#fff' : MUTED }}>
+                {s === 'all' ? '전체' : s}
+              </button>
+            ))}
+          </div>
 
-        {/* 목록 */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {loading && <p style={{ fontSize: 13, color: DIM, textAlign: 'center', paddingTop: 16 }}>로딩 중...</p>}
-          {!loading && filtered.length === 0 && (
-            <p style={{ fontSize: 13, color: DIM, textAlign: 'center', paddingTop: 16 }}>스킬 없음</p>
+          {patchMsg && (
+            <div style={{ fontSize: 12, padding: '6px 10px', borderRadius: 6, flexShrink: 0,
+              background: patchMsg.startsWith('✅') ? 'rgba(16,185,129,.1)' : 'rgba(220,38,38,.1)',
+              color: patchMsg.startsWith('✅') ? '#059669' : '#DC2626' }}>
+              {patchMsg}
+            </div>
           )}
-          {filtered.map(skill => (
-            <button key={skill.id} onClick={() => { setSelected(skill); setShowForm(false); setPatchMsg(null) }}
-              style={{ width: '100%', textAlign: 'left', padding: '9px 11px', borderRadius: 7,
-                border: `1px solid ${selected?.id === skill.id ? BLUE_MD : LINE}`,
-                background: selected?.id === skill.id ? 'rgba(74,111,165,.06)' : SURFACE, cursor: 'pointer' }}
-              onMouseEnter={e => { if (selected?.id !== skill.id) e.currentTarget.style.borderColor = DIM }}
-              onMouseLeave={e => { if (selected?.id !== skill.id) e.currentTarget.style.borderColor = LINE }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 500, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                  {skill.name}
-                </span>
-                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 9999, flexShrink: 0,
-                  ...(STATUS_STYLE[skill.status] ?? { background: 'rgba(190,200,220,.15)', color: DIM, fontWeight: 600 }) }}>
-                  {skill.status}
-                </span>
+
+          {/* 목록 */}
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {loading && <p style={{ fontSize: 13, color: DIM, textAlign: 'center', paddingTop: 16 }}>로딩 중...</p>}
+            {!loading && filtered.length === 0 && (
+              <p style={{ fontSize: 13, color: DIM, textAlign: 'center', paddingTop: 16 }}>스킬 없음</p>
+            )}
+            {filtered.map(skill => (
+              <div key={skill.id}
+                style={{ borderRadius: 7, border: `1px solid ${selected?.id === skill.id ? BLUE_MD : LINE}`,
+                  background: selected?.id === skill.id ? 'rgba(74,111,165,.06)' : SURFACE }}>
+                {/* 스킬 정보 행 (클릭하면 우측 상세) */}
+                <button onClick={() => { setSelected(skill); setPatchMsg(null) }}
+                  style={{ width: '100%', textAlign: 'left', padding: '9px 11px', background: 'transparent',
+                    border: 'none', cursor: 'pointer', display: 'block' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: TEXT,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                      {skill.name}
+                    </span>
+                    <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 9999, flexShrink: 0,
+                      ...(STATUS_STYLE[skill.status] ?? { background: 'rgba(190,200,220,.15)', color: DIM, fontWeight: 600 }) }}>
+                      {skill.status}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+                    <span style={{ fontSize: 11, color: MUTED }}>{skill.category}</span>
+                    <span style={{ fontSize: 11, color: DIM }}>사용 {skill.usageCount}회</span>
+                  </div>
+                </button>
+
+                {/* 인라인 액션 버튼 */}
+                <div style={{ display: 'flex', gap: 5, padding: '0 11px 8px', alignItems: 'center' }}>
+                  {skill.status === 'draft' && (
+                    <button onClick={() => patchStatus(skill, 'active')} disabled={patchingId === skill.id}
+                      style={{ fontSize: 11, padding: '3px 10px', borderRadius: 5, fontWeight: 600,
+                        background: patchingId === skill.id ? 'rgba(16,185,129,.05)' : 'rgba(16,185,129,.12)',
+                        color: '#059669', border: '1px solid rgba(16,185,129,.3)',
+                        cursor: patchingId === skill.id ? 'default' : 'pointer' }}>
+                      {patchingId === skill.id ? '처리 중...' : '✓ 승인'}
+                    </button>
+                  )}
+                  {skill.status === 'active' && (
+                    <button onClick={() => patchStatus(skill, 'deprecated')} disabled={patchingId === skill.id}
+                      style={{ fontSize: 11, padding: '3px 10px', borderRadius: 5,
+                        background: 'rgba(190,200,220,.1)', color: DIM, border: `1px solid ${LINE}`,
+                        cursor: patchingId === skill.id ? 'default' : 'pointer' }}>
+                      아카이브
+                    </button>
+                  )}
+                  {skill.status === 'deprecated' && (
+                    <button onClick={() => patchStatus(skill, 'active')} disabled={patchingId === skill.id}
+                      style={{ fontSize: 11, padding: '3px 10px', borderRadius: 5,
+                        background: 'rgba(16,185,129,.08)', color: '#059669', border: '1px solid rgba(16,185,129,.2)',
+                        cursor: patchingId === skill.id ? 'default' : 'pointer' }}>
+                      복원
+                    </button>
+                  )}
+                  <span style={{ fontSize: 10, color: DIM, marginLeft: 2 }}>
+                    {skill.status === 'draft' ? '→ 승인하면 카탈로그에 표시됩니다' : skill.status === 'active' ? '카탈로그 노출 중' : '비활성'}
+                  </span>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
-                <span style={{ fontSize: 11, color: MUTED }}>{skill.category}</span>
-                <span style={{ fontSize: 11, color: DIM }}>사용 {skill.usageCount}회</span>
+            ))}
+          </div>
+        </div>
+
+        {/* 우: 선택된 스킬 상세 */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          {selected ? (
+            <div style={{ background: SURFACE, borderRadius: 12, border: `1px solid ${LINE}`, padding: 24,
+              display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: NAVY, margin: 0 }}>{selected.name}</h2>
+                <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 9999, ...(STATUS_STYLE[selected.status] ?? {}) }}>
+                    {STATUS_LABEL[selected.status] ?? selected.status}
+                  </span>
+                  <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 9999,
+                    ...(SEC_STYLE[selected.securityLevel] ?? { background: 'rgba(190,200,220,.15)', color: DIM }) }}>
+                    {selected.securityLevel}
+                  </span>
+                  <span style={{ fontSize: 12, color: DIM }}>{selected.category}</span>
+                  <span style={{ fontSize: 12, color: DIM }}>v{selected.version}</span>
+                  <span style={{ fontSize: 12, color: DIM }}>사용 {selected.usageCount}회</span>
+                  {selected.avgRating != null && (
+                    <span style={{ fontSize: 12, color: '#D97706' }}>★ {selected.avgRating.toFixed(1)} ({selected.ratingCount}명)</span>
+                  )}
+                </div>
+                {selected.approvedBy && (
+                  <p style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>
+                    승인: {selected.approvedBy} {selected.approvedAt ? `(${new Date(selected.approvedAt).toLocaleDateString('ko-KR')})` : ''}
+                  </p>
+                )}
               </div>
-            </button>
-          ))}
+              <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {selected.purpose && (
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 3 }}>목적</div>
+                    <p style={{ fontSize: 13, color: MUTED, whiteSpace: 'pre-wrap', margin: 0 }}>{selected.purpose}</p>
+                  </div>
+                )}
+                {selected.instructions && (
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 3 }}>사용 방법</div>
+                    <p style={{ fontSize: 13, color: MUTED, whiteSpace: 'pre-wrap', margin: 0 }}>{selected.instructions}</p>
+                  </div>
+                )}
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 3 }}>프롬프트</div>
+                  <pre style={{ background: BG, border: `1px solid ${LINE}`, borderRadius: 6,
+                    padding: 12, fontSize: 12, color: TEXT, whiteSpace: 'pre-wrap',
+                    overflowX: 'auto', maxHeight: 300, overflowY: 'auto', margin: 0 }}>
+                    {selected.promptText}
+                  </pre>
+                </div>
+                {selected.cautions && (
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: '#B8956A', marginBottom: 3 }}>⚠️ 주의사항</div>
+                    <p style={{ fontSize: 12, color: '#9A7850', whiteSpace: 'pre-wrap', margin: 0 }}>{selected.cautions}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div style={{ height: '100%', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', color: DIM }}>
+              <div style={{ fontSize: 40, marginBottom: 10 }}>⚙️</div>
+              <p style={{ fontSize: 14 }}>좌측에서 스킬을 선택하면 상세 정보가 표시됩니다</p>
+              <p style={{ fontSize: 12, color: DIM, marginTop: 4 }}>draft 상태 스킬은 [✓ 승인] 버튼으로 카탈로그에 즉시 게시됩니다</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 우: 상세 / 폼 */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      {/* ── 신규 등록 모달 (fixed overlay) ── */}
+      {showForm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 28, width: '100%', maxWidth: 680,
+            maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.25)', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-        {/* 새 스킬 등록 폼 */}
-        {showForm && (
-          <div style={{ background: SURFACE, borderRadius: 12, border: `1px solid ${LINE}`, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* 모달 헤더 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h2 style={{ fontSize: 17, fontWeight: 700, color: NAVY, margin: 0 }}>새 스킬 등록</h2>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -518,10 +635,10 @@ function AdminTab() {
             {/* JSON 모드 */}
             {formMode === 'json' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <label style={labelStyle}>JSON 객체 또는 배열 (첫 번째 항목을 폼에 채웁니다)</label>
+                <label style={labelStyle}>JSON 객체 또는 배열 (배열이면 전체 일괄 저장 가능)</label>
                 <textarea value={jsonInput} onChange={e => setJsonInput(e.target.value)}
-                  rows={10} placeholder={'{\n  "skillId": "skill-xxx",\n  "name": "스킬 이름",\n  "category": "업무자동화",\n  "promptText": "..."\n}'}
-                  style={{ ...inputStyle, fontFamily: 'monospace', resize: 'vertical' }} />
+                  rows={12} placeholder={'[\n  {\n    "skillId": "skill-xxx",\n    "name": "스킬 이름",\n    "category": "업무자동화",\n    "promptText": "..."\n  }\n]'}
+                  style={{ ...inputStyle, fontFamily: 'monospace', fontSize: 12, resize: 'vertical' }} />
                 {jsonError && <p style={{ fontSize: 12, color: '#DC2626', margin: 0 }}>{jsonError}</p>}
                 {bulkMsg && <p style={{ fontSize: 12, color: bulkMsg.startsWith('✅') ? '#059669' : '#DC2626', margin: 0 }}>{bulkMsg}</p>}
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -614,118 +731,28 @@ function AdminTab() {
                 {saveMsg}
               </p>
             )}
-            <div style={{ display: 'flex', gap: 8 }}>
+
+            {/* 저장 / 취소 */}
+            <div style={{ display: 'flex', gap: 8, paddingTop: 4 }}>
               <button onClick={saveSkill} disabled={saveLoading}
-                style={{ fontSize: 13, padding: '7px 20px', borderRadius: 6,
+                style={{ fontSize: 13, padding: '8px 24px', borderRadius: 6,
                   background: saveLoading ? DIM : BLUE, color: '#fff', border: 'none',
-                  cursor: saveLoading ? 'default' : 'pointer', fontWeight: 500 }}>
+                  cursor: saveLoading ? 'default' : 'pointer', fontWeight: 600 }}>
                 {saveLoading ? '저장 중...' : 'draft로 저장'}
               </button>
-              <button onClick={() => { setShowForm(false); setForm({...EMPTY_FORM}); setJsonInput(''); setSaveMsg(null) }}
-                style={{ fontSize: 13, padding: '7px 16px', borderRadius: 6,
+              <button onClick={() => { setShowForm(false); setForm({...EMPTY_FORM}); setJsonInput(''); setSaveMsg(null); setBulkMsg(null) }}
+                style={{ fontSize: 13, padding: '8px 18px', borderRadius: 6,
                   background: SURFACE, color: MUTED, border: `1px solid ${LINE}`, cursor: 'pointer' }}>
                 취소
               </button>
+              <span style={{ fontSize: 12, color: DIM, alignSelf: 'center', marginLeft: 4 }}>
+                저장 후 목록에서 [✓ 승인]을 클릭하면 카탈로그에 게시됩니다
+              </span>
             </div>
           </div>
-        )}
-
-        {/* 선택된 스킬 상세 + 상태 관리 */}
-        {!showForm && selected && (
-          <div style={{ background: SURFACE, borderRadius: 12, border: `1px solid ${LINE}`, padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {/* 헤더 */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-              <div>
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: NAVY, margin: 0 }}>{selected.name}</h2>
-                <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                  <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 9999, ...(STATUS_STYLE[selected.status] ?? {}) }}>
-                    {STATUS_LABEL[selected.status] ?? selected.status}
-                  </span>
-                  <span style={{ fontSize: 12, padding: '2px 8px', borderRadius: 9999, ...(SEC_STYLE[selected.securityLevel] ?? { background: 'rgba(190,200,220,.15)', color: DIM }) }}>
-                    {selected.securityLevel}
-                  </span>
-                  <span style={{ fontSize: 12, color: DIM }}>{selected.category}</span>
-                  <span style={{ fontSize: 12, color: DIM }}>v{selected.version}</span>
-                  <span style={{ fontSize: 12, color: DIM }}>사용 {selected.usageCount}회</span>
-                  {selected.avgRating != null && (
-                    <span style={{ fontSize: 12, color: '#D97706' }}>★ {selected.avgRating.toFixed(1)} ({selected.ratingCount}명)</span>
-                  )}
-                </div>
-                {selected.approvedBy && (
-                  <p style={{ fontSize: 12, color: MUTED, marginTop: 4 }}>
-                    승인: {selected.approvedBy} {selected.approvedAt ? `(${new Date(selected.approvedAt).toLocaleDateString('ko-KR')})` : ''}
-                  </p>
-                )}
-              </div>
-              {/* 상태 변경 버튼 */}
-              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                {selected.status === 'draft' && (
-                  <button onClick={() => patchStatus(selected, 'active')} disabled={patchLoading}
-                    style={{ fontSize: 12, padding: '6px 14px', borderRadius: 6, fontWeight: 600,
-                      background: 'rgba(16,185,129,.12)', color: '#059669', border: '1px solid rgba(16,185,129,.25)',
-                      cursor: patchLoading ? 'default' : 'pointer' }}>
-                    승인 (active)
-                  </button>
-                )}
-                {selected.status === 'active' && (
-                  <button onClick={() => patchStatus(selected, 'deprecated')} disabled={patchLoading}
-                    style={{ fontSize: 12, padding: '6px 14px', borderRadius: 6,
-                      background: 'rgba(190,200,220,.12)', color: DIM, border: `1px solid ${LINE}`,
-                      cursor: patchLoading ? 'default' : 'pointer' }}>
-                    아카이브
-                  </button>
-                )}
-                {selected.status === 'deprecated' && (
-                  <button onClick={() => patchStatus(selected, 'active')} disabled={patchLoading}
-                    style={{ fontSize: 12, padding: '6px 14px', borderRadius: 6,
-                      background: 'rgba(16,185,129,.12)', color: '#059669', border: '1px solid rgba(16,185,129,.25)',
-                      cursor: patchLoading ? 'default' : 'pointer' }}>
-                    복원 (active)
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {patchMsg && (
-              <p style={{ fontSize: 13, color: patchMsg.startsWith('✅') ? '#059669' : '#DC2626', margin: 0 }}>
-                {patchMsg}
-              </p>
-            )}
-
-            <div style={{ borderTop: `1px solid ${LINE}`, paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {selected.purpose && (
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 3 }}>목적</div>
-                  <p style={{ fontSize: 13, color: MUTED, whiteSpace: 'pre-wrap', margin: 0 }}>{selected.purpose}</p>
-                </div>
-              )}
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: TEXT, marginBottom: 3 }}>프롬프트</div>
-                <pre style={{ background: BG, border: `1px solid ${LINE}`, borderRadius: 6,
-                  padding: 12, fontSize: 12, color: TEXT, whiteSpace: 'pre-wrap',
-                  overflowX: 'auto', maxHeight: 200, overflowY: 'auto', margin: 0 }}>
-                  {selected.promptText}
-                </pre>
-              </div>
-              {selected.cautions && (
-                <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: '#B8956A', marginBottom: 3 }}>⚠️ 주의사항</div>
-                  <p style={{ fontSize: 12, color: '#9A7850', whiteSpace: 'pre-wrap', margin: 0 }}>{selected.cautions}</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 빈 상태 */}
-        {!showForm && !selected && (
-          <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: DIM }}>
-            <div style={{ fontSize: 40, marginBottom: 10 }}>⚙️</div>
-            <p style={{ fontSize: 14 }}>스킬을 선택하거나 새 스킬을 등록하세요</p>
-          </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   )
 }
 
