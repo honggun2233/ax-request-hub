@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSession } from 'next-auth/react'
 
 const BLUE    = '#4A6FA5'
 const BLUE_MD = '#6B8FC9'
@@ -54,6 +55,8 @@ interface Skill {
 }
 
 export default function SkillsPage() {
+  const { data: session } = useSession()
+  const isAdmin = (session?.user as any)?.role === 'AX_TEAM'
   const [skills, setSkills] = useState<Skill[]>([])
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState('전체')
@@ -63,6 +66,8 @@ export default function SkillsPage() {
   const [ratingInput, setRatingInput] = useState(5)
   const [ratingComment, setRatingComment] = useState('')
   const [ratingDone, setRatingDone] = useState(false)
+  const [seeding, setSeeding] = useState(false)
+  const [seedResult, setSeedResult] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -76,6 +81,21 @@ export default function SkillsPage() {
   }, [category, q])
 
   useEffect(() => { load() }, [load])
+
+  async function runSeed() {
+    setSeeding(true)
+    setSeedResult(null)
+    try {
+      const res = await fetch('/api/skills/seed', { method: 'POST' })
+      const data = await res.json()
+      setSeedResult(res.ok ? `✅ ${data.seeded ?? data.upserted ?? '완료'} 개 시드 완료` : `❌ ${data.error ?? '오류 발생'}`)
+      if (res.ok) load()
+    } catch {
+      setSeedResult('❌ 네트워크 오류')
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   function copyPrompt(text: string) {
     navigator.clipboard.writeText(text)
@@ -103,7 +123,28 @@ export default function SkillsPage() {
     <div style={{ display: 'flex', height: 'calc(100vh - 48px)', gap: 16, color: TEXT }}>
       {/* 좌: 스킬 목록 */}
       <div style={{ width: 288, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: NAVY, margin: 0 }}>GPT 프롬프트 카탈로그</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: NAVY, margin: 0 }}>GPT 프롬프트 카탈로그</h1>
+          {isAdmin && (
+            <button
+              onClick={runSeed}
+              disabled={seeding}
+              title="SEED_SKILLS를 DB에 upsert합니다 (AX팀 전용)"
+              style={{
+                fontSize: 11, padding: '4px 10px', borderRadius: 6, border: `1px solid ${LINE}`,
+                background: SURFACE, color: MUTED, cursor: seeding ? 'default' : 'pointer',
+                opacity: seeding ? 0.6 : 1, whiteSpace: 'nowrap', flexShrink: 0,
+              }}
+            >
+              {seeding ? '시드 중...' : '🌱 시드 추가'}
+            </button>
+          )}
+        </div>
+        {seedResult && (
+          <p style={{ fontSize: 12, color: seedResult.startsWith('✅') ? '#059669' : '#DC2626', margin: 0 }}>
+            {seedResult}
+          </p>
+        )}
         <input
           type="text"
           placeholder="검색..."
