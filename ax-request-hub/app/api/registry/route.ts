@@ -57,6 +57,30 @@ export async function POST(req: NextRequest) {
 
   // 허용된 필드만 명시적으로 추출 (Mass Assignment 방지 — gate*Passed, lifecycleStage 등 서버 전용 필드 차단)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const riskTypeNum = data.riskType !== undefined && data.riskType !== null ? Number(data.riskType) : null
+
+  // 유형 3·4 에이전트 등록 필수 요건 검증 (운영지침 제21조②-5, 제21조④)
+  if (riskTypeNum !== null && riskTypeNum >= 3) {
+    if (!data.hasInstantShutdown) {
+      return NextResponse.json(
+        { error: '유형 3·4 에이전트는 즉시 중단(10초 이내) 기능이 필요합니다. (운영지침 제21조②-5)' },
+        { status: 422 }
+      )
+    }
+    if (!data.hasHumanApprovalForAutonomous) {
+      return NextResponse.json(
+        { error: '유형 3·4 에이전트는 자율 실행 범위에 사람 승인 단계가 필요합니다. (운영지침 제21조④)' },
+        { status: 422 }
+      )
+    }
+  }
+
+  // 점검 주기 자동 설정 (위험관리지침 제4조③) — 유형 3·4=고위험→분기, 유형 2=중위험→반기, 유형 1=저위험→연
+  const reviewCycle = riskTypeNum === null ? 'ANNUAL'
+    : riskTypeNum >= 3 ? 'QUARTERLY'
+    : riskTypeNum === 2 ? 'BIANNUAL'
+    : 'ANNUAL'
+
   const safeData: any = {
     agentName: data.agentName,
     projectId: data.projectId,
@@ -68,22 +92,75 @@ export async function POST(req: NextRequest) {
     ...(data.description  !== undefined && { description: data.description }),
     ...(data.modelVersion !== undefined && { modelVersion: data.modelVersion }),
     ...(data.department   !== undefined && { department: data.department }),
-    ...(data.riskType     !== undefined && { riskType: data.riskType === null ? null : Number(data.riskType) }),
+    ...(riskTypeNum !== null && { riskType: riskTypeNum }),
+    ...(data.hasInstantShutdown            !== undefined && { hasInstantShutdown: Boolean(data.hasInstantShutdown) }),
+    ...(data.hasHumanApprovalForAutonomous !== undefined && { hasHumanApprovalForAutonomous: Boolean(data.hasHumanApprovalForAutonomous) }),
+    reviewCycle,
   }
   const agent = await prisma.agentRegistry.create({ data: safeData })
   return NextResponse.json(agent, { status: 201 })
 }
 
+// 모델 변경 5가지 중대 변경 감지 (운영지침 제22조)
+const MAJOR_CHANGE_FIELDS: Record<string, string> = {
+  riskType:          '위험 유형 변경',
+  purpose:           '목적 변경',
+  dataSource:        '데이터 소스 변경',
+  phase:             '배포 환경 변경',
+  isHighImpact:      '고영향 AI 여부 변경',
+}
+
 export async function PATCH(req: NextRequest) {
   const auth = await requireRole('AX_TEAM')
   if ('error' in auth) return auth.error
-  const { id, lifecycleStage, operatorTrustScore, operatorComment, sam30dAccuracy, retireReason } = await req.json()
+  const body = await req.json()
+  const { id, lifecycleStage, operatorTrustScore, operatorComment, sam30dAccuracy, retireReason } = body
   const now = new Date()
+
+  // 중대 변경 감지 — lifecycleStage 전환이 아닌 필드 업데이트 시 (운영지침 제22조)
+  if (!lifecycleStage && id) {
+    const current = await prisma.agentRegistry.findUnique({
+      where: { id },
+      select: Object.keys(MAJOR_CHANGE_FIELDS).reduce((acc, k) => ({ ...acc, [k]: true }), {} as any),
+    })
+    if (current) {
+      const majorChanges: string[] = []
+      for (const [field, label] of Object.entries(MAJOR_CHANGE_FIELDS)) {
+        if (body[field] !== undefined && body[field] !== (current as any)[field]) {
+          majorChanges.push(label)
+        }
+      }
+      if (majorChanges.length > 0) {
+        await prisma.councilAgendaItem.create({
+          data: {
+            agentId: id,
+            itemType: 'MAJOR_CHANGE',
+            packageMeta: JSON.stringify({
+              changedFields: majorChanges,
+              changedBy: auth.user.email,
+              changedAt: now.toISOString(),
+            }),
+          },
+        }).catch(console.error)
+      }
+    }
+  }
 
   // ACTIVE 전환 — activateAgent가 단일 트랜잭션 내에서 모든 필드를 원자적으로 처리
   if (lifecycleStage === 'ACTIVE') {
+    const current = await prisma.agentRegistry.findUnique({ where: { id }, select: { riskType: true } })
+    const riskType = current?.riskType ?? null
+    const reviewCycle = riskType !== null && riskType >= 3 ? 'QUARTERLY'
+      : riskType === 2 ? 'BIANNUAL'
+      : 'ANNUAL'
+    const reviewMonths = reviewCycle === 'QUARTERLY' ? 3 : reviewCycle === 'BIANNUAL' ? 6 : 12
+    const nextReviewAt = new Date(now)
+    nextReviewAt.setMonth(nextReviewAt.getMonth() + reviewMonths)
+
     const agent = await prisma.$transaction(async (tx) => {
-      return activateAgent(tx, id, { operatorTrustScore, operatorComment, sam30dAccuracy })
+      const activated = await activateAgent(tx, id, { operatorTrustScore, operatorComment, sam30dAccuracy })
+      // 점검 주기·다음 점검일 갱신 (위험관리지침 제4조③)
+      return tx.agentRegistry.update({ where: { id }, data: { reviewCycle, nextReviewAt } })
     })
     return NextResponse.json(agent)
   }

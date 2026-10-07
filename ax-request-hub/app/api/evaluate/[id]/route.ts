@@ -26,6 +26,44 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ message: '이미 처리된 AI 활용입니다.', status: project.status })
   }
 
+  // 고영향 AI·고성능 AI → 고위험 자동 승격 (운영규정 제10조③)
+  // evaluate 전에 판별하여 AX팀 수동 검토로 에스컬레이션
+  if ((project as any).isHighImpactAI || (project as any).isHighCapabilityAI) {
+    const flagLabel = (project as any).isHighImpactAI ? '고영향 AI' : '고성능 AI'
+    await prisma.project.update({
+      where: { id: project.id },
+      data: { status: 'evaluated', totalScore: null },
+    })
+    await sendApprovalEmail({ to: project.requesterEmail, projectTitle: project.title, totalScore: 0, isAutoApproved: false })
+    await prisma.councilAgendaItem.create({
+      data: {
+        projectId: project.id,
+        itemType: 'HIGH_RISK_REJECTION',
+        packageMeta: JSON.stringify({
+          reason: `${flagLabel} 판별 → 위험등급 고위험 자동 승격`,
+          projectTitle: project.title,
+          requesterName: project.requesterName,
+          requesterEmail: project.requesterEmail,
+          receivedAt: new Date().toISOString(),
+        }),
+      },
+    })
+    // AX팀 + 소속 부서장 동시 알림 (운영규정 제16조①)
+    const [axTeamMembers, deptHead] = await Promise.all([
+      prisma.employee.findMany({ where: { role: 'AX_TEAM', isActive: true }, select: { email: true } }),
+      prisma.employee.findFirst({ where: { department: project.department, role: 'DEPT_HEAD', isActive: true }, select: { email: true } }),
+    ])
+    const notifyTargets = [...axTeamMembers.map(m => m.email), ...(deptHead ? [deptHead.email] : [])]
+    for (const email of notifyTargets) {
+      await notify(prisma, email,
+        `[고위험 자동승격] ${project.title}`,
+        `${flagLabel}로 판별되어 위험등급이 고위험으로 자동 승격되었습니다. 수동 검토가 필요합니다.`,
+        `/admin?projectId=${project.id}`
+      )
+    }
+    return NextResponse.json({ skipped: true, reason: `${flagLabel}: 고위험 자동 승격, AX팀 수동 검토 필요`, status: 'evaluated' })
+  }
+
   // CONFIDENTIAL(기밀·극비) AI 활용은 Claude API 평가 생략 → 즉시 AX팀 수동 검토 에스컬레이션
   if (project.confidentialityLevel === 'CONFIDENTIAL') {
     await prisma.project.update({
@@ -55,13 +93,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       },
     })
 
-    const axTeamMembers = await prisma.employee.findMany({
-      where: { role: 'AX_TEAM', isActive: true },
-      select: { email: true },
-    })
-    for (const member of axTeamMembers) {
-      await notify(prisma, 
-        member.email,
+    // AX팀 + 소속 부서장 동시 알림 (운영규정 제16조①)
+    const [axTeamMembers, deptHead] = await Promise.all([
+      prisma.employee.findMany({ where: { role: 'AX_TEAM', isActive: true }, select: { email: true } }),
+      prisma.employee.findFirst({ where: { department: project.department, role: 'DEPT_HEAD', isActive: true }, select: { email: true } }),
+    ])
+    const notifyTargets = [...axTeamMembers.map(m => m.email), ...(deptHead ? [deptHead.email] : [])]
+    for (const email of notifyTargets) {
+      await notify(prisma, email,
         `[CONFIDENTIAL 수동검토 필요] ${project.title}`,
         `CONFIDENTIAL 등급 AI 활용으로 자동 평가가 생략되었습니다. AX팀 전체 수동 검토가 필요합니다.`,
         `/admin?projectId=${project.id}`

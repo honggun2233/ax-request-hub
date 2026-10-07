@@ -36,6 +36,15 @@ model Project {
   techStandardsPassed       Boolean @default(false)
   techStandardsFailedItems  String  @default("[]")
   selectedCommonAgents      String?  // 선택한 공통 에이전트 agentKey 목록 (JSON)
+
+  // 컴플라이언스 검토 추적 (운영규정 제8조⑤ — 고위험 과제 생략 불가)
+  complianceReviewedAt DateTime?
+  complianceReviewedBy String?
+
+  // 고영향·고성능 AI 여부 (운영규정 제10조③ — 고위험 자동 승격 트리거)
+  isHighImpactAI      Boolean  @default(false)
+  isHighCapabilityAI  Boolean  @default(false)
+
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
 
@@ -131,6 +140,7 @@ model Employee {
   literacyEnrollments  LiteracyEnrollment[]
   policyLogs           PolicyDecisionLog[]
   chatSessions         ChatSession[]
+  labAccesses          LabAccess[]
 }
 
 model DepartmentQuota {
@@ -231,7 +241,7 @@ model ServiceAllocation {
 
 model TokenPolicy {
   id               String   @id @default(cuid())
-  scope            String
+  scope            String   // LEVEL | COMPANY
   level            String?
   employeeId       String?
   service          String
@@ -239,8 +249,13 @@ model TokenPolicy {
   singleCallLimit  Int      @default(0)
   warningThreshold Int      @default(80)
   isActive         Boolean  @default(true)
+  // networkContext: PRODUCTION(기본) | RESEARCH(연구망 전용 쿼터)
+  // 기존 레코드는 마이그레이션 시 PRODUCTION으로 백필됨
+  networkContext   String   @default("PRODUCTION")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+
+  @@index([networkContext, service, isActive])
 }
 
 model UsageRecord {
@@ -495,7 +510,17 @@ model AgentRegistry {
   isSystemAgent    Boolean  @default(false)
   commonAgentType  String?  // REQ_ANALYSIS | ARCH_DESIGN | CODE_GEN | CODE_REVIEW | TEST_GEN
 
-  legacyAgent      Agent?         @relation("AgentRegistryLink")
+  // ResearchLab 졸업 훅 — 연구망 실험에서 운영 게이트로 진입 시 연결
+  labExperimentId  String?         @unique
+
+  // 거버넌스 v2.0 (2026-10-01) 신규 필드
+  isUltraHighRisk               Boolean  @default(false)  // 초고위험 판정 — 즉시 운영 중지 (운영규정 제11조⑤)
+  hasInstantShutdown            Boolean  @default(false)  // 즉시 중단 10초 이내 요건 (운영지침 제21조②-5)
+  hasHumanApprovalForAutonomous Boolean  @default(false)  // 자율 실행 범위 사람 승인 단계 (운영지침 제21조④)
+  reviewCycle                   String   @default("ANNUAL") // HIGH=QUARTERLY|MEDIUM=BIANNUAL|LOW=ANNUAL (위험관리지침 제4조③)
+
+  legacyAgent      Agent?          @relation("AgentRegistryLink")
+  labExperiment    LabExperiment?  @relation(fields: [labExperimentId], references: [id])
 
   scores        AgentScore[]
   projects      AgentProjectLink[]
@@ -792,8 +817,10 @@ model EmployeeAgentLink {
 }
 
 // AI 라우팅 이벤트 로그 (매 Bedrock 호출마다 기록)
+// 파티션 테이블: PARTITION BY RANGE(createdAt), 월별 파티션
+// PK = (id, createdAt) — PostgreSQL RANGE 파티셔닝 요건
 model GatewayCallLog {
-  id           String   @id @default(cuid())
+  id           String   @default(cuid())
   providerKey  String   // 'anthropic' | 'openai' | 'gemini' | 'onprem'
   taskType     String?  // 'TIER1_PARSE' | 'GATE3_RATIONALE' | ...
   inputTokens  Int      @default(0)
@@ -804,18 +831,20 @@ model GatewayCallLog {
   projectId    String?
   createdAt    DateTime @default(now())
 
+  @@id([id, createdAt])
   @@index([providerKey, createdAt])
   @@index([taskType, providerKey])
 }
 
 // 정책 판정 이력 (Policy Gateway Phase 2)
 model PolicyDecisionLog {
-  id         String   @id @default(cuid())
-  agentId    String
-  employeeId String
-  decision   String   // ALLOW | WARN | BLOCK
-  reason     String
-  checkedAt  DateTime @default(now())
+  id           String    @id @default(cuid())
+  agentId      String
+  employeeId   String
+  decision     String    // ALLOW | WARN | BLOCK
+  reason       String
+  checkedAt    DateTime  @default(now())
+  retainUntil  DateTime?  // 3년 보관 의무 (운영지침 제21조⑤)
 
   agent    AgentRegistry @relation(fields: [agentId], references: [id])
   employee Employee      @relation(fields: [employeeId], references: [id])
@@ -867,6 +896,117 @@ model ModelProvider {
   notes              String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────────────────────
+// ResearchLab: AI 연구망 접근 관리·리소스 할당·실험 추적
+// LabAccess → LabAllocation → LabResource / LabQuotaPolicy
+// LabExperiment → AgentRegistry (graduation hook)
+// ─────────────────────────────────────────────────────────────
+
+// 연구망 접근 신청·승인·회수
+// status: PENDING | APPROVED | ACTIVE | REVOKED | EXPIRED
+model LabAccess {
+  id          String    @id @default(cuid())
+  employeeId  String
+  purpose     String
+  status      String    @default("PENDING")
+  requestedAt DateTime  @default(now())
+  approvedAt  DateTime?
+  approvedBy  String?
+  revokedAt   DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  employee    Employee      @relation(fields: [employeeId], references: [id])
+  allocations LabAllocation[]
+  experiments LabExperiment[]
+
+  @@index([employeeId, status])
+  @@index([status, expiresAt])
+}
+
+// 리소스 카탈로그 (물리 장비·컨테이너 슬롯 전용)
+// LLM API 쿼터는 TokenPolicy.networkContext='RESEARCH' 사용
+// type: MACHINE_SLOT | CONTAINER_SLOT
+model LabResource {
+  id            String    @id @default(cuid())
+  name          String
+  type          String    // MACHINE_SLOT | CONTAINER_SLOT
+  description   String?
+  totalCapacity Int
+  location      String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  allocations   LabAllocation[]
+
+  @@index([type, isActive])
+}
+
+// 쿼터 정책 템플릿 (역할/부서 기준)
+// targetType: ROLE | DEPARTMENT | EMPLOYEE
+// targetId: null = 전체 기본값 (fallback)
+// priority: 낮을수록 우선 / 동일 targetType 내 tie-break용
+// 리졸빙 순위: EMPLOYEE > DEPARTMENT > ROLE > (targetId=null)
+model LabQuotaPolicy {
+  id                   String    @id @default(cuid())
+  name                 String
+  targetType           String    // ROLE | DEPARTMENT | EMPLOYEE
+  targetId             String?
+  machineHoursPerMonth Int       @default(20)
+  containerSlotsMax    Int       @default(2)
+  priority             Int       @default(100)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  allocations          LabAllocation[]
+
+  @@index([targetType, targetId])
+}
+
+// 실제 할당: LabAccess × LabResource × LabQuotaPolicy
+// customOverride: 예외 처리 (빈번해지면 새 Policy 추가 신호)
+model LabAllocation {
+  id             String    @id @default(cuid())
+  labAccessId    String
+  resourceId     String
+  quotaPolicyId  String
+  customOverride Json?
+  allocatedAt    DateTime  @default(now())
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  labAccess      LabAccess      @relation(fields: [labAccessId], references: [id])
+  resource       LabResource    @relation(fields: [resourceId], references: [id])
+  quotaPolicy    LabQuotaPolicy @relation(fields: [quotaPolicyId], references: [id])
+
+  @@index([labAccessId])
+  @@index([resourceId, revokedAt])
+}
+
+// 실험 추적 (자유형식, optional)
+// status: DRAFT | RUNNING | COMPLETED | ARCHIVED | GRADUATED
+// GRADUATED: labAccess.experiments → AgentRegistry.labExperimentId 연결됨
+model LabExperiment {
+  id          String    @id @default(cuid())
+  labAccessId String
+  title       String
+  description String?
+  status      String    @default("DRAFT")
+  startedAt   DateTime?
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  labAccess   LabAccess       @relation(fields: [labAccessId], references: [id])
+  agentEntry  AgentRegistry?  // graduation hook — AgentRegistry.labExperimentId FK
+
+  @@index([labAccessId, status])
 }
 
 // governance_chunks 테이블은 pgvector DB(ax_governance, 포트 5438)에서 embed_pipeline.py가 직접 관리.

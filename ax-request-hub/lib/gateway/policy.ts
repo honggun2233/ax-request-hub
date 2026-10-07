@@ -34,9 +34,12 @@ function setCache(key: string, decision: PolicyDecision, reason: string) {
   policyCache.set(key, { decision, reason, expiresAt: Date.now() + 60_000 })
 }
 
+// 감사 로그 보관 3년 의무 (운영지침 제21조⑤) — retainUntil 계산 후 저장
 function logDecision(agentId: string, employeeId: string, decision: string, reason: string) {
+  const retainUntil = new Date()
+  retainUntil.setFullYear(retainUntil.getFullYear() + 3)
   prisma.policyDecisionLog
-    .create({ data: { agentId, employeeId, decision, reason } })
+    .create({ data: { agentId, employeeId, decision, reason, retainUntil } })
     .catch(console.error)
 }
 
@@ -48,6 +51,12 @@ export async function checkPolicy(agentId: string, employeeId: string): Promise<
     if (!agent) return { decision: 'BLOCK', reason: '에이전트를 찾을 수 없음' }
 
     const stage = agent.lifecycleStage
+
+    // 초고위험 — 운영규정 제11조⑤: 즉시 운영 중지 의무 (캐시 우회, 항상 실시간 판정)
+    if (stage === 'ULTRA_HIGH_BLOCKED' || (agent as any).isUltraHighRisk) {
+      logDecision(agentId, employeeId, 'BLOCK', '초고위험 판정 에이전트 — AI위원회 검토 완료 전까지 운영 중지')
+      return { decision: 'BLOCK', reason: '초고위험 판정 에이전트 — AI위원회 검토 완료 전까지 운영 중지' }
+    }
 
     if (stage === 'RETIRED') {
       return { decision: 'BLOCK', reason: '폐기된 에이전트' }

@@ -1,11 +1,14 @@
 import { prisma } from '@/lib/prisma'
 
-export const HIGH_RISK_STAGES = new Set(['GATE2', 'GATE3', 'PROD', 'OPERATION'])
-export const MED_RISK_STAGES  = new Set(['GATE1', 'PILOT'])
+// 운영규정 제10조: 초고위험(4단계) 추가 — 등록 차단·즉시 운영 중지
+export const ULTRA_HIGH_RISK_STAGES = new Set(['ULTRA_HIGH_BLOCKED'])
+export const HIGH_RISK_STAGES       = new Set(['GATE2', 'GATE3', 'PROD', 'OPERATION'])
+export const MED_RISK_STAGES        = new Set(['GATE1', 'PILOT'])
 
-export function riskLevel(stage: string): 'HIGH' | 'MEDIUM' | 'LOW' {
-  if (HIGH_RISK_STAGES.has(stage)) return 'HIGH'
-  if (MED_RISK_STAGES.has(stage))  return 'MEDIUM'
+export function riskLevel(stage: string): 'ULTRA_HIGH' | 'HIGH' | 'MEDIUM' | 'LOW' {
+  if (ULTRA_HIGH_RISK_STAGES.has(stage)) return 'ULTRA_HIGH'
+  if (HIGH_RISK_STAGES.has(stage))       return 'HIGH'
+  if (MED_RISK_STAGES.has(stage))        return 'MEDIUM'
   return 'LOW'
 }
 
@@ -15,7 +18,7 @@ export interface AffectedAgent {
   lifecycleStage: string
   connectionType: 'DIRECT' | 'VIA_PROJECT' | 'VIA_DERIVED_ASSET'
   projectName:    string | null
-  riskLevel:      'HIGH' | 'MEDIUM' | 'LOW'
+  riskLevel:      'ULTRA_HIGH' | 'HIGH' | 'MEDIUM' | 'LOW'
 }
 
 // 데이터 자산 회수 시 영향받는 에이전트 목록 (2-path 그래프 탐색)
@@ -105,7 +108,7 @@ export async function getAffectedAgents(assetId: string): Promise<AffectedAgent[
   }
 
   const agents = Array.from(seen.values())
-  const order: Record<string, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 }
-  agents.sort((a, b) => order[a.riskLevel] - order[b.riskLevel])
+  const order: Record<string, number> = { ULTRA_HIGH: 0, HIGH: 1, MEDIUM: 2, LOW: 3 }
+  agents.sort((a, b) => (order[a.riskLevel] ?? 3) - (order[b.riskLevel] ?? 3))
   return agents
 }

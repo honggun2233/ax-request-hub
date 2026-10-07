@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const project = await prisma.project.findUnique({
     where: { id },
     include: { scoreCard: { select: { id: true } } },
-  })
+  }) as any
   if (!project) return NextResponse.json({ error: '과제를 찾을 수 없습니다.' }, { status: 404 })
 
   // C-2: 이미 종료된 과제 재승인 방지
@@ -34,6 +34,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (action === 'approve' && !project.scoreCard) {
     return NextResponse.json(
       { error: 'ScoreCard가 없습니다. Gate3 채점을 먼저 완료해야 승인할 수 있습니다.' },
+      { status: 422 }
+    )
+  }
+
+  // 고위험 과제 컴플라이언스 검토 완료 가드 (운영규정 제8조⑤ — 생략·단축 불가 명문화)
+  const isHighRisk = project.confidentialityLevel === 'CONFIDENTIAL'
+    || (project.totalScore ?? 0) >= 80
+    || project.isHighImpactAI
+    || project.isHighCapabilityAI
+  if (action === 'approve' && isHighRisk && !project.complianceReviewedAt) {
+    return NextResponse.json(
+      { error: '고위험 과제는 컴플라이언스 검토 완료 후 승인할 수 있습니다. (운영규정 제8조⑤) 컴플라이언스팀 검토 완료 확인 후 재시도하세요.' },
       { status: 422 }
     )
   }
@@ -95,6 +107,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       data: { status: 'PENDING' },
     })
 
+    // 상용 전환 승인 경로 차등화 (운영규정 제9조)
+    // 고위험·기밀 → AI위원회 의결 필수 안건 생성
+    // 저·중위험 → AI실무협의체 전결 (시스템 외 프로세스), 차기 AI위원회 보고용 안건만 생성
+    await prisma.councilAgendaItem.create({
+      data: {
+        projectId: id,
+        itemType: isHighRisk ? 'PROD_APPROVAL' : 'PRACTICAL_COMMITTEE_REVIEW',
+        packageMeta: JSON.stringify({
+          approvedBy: (session.user as any)?.email,
+          approvalPath: isHighRisk ? 'AI위원회' : 'AI실무협의체',
+          totalScore: project.totalScore,
+          confidentialityLevel: project.confidentialityLevel,
+          projectTitle: project.title,
+          approvedAt: new Date().toISOString(),
+        }),
+      },
+    })
+
     await sendApprovalEmail({
       to: project.requesterEmail,
       projectTitle: project.title,
@@ -106,6 +136,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       ok: true,
       status: statusMap[typedAction],
       dataRequestsActivated: draftCount.count,
+      approvalPath: isHighRisk ? 'AI위원회' : 'AI실무협의체',
     })
   }
 

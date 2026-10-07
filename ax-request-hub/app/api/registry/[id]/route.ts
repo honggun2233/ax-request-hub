@@ -127,7 +127,7 @@ export async function PATCH(
         entityType: 'AGENT',
         entityId: id,
         action: 'TRANSPARENCY_EXCEPTION_NOTE',
-        actorEmail: auth.email,
+        actorEmail: (auth as any).user?.email ?? 'unknown',
         detail: JSON.stringify({
           agentName: updated.agentName,
           note: transparencyExceptionNote,
