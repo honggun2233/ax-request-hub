@@ -74,3 +74,10 @@ docs/.obsidian/
 docs/*.canvas
 docs/*.base
 docs/'무제 1.canvas'
+
+# Build cache
+.turbo/
+packages/*/.turbo/
+
+# Runtime logs
+logs/
